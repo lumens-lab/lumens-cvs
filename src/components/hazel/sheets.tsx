@@ -3,6 +3,7 @@ import { Ic, T, Av, gl, COLORS, Sheet, showToast } from './ui';
 import { CardComp } from './CardComp';
 import { CARD_THEMES, MONTHS, PAY_METHODS, SEARCH_USERS, GRAD_MAP } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
+import { ICON_LIBRARY, ICON_COLORS } from '@/lib/hazel/icons';
 
 const { W, S, S2, AC, GN, RD, BL, PP } = COLORS;
 
@@ -104,8 +105,8 @@ export function AddCatSheet({ open, onClose, kind = 'expense' }: { open: boolean
   const [icon, setIcon] = useState('Tag');
   const [color, setColor] = useState('#5eead4');
   const [budget, setBudget] = useState('');
-  const colors = ['#5eead4', '#34d399', '#60a5fa', '#c084fc', '#f87171', '#fb923c', '#fbbf24', '#f472b6'];
-  const icons = ['Tag', 'ShoppingBag', 'Coffee', 'Car', 'Music', 'Receipt', 'Home', 'Heart', 'Gift', 'Plane', 'Book', 'Briefcase'];
+  const colors = ICON_COLORS;
+  const icons = ICON_LIBRARY;
   const save = () => {
     if (!name.trim()) return showToast('Enter a name');
     const cat = { id: Date.now().toString(), name: name.trim(), icon, color, ...(kind === 'expense' && budget ? { budget: parseFloat(budget) } : {}) };
@@ -126,7 +127,7 @@ export function AddCatSheet({ open, onClose, kind = 'expense' }: { open: boolean
       </div>
       <div style={{ marginTop: 14 }}>
         <div style={{ fontSize: 12, color: S, marginBottom: 8 }}>Icon</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 8, maxHeight: 220, overflowY: 'auto', paddingRight: 4 }}>
           {icons.map((i) => (
             <T key={i} onClick={() => setIcon(i)} style={{ aspectRatio: '1', borderRadius: 12, background: icon === i ? color + '33' : 'rgba(255,255,255,0.05)', border: icon === i ? `1px solid ${color}` : '1px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: icon === i ? color : W }}>
               <Ic n={i} s={18} />
