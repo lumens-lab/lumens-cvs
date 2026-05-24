@@ -14,12 +14,16 @@ export type SettingsScreen =
   | 'set-backup'
   | 'set-accounts'
   | 'set-income-cats'
-  | 'set-expense-cats';
+  | 'set-expense-cats'
+  | 'set-notifications'
+  | 'set-appearance';
 
 export function SettingsRoot({ go, onBack }: { go: (s: SettingsScreen) => void; onBack: () => void }) {
   const items: { id: SettingsScreen; icon: string; label: string; desc: string }[] = [
     { id: 'set-currency', icon: 'DollarSign', label: 'Preferred Currency', desc: 'Set your default currency' },
     { id: 'set-language', icon: 'Languages', label: 'Language', desc: 'Choose your language' },
+    { id: 'set-notifications', icon: 'Bell', label: 'Notifications', desc: 'Choose what alerts you receive' },
+    { id: 'set-appearance', icon: 'Palette', label: 'Appearance', desc: 'Light or dark theme' },
     { id: 'set-backup', icon: 'CloudUpload', label: 'Backup & Export', desc: 'Backup data, export expenses' },
     { id: 'set-accounts', icon: 'Landmark', label: 'Account Settings', desc: 'Manage your bank accounts' },
     { id: 'set-income-cats', icon: 'TrendingUp', label: 'Income Categories', desc: 'Add, edit or remove' },
