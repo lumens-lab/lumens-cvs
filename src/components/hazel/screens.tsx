@@ -468,6 +468,20 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
                   <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.85 }}>Sent 💵</div>
                   <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4, letterSpacing: '-0.02em' }}>{getCurrencySym(m.cur || state.settings?.currency || 'ZAR')}{(m.amt ?? 0).toFixed(2)}</div>
                 </div>
+              ) : m.type === 'image' && m.media ? (
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ padding: 4, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', overflow: 'hidden' }}>
+                  <img src={m.media} alt="attachment" style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16, objectFit: 'cover' }} />
+                </div>
+              ) : m.type === 'video' && m.media ? (
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ padding: 4, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', overflow: 'hidden' }}>
+                  <video src={m.media} controls style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16 }} />
+                </div>
+              ) : m.type === 'voice' && m.media ? (
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', background: m.sent ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))' : 'linear-gradient(135deg, rgba(80,62,52,0.45), rgba(58,46,38,0.45))', boxShadow: '0 6px 22px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+                  <Ic n="Mic" s={16} />
+                  <audio src={m.media} controls style={{ height: 32 }} />
+                  {m.dur ? <span style={{ fontSize: 11, opacity: 0.7 }}>{m.dur}s</span> : null}
+                </div>
               ) : (
                 <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
