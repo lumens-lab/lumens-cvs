@@ -435,7 +435,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
     setMsg('');
   };
 
-  const pushMsg = (m: Omit<ChatMsgInline, 'id' | 'time' | 'sent'> & { sent?: boolean }) => {
+  const pushMsg = (m: { type?: 'image' | 'video' | 'voice' | 'money'; text?: string; media?: string; dur?: number; amt?: number; cur?: string }) => {
     const ts = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     set((s) => {
       const cv = s.conversations.find((c) => c.cid === contactId);
