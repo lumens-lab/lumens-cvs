@@ -334,9 +334,7 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
           return (
             <div key={c.id} style={{ ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 18, background: c.clr, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14 }}>
-                  {c.sym[0]}
-                </div>
+                <CryptoIcon sym={c.sym} size={36} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{c.name}</div>
                   <div style={{ color: S, fontSize: 11 }}>{c.sym}</div>
