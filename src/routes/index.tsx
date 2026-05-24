@@ -238,20 +238,21 @@ function Shell({ children, hideNav }: { children: React.ReactNode; hideNav?: boo
 
 function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) => void; togglePhase: () => void }) {
   const phase = phaseOf(tab);
-  // Per spec: chat phase → Find + Profile (chat removed). Wallet phase → Budget + Expenses + Settings (wallet removed).
+  // Per spec: chat phase → Find + Profile (chat removed). Wallet phase → Assets + Budget + Expenses + Settings (wallet/home stays as the toggle target).
   const items: { id: Tab; icon: string; label: string }[] =
     phase === "chat"
       ? [
-          { id: "find", icon: "Search", label: "Find" },
-          { id: "profile", icon: "User", label: "Profile" },
+          { id: "find", icon: "UserSearch", label: "Find" },
+          { id: "profile", icon: "CircleUserRound", label: "Profile" },
         ]
       : [
+          { id: "assets", icon: "Layers", label: "Assets" },
           { id: "budget", icon: "PieChart", label: "Budget" },
-          { id: "expenses", icon: "Receipt", label: "Expenses" },
-          { id: "settings", icon: "Settings", label: "Settings" },
+          { id: "expenses", icon: "ReceiptText", label: "Expenses" },
+          { id: "settings", icon: "Settings2", label: "Settings" },
         ];
 
-  const toggleIcon = phase === "chat" ? "Wallet" : "MessageCircle";
+  const toggleIcon = phase === "chat" ? "Wallet" : "MessagesSquare";
   const toggleLabel = phase === "chat" ? "Wallet" : "Chat";
 
   return (
@@ -261,13 +262,13 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
         position: "fixed",
         left: 0,
         right: 0,
-        bottom: 14,
+        bottom: 12,
         zIndex: 100,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        gap: 10,
-        padding: "0 14px",
+        gap: 8,
+        padding: "0 10px",
         pointerEvents: "none",
       }}
     >
@@ -277,26 +278,26 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
         aria-label={`Switch to ${toggleLabel}`}
         style={{
           pointerEvents: "auto",
-          width: 52,
-          height: 52,
-          borderRadius: 26,
-          background: "rgba(94,234,212,0.18)",
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          background: "linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06))",
           backdropFilter: "blur(22px)",
           WebkitBackdropFilter: "blur(22px)",
-          border: "1px solid rgba(94,234,212,0.35)",
-          color: AC,
+          border: "1px solid rgba(255,255,255,0.18)",
+          color: "#fff",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 1,
+          gap: 2,
           boxShadow: "0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
           cursor: "pointer",
           flexShrink: 0,
         }}
       >
-        <Ic n={toggleIcon} s={18} c={AC} />
-        <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: "0.04em" }}>{toggleLabel}</span>
+        <Ic n={toggleIcon} s={20} c={"#fff" as any} />
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", color: "rgba(255,255,255,0.85)" }}>{toggleLabel}</span>
       </button>
 
       {/* Floating glass nav */}
@@ -305,10 +306,10 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
         className="nav-pop"
         style={{
           pointerEvents: "auto",
-          height: 52,
+          height: 56,
           flex: "0 1 auto",
-          padding: "0 6px",
-          borderRadius: 26,
+          padding: "0 8px",
+          borderRadius: 28,
           background: "rgba(8,28,68,0.55)",
           backdropFilter: "blur(22px) saturate(160%)",
           WebkitBackdropFilter: "blur(22px) saturate(160%)",
@@ -316,7 +317,7 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
           boxShadow: "0 10px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
           display: "flex",
           alignItems: "center",
-          gap: 2,
+          gap: 0,
         }}
       >
         {items.map((it) => {
@@ -330,23 +331,26 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
                   ? "linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08))"
                   : "transparent",
                 border: a ? "1px solid rgba(255,255,255,0.22)" : "1px solid transparent",
-                padding: "8px 12px",
-                borderRadius: 20,
+                padding: "6px 10px",
+                borderRadius: 22,
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
-                gap: 6,
+                justifyContent: "center",
+                gap: 2,
                 color: a ? "#fff" : "rgba(255,255,255,0.65)",
-                fontSize: 11,
+                fontSize: 9,
                 fontWeight: 700,
-                minHeight: 40,
+                minHeight: 44,
+                minWidth: 50,
                 backdropFilter: a ? "blur(18px)" : "none",
                 WebkitBackdropFilter: a ? "blur(18px)" : "none",
                 boxShadow: a ? "inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 14px rgba(0,0,0,0.25)" : "none",
                 transition: "background .25s ease, color .2s ease, border-color .2s ease",
               }}
             >
-              <Ic n={it.icon} s={16} c={a ? "#fff" : "rgba(255,255,255,0.65)"} />
-              <span>{it.label}</span>
+              <Ic n={it.icon} s={18} c={a ? "#fff" : "rgba(255,255,255,0.7)"} />
+              <span style={{ letterSpacing: "0.02em" }}>{it.label}</span>
             </T>
           );
         })}
