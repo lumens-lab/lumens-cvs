@@ -22,7 +22,7 @@ export function HomeScreen({
   }, [txFilter, state.txs]);
 
   return (
-    <div className="afu" style={{ padding: '14px 20px 100px' }}>
+    <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
@@ -49,9 +49,9 @@ export function HomeScreen({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 24 }}>
         {[
           { icon: 'Send', label: 'Send', clr: AC, bg: 'rgba(94,234,212,0.08)', fn: () => openSheet('send') },
-          { icon: 'Download', label: 'Receive', clr: GN, bg: 'rgba(52,211,153,0.08)' },
-          { icon: 'ArrowLeftRight', label: 'Swap', clr: BL, bg: 'rgba(96,165,250,0.08)' },
-          { icon: 'Users', label: 'People', clr: PP, bg: 'rgba(192,132,252,0.08)', fn: () => openSub('find-people') },
+          { icon: 'Download', label: 'Receive', clr: GN, bg: 'rgba(52,211,153,0.08)', fn: () => openSheet('receive') },
+          { icon: 'ArrowLeftRight', label: 'Swap', clr: BL, bg: 'rgba(96,165,250,0.08)', fn: () => openSheet('swap') },
+          { icon: 'Coins', label: 'Assets', clr: PP, bg: 'rgba(192,132,252,0.08)', fn: () => openSub('assets') },
         ].map((a) => (
           <T key={a.label} onClick={a.fn} style={{ ...gl(a.bg, 16, { boxShadow: 'none' }), padding: '14px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: W, border: 'none' }}>
             <Ic n={a.icon} s={20} c={a.clr} />
