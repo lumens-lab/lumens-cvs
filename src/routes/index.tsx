@@ -85,9 +85,10 @@ function HazelApp() {
 
   const openSheet = (id: string, data?: any) => { setSheet(id); setSheetData(data ?? null); };
   const closeSheet = () => { setSheet(null); setSheetData(null); };
-  const openSub = (id: Sub | "find-people") => {
-    // Legacy callers route "find-people" to the Find tab in chat phase.
+  const openSub = (id: Sub | "find-people" | "settings") => {
+    // Legacy callers route certain ids to tabs instead of sub-screens.
     if (id === "find-people") { setTab("find"); setSub(null); return; }
+    if (id === "settings") { setTab("settings"); setSub(null); return; }
     setSub(id);
   };
   const closeSub = () => setSub(null);
