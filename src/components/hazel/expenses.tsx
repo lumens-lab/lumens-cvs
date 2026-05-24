@@ -44,6 +44,8 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: () => void; o
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search expenses..." style={{ width: '100%', padding: '12px 16px 12px 40px', ...gl(), color: W, fontSize: 13, outline: 'none', minHeight: 48 }} />
       </div>
 
+      <div style={{ fontSize: 13, fontWeight: 800, color: W, margin: '4px 2px 10px', letterSpacing: '-0.01em' }}>Recent Activities</div>
+
       {expenses.length === 0 ? (
         <div style={{ ...gl(), padding: 24, textAlign: 'center', color: S }}>No expenses yet. Tap “+ Add” to record one.</div>
       ) : (
@@ -55,7 +57,10 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: () => void; o
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ color: W, fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
-              <div style={{ color: S, fontSize: 11 }}>{new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}{t.merchant ? ` • ${t.merchant}` : ''}</div>
+              <div style={{ color: S, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {t.merchant ? `${t.merchant} • ` : ''}{new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {t.note ? ` • ${t.note}` : ''}
+              </div>
             </div>
             <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{sym}{Math.abs(t.amt).toFixed(2)}</div>
           </T>

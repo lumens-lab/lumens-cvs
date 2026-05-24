@@ -28,7 +28,9 @@ export function HomeScreen({
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: W, letterSpacing: '-0.02em' }}>{state.profile.name}</div>
         </div>
-        <Av ini={state.profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2)} src={state.profile.avatar} sz={44} />
+        <T onClick={() => openSub('profile')} aria-label="Open profile" style={{ background: 'none', border: 'none', padding: 0, borderRadius: 22 }}>
+          <Av ini={state.profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2)} src={state.profile.avatar} sz={44} />
+        </T>
       </div>
 
       {/* Cards */}
@@ -48,7 +50,7 @@ export function HomeScreen({
       {/* Quick actions */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 24 }}>
         {[
-          { icon: 'Send', label: 'Send', clr: AC, bg: 'rgba(94,234,212,0.08)', fn: () => openSheet('send') },
+          { icon: 'QrCode', label: 'Pay', clr: COLORS.BLUE_BRIGHT, bg: 'rgba(37,99,235,0.12)', fn: () => openSheet('pay') },
           { icon: 'Download', label: 'Receive', clr: GN, bg: 'rgba(52,211,153,0.08)', fn: () => openSheet('receive') },
           { icon: 'ArrowLeftRight', label: 'Swap', clr: BL, bg: 'rgba(96,165,250,0.08)', fn: () => openSheet('swap') },
           { icon: 'Coins', label: 'Assets', clr: PP, bg: 'rgba(192,132,252,0.08)', fn: () => openSub('assets') },
@@ -496,9 +498,9 @@ export function ProfileScreen({ openSub }: any) {
   const items = [
     { icon: 'User', label: 'Edit Profile', fn: () => openSub('edit-profile') },
     { icon: 'Settings', label: 'Settings', fn: () => openSub('settings') },
-    { icon: 'Bell', label: 'Notifications' },
-    { icon: 'Shield', label: 'Privacy & Security' },
-    { icon: 'HelpCircle', label: 'Help Center' },
+    { icon: 'Bell', label: 'Notifications', fn: () => openSub('set-notifications') },
+    { icon: 'Shield', label: 'Security', fn: () => openSub('security') },
+    { icon: 'HelpCircle', label: 'Help & Support', fn: () => openSub('help') },
     { icon: 'LogOut', label: 'Sign out', danger: true },
   ];
   return (

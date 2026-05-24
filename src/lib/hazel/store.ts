@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { DEFAULT_EXPENSE_CATS, DEFAULT_INCOME_CATS, SEED_TXS } from './data';
 
 export type Card = { id: number; num: string; holder: string; exp: string; theme: number };
-export type Account = { id: number; name: string; type: string; number: string };
+export type Account = { id: number; name: string; type: string; number: string; icon?: string; color?: string };
 export type Cat = { id: string; name: string; icon: string; color: string; budget?: number };
 export type Tx = {
   id?: number;
@@ -43,10 +43,19 @@ export type HazelState = {
   incomeCats: Cat[];
   expenseCats: Cat[];
   budgets: Record<string, { total: number; period: 'month'|'week'|'custom'; start?: string; end?: string }>; // by YYYY-MM
-  settings: { currency: string; language: string };
+  settings: {
+    currency: string;
+    language: string;
+    theme: 'dark' | 'light';
+    notifications: { transactions: boolean; budgetAlerts: boolean; chat: boolean; security: boolean; promotions: boolean; sound: boolean };
+    security: { twoFA: boolean; biometrics: boolean };
+    devices: { id: string; name: string; lastActive: string; current: boolean }[];
+  };
+  onboarded: boolean;
+  pin: string | null;
 };
 
-const KEY = 'hazelpay-state-v1';
+const KEY = 'lumens-state-v2';
 
 const initial: HazelState = {
   profile: {
@@ -92,7 +101,19 @@ const initial: HazelState = {
   incomeCats: DEFAULT_INCOME_CATS,
   expenseCats: DEFAULT_EXPENSE_CATS,
   budgets: { '2024-12': { total: 3000, period: 'month' } },
-  settings: { currency: 'ZAR', language: 'en' },
+  settings: {
+    currency: 'ZAR',
+    language: 'en',
+    theme: 'dark',
+    notifications: { transactions: true, budgetAlerts: true, chat: true, security: true, promotions: false, sound: true },
+    security: { twoFA: false, biometrics: false },
+    devices: [
+      { id: 'd1', name: 'iPhone 15 Pro', lastActive: 'Active now', current: true },
+      { id: 'd2', name: 'MacBook Air', lastActive: '2 days ago', current: false },
+    ],
+  },
+  onboarded: false,
+  pin: null,
 };
 
 function load(): HazelState {
