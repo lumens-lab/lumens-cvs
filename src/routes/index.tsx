@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Ic, T, COLORS } from "@/components/hazel/ui";
 import {
   HomeScreen,
@@ -30,6 +30,11 @@ import {
 } from "@/components/hazel/settings";
 import { ExpensesScreen, ExpenseDetailScreen, AddExpenseSheet } from "@/components/hazel/expenses";
 import { SwapSheet, ReceiveSheet } from "@/components/hazel/extras";
+import { PaySheet } from "@/components/hazel/paysheet";
+import { WelcomeFlow, PinLock } from "@/components/hazel/onboarding";
+import { SecurityScreen, HelpScreen } from "@/components/hazel/security";
+import { NotificationsScreen, AppearanceScreen } from "@/components/hazel/prefs";
+import { useHazelStore } from "@/lib/hazel/store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -63,11 +68,25 @@ type Sub =
   | "chat-view"
   | "cat-detail"
   | "expense-detail"
+  | "security"
+  | "help"
   | Exclude<SettingsScreen, "settings">;
 
 const { W, S, AC } = COLORS;
 
 function HazelApp() {
+  const { state } = useHazelStore();
+  const [mounted, setMounted] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+  const [pendingPhase, setPendingPhase] = useState<"wallet" | null>(null);
+  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const t = state.settings.theme;
+    document.body.classList.toggle("theme-light", t === "light");
+    document.body.classList.toggle("theme-dark", t !== "light");
+  }, [state.settings.theme]);
+
   const [tab, setTab] = useState<Tab>("wallet");
   const [sub, setSub] = useState<Sub>(null);
   const [sheet, setSheet] = useState<string | null>(null);
@@ -85,16 +104,19 @@ function HazelApp() {
 
   const openSheet = (id: string, data?: any) => { setSheet(id); setSheetData(data ?? null); };
   const closeSheet = () => { setSheet(null); setSheetData(null); };
-  const openSub = (id: Sub | "find-people" | "settings") => {
+  const openSub = (id: Sub | "find-people" | "settings" | "profile") => {
     // Legacy callers route certain ids to tabs instead of sub-screens.
     if (id === "find-people") { setTab("find"); setSub(null); return; }
     if (id === "settings") { setTab("settings"); setSub(null); return; }
+    if (id === "profile") { setTab("profile"); setSub(null); return; }
     setSub(id);
   };
   const closeSub = () => setSub(null);
 
   const togglePhase = () => {
-    setTab(phaseOf(tab) === "chat" ? "wallet" : "chat");
+    const next = phaseOf(tab) === "chat" ? "wallet" : "chat";
+    if (next === "wallet" && state.pin && !unlocked) { setPendingPhase("wallet"); return; }
+    setTab(next);
     setSub(null);
   };
 
@@ -106,6 +128,12 @@ function HazelApp() {
     </Shell>
   );
 
+  if (!mounted) return <Shell>{null}</Shell>;
+  if (!state.onboarded) return <WelcomeFlow onDone={() => { setUnlocked(true); }} />;
+  if (state.pin && !unlocked) {
+    return <PinLock onUnlock={() => { setUnlocked(true); if (pendingPhase) { setTab(pendingPhase); setPendingPhase(null); } }} />;
+  }
+
   if (sub === "assets") return withNav(<WalletScreen openSheet={openSheet} cardVis={cardVis} setCardVis={setCardVis} />);
   if (sub === "edit-profile") return withNav(<EditProfileScreen onBack={closeSub} />);
   if (sub === "set-currency") return withNav(<CurrencyScreen onBack={() => setSub(null)} />);
@@ -114,6 +142,10 @@ function HazelApp() {
   if (sub === "set-accounts") return withNav(<AccountsScreen onBack={() => setSub(null)} />);
   if (sub === "set-income-cats") return withNav(<CategoriesScreen kind="income" onBack={() => setSub(null)} />);
   if (sub === "set-expense-cats") return withNav(<CategoriesScreen kind="expense" onBack={() => setSub(null)} />);
+  if (sub === "set-notifications") return withNav(<NotificationsScreen onBack={() => setSub(null)} />);
+  if (sub === "set-appearance") return withNav(<AppearanceScreen onBack={() => setSub(null)} />);
+  if (sub === "security") return withNav(<SecurityScreen onBack={() => setSub(null)} onChangePin={() => { /* future */ }} />);
+  if (sub === "help") return withNav(<HelpScreen onBack={() => setSub(null)} />);
   if (sub === "expense-detail" && expenseId != null) return withNav(<ExpenseDetailScreen id={expenseId} onBack={() => { setSub(null); setExpenseId(null); }} />);
   if (sub === "cat-detail" && catCtx)
     return (
@@ -337,6 +369,7 @@ function Sheets({ sheet, sheetData, closeSheet, chatId }: any) {
       <AddExpenseSheet open={sheet === "add-expense"} onClose={closeSheet} />
       <SwapSheet open={sheet === "swap"} onClose={closeSheet} />
       <ReceiveSheet open={sheet === "receive"} onClose={closeSheet} />
+      <PaySheet open={sheet === "pay"} onClose={closeSheet} />
     </>
   );
 }
