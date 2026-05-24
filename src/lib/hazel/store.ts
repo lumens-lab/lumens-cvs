@@ -185,17 +185,116 @@ export function useHazelStore() {
 
 export function getStateSnapshot(): HazelState { boot(); return mem; }
 
+/** Escape HTML special chars to neutralize any pre-injected XSS payloads. */
+function escStr(v: unknown): string {
+  if (typeof v !== 'string') return '';
+  return v
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sanitizeTx(t: any): Tx | null {
+  if (!t || typeof t !== 'object') return null;
+  if (typeof t.name !== 'string' || typeof t.cat !== 'string' || typeof t.date !== 'string') return null;
+  if (typeof t.amt !== 'number' || !isFinite(t.amt)) return null;
+  return {
+    id: typeof t.id === 'number' ? t.id : undefined,
+    name: escStr(t.name).slice(0, 200),
+    cat: escStr(t.cat).slice(0, 80),
+    icon: escStr(t.icon).slice(0, 60) || 'Tag',
+    ibg: escStr(t.ibg).slice(0, 80),
+    ic: escStr(t.ic).slice(0, 80),
+    date: escStr(t.date).slice(0, 40),
+    amt: t.amt,
+    merchant: t.merchant ? escStr(t.merchant).slice(0, 200) : undefined,
+    note: t.note ? escStr(t.note).slice(0, 1000) : undefined,
+    receipt: typeof t.receipt === 'string' && t.receipt.startsWith('data:image/') ? t.receipt.slice(0, 5_000_000) : undefined,
+    items: Array.isArray(t.items)
+      ? t.items
+          .filter((i: any) => i && typeof i.name === 'string' && typeof i.amt === 'number')
+          .slice(0, 200)
+          .map((i: any) => ({ name: escStr(i.name).slice(0, 200), amt: i.amt }))
+      : undefined,
+  };
+}
+
+function sanitizeCat(c: any): Cat | null {
+  if (!c || typeof c !== 'object') return null;
+  if (typeof c.id !== 'string' || typeof c.name !== 'string') return null;
+  return {
+    id: escStr(c.id).slice(0, 80),
+    name: escStr(c.name).slice(0, 80),
+    icon: escStr(c.icon).slice(0, 60) || 'Tag',
+    color: typeof c.color === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c.color) ? c.color : '#5eead4',
+    budget: typeof c.budget === 'number' && isFinite(c.budget) ? c.budget : undefined,
+  };
+}
+
+/**
+ * Restore a backup. Validates shape, escapes string fields, and NEVER
+ * imports the PIN or onboarded flag — those stay as the existing
+ * in-memory values so a malicious backup cannot bypass the lock screen.
+ */
 export function importState(json: string): boolean {
   try {
     const parsed = JSON.parse(json);
-    mem = { ...initial, ...parsed };
+    if (!parsed || typeof parsed !== 'object') return false;
+
+    const next: HazelState = { ...initial };
+
+    if (parsed.profile && typeof parsed.profile === 'object') {
+      next.profile = {
+        ...initial.profile,
+        name: escStr(parsed.profile.name) || initial.profile.name,
+        email: escStr(parsed.profile.email) || initial.profile.email,
+        username: escStr(parsed.profile.username) || initial.profile.username,
+        phone: escStr(parsed.profile.phone) || initial.profile.phone,
+        dob: escStr(parsed.profile.dob) || initial.profile.dob,
+        avatar: typeof parsed.profile.avatar === 'string' && parsed.profile.avatar.startsWith('data:image/') ? parsed.profile.avatar : '',
+        cover: typeof parsed.profile.cover === 'string' && parsed.profile.cover.startsWith('data:image/') ? parsed.profile.cover : '',
+      };
+    }
+
+    if (Array.isArray(parsed.txs)) {
+      next.txs = parsed.txs.map(sanitizeTx).filter(Boolean) as Tx[];
+    }
+    if (Array.isArray(parsed.incomeCats)) {
+      next.incomeCats = parsed.incomeCats.map(sanitizeCat).filter(Boolean) as Cat[];
+    }
+    if (Array.isArray(parsed.expenseCats)) {
+      next.expenseCats = parsed.expenseCats.map(sanitizeCat).filter(Boolean) as Cat[];
+    }
+    if (parsed.settings && typeof parsed.settings === 'object') {
+      next.settings = {
+        ...initial.settings,
+        ...parsed.settings,
+        currency: typeof parsed.settings.currency === 'string' ? escStr(parsed.settings.currency).slice(0, 10) : initial.settings.currency,
+        language: typeof parsed.settings.language === 'string' ? escStr(parsed.settings.language).slice(0, 10) : initial.settings.language,
+        notifications: { ...initial.settings.notifications, ...(parsed.settings.notifications || {}) },
+        security: { ...initial.settings.security, ...(parsed.settings.security || {}) },
+        devices: initial.settings.devices,
+      };
+    }
+
+    // Preserve existing PIN + onboarded — never import from backup.
+    next.pin = mem.pin;
+    next.onboarded = mem.onboarded;
+
+    mem = next;
     persist();
     subs.forEach((s) => s());
     return true;
   } catch { return false; }
 }
 
-export function exportState(): string { return JSON.stringify(mem, null, 2); }
+/** Export state with PIN stripped — credentials never leave the device. */
+export function exportState(): string {
+  const { pin: _pin, ...safe } = mem;
+  return JSON.stringify(safe, null, 2);
+}
 
 export function resetState() {
   mem = initial;
