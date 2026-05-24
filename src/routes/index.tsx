@@ -78,6 +78,7 @@ const { W, S, AC } = COLORS;
 
 function HazelApp() {
   const { state } = useHazelStore();
+  const { user, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [pendingPhase, setPendingPhase] = useState<"wallet" | null>(null);
@@ -133,6 +134,8 @@ function HazelApp() {
   );
 
   if (!mounted) return <Shell>{null}</Shell>;
+  if (authLoading) return <Shell>{null}</Shell>;
+  if (!user) return <AuthScreen />;
   if (!state.onboarded) return <WelcomeFlow onDone={() => { setUnlocked(true); }} />;
   if (state.pin && !unlocked) {
     return <PinLock onUnlock={() => { setUnlocked(true); if (pendingPhase) { setTab(pendingPhase); setPendingPhase(null); } }} />;
