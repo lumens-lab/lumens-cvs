@@ -60,7 +60,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
       <Cover>
         <div className="logo-anim" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22 }}>
           <div className="logo-glow" style={{ background: 'rgba(255,255,255,0.96)', padding: '30px 44px', borderRadius: 28, backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)' }}>
-            <img src={logo} alt="Lumens" style={{ height: 76, display: 'block' }} />
+            <img src={logo} alt="Lumens" style={{ height: 128, display: 'block' }} />
           </div>
           <div style={{ color: '#fff', opacity: 0.7, fontSize: 13, letterSpacing: '0.3em', textTransform: 'uppercase', fontWeight: 600 }}>illuminate your money</div>
         </div>
@@ -76,7 +76,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
       <Cover>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px 36px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <img src={logo} alt="Lumens" style={{ height: 28, filter: 'brightness(0) invert(1)' }} />
+            <img src={logo} alt="Lumens" style={{ height: 44, filter: 'brightness(0) invert(1)' }} />
             <T onClick={() => setStage('pin')} style={{ color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', fontSize: 13, fontWeight: 600 }}>Skip</T>
           </div>
           <div key={slide} className="afu" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 24 }}>
@@ -147,7 +147,7 @@ export function PinLock({ onUnlock, onCancel }: { onUnlock: () => void; onCancel
             <Ic n="ChevronLeft" s={20} />
           </T>
         )}
-        <img src={logo} alt="Lumens" style={{ height: 38, filter: 'brightness(0) invert(1)', opacity: 0.95 }} />
+        <img src={logo} alt="Lumens" style={{ height: 64, filter: 'brightness(0) invert(1)', opacity: 0.95 }} />
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>Enter your PIN</h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 6 }}>Unlock to view your wallet</p>
