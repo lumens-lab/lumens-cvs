@@ -39,17 +39,18 @@ import { useHazelStore } from "@/lib/hazel/store";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "HazelPay — Pay, budget, chat" },
-      { name: "description", content: "HazelPay: send money, budget your month and chat with friends. South African Rand by default." },
+      { title: "Lumens — Pay, budget, chat" },
+      { name: "description", content: "Lumens: send money, budget your month and chat with friends. South African Rand by default." },
     ],
   }),
   component: HazelApp,
 });
 
-/** Wallet phase = wallet (home), budget, expenses, settings.
+/** Wallet phase = wallet (home), assets, budget, expenses, settings.
  *  Chat phase = chat, find, profile. */
 type Tab =
   | "wallet"
+  | "assets"
   | "budget"
   | "expenses"
   | "settings"
@@ -58,12 +59,11 @@ type Tab =
   | "profile";
 
 const CHAT_TABS: Tab[] = ["chat", "find", "profile"];
-const WALLET_TABS: Tab[] = ["wallet", "budget", "expenses", "settings"];
+const WALLET_TABS: Tab[] = ["wallet", "assets", "budget", "expenses", "settings"];
 const phaseOf = (t: Tab): "chat" | "wallet" => (CHAT_TABS.includes(t) ? "chat" : "wallet");
 
 type Sub =
   | null
-  | "assets"
   | "edit-profile"
   | "chat-view"
   | "cat-detail"
@@ -83,8 +83,9 @@ function HazelApp() {
   useEffect(() => {
     if (typeof document === "undefined") return;
     const t = state.settings.theme;
-    document.body.classList.toggle("theme-light", t === "light");
-    document.body.classList.toggle("theme-dark", t !== "light");
+    const body = document.body;
+    ["theme-light", "theme-dark", "theme-hazel", "theme-peach"].forEach((c) => body.classList.remove(c));
+    body.classList.add(`theme-${t}`);
   }, [state.settings.theme]);
 
   const [tab, setTab] = useState<Tab>("wallet");
@@ -109,6 +110,7 @@ function HazelApp() {
     if (id === "find-people") { setTab("find"); setSub(null); return; }
     if (id === "settings") { setTab("settings"); setSub(null); return; }
     if (id === "profile") { setTab("profile"); setSub(null); return; }
+    if (id === ("assets" as any)) { setTab("assets"); setSub(null); return; }
     setSub(id);
   };
   const closeSub = () => setSub(null);
@@ -134,7 +136,6 @@ function HazelApp() {
     return <PinLock onUnlock={() => { setUnlocked(true); if (pendingPhase) { setTab(pendingPhase); setPendingPhase(null); } }} />;
   }
 
-  if (sub === "assets") return withNav(<WalletScreen openSheet={openSheet} cardVis={cardVis} setCardVis={setCardVis} />);
   if (sub === "edit-profile") return withNav(<EditProfileScreen onBack={closeSub} />);
   if (sub === "set-currency") return withNav(<CurrencyScreen onBack={() => setSub(null)} />);
   if (sub === "set-language") return withNav(<LanguageScreen onBack={() => setSub(null)} />);
@@ -187,6 +188,9 @@ function HazelApp() {
           setTxFilter={setTxFilter}
           greeting={greeting}
         />
+      )}
+      {tab === "assets" && (
+        <WalletScreen openSheet={openSheet} cardVis={cardVis} setCardVis={setCardVis} />
       )}
       {tab === "budget" && (
         <BudgetScreen
