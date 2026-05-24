@@ -85,7 +85,11 @@ function HazelApp() {
 
   const openSheet = (id: string, data?: any) => { setSheet(id); setSheetData(data ?? null); };
   const closeSheet = () => { setSheet(null); setSheetData(null); };
-  const openSub = (id: Sub) => setSub(id);
+  const openSub = (id: Sub | "find-people") => {
+    // Legacy callers route "find-people" to the Find tab in chat phase.
+    if (id === "find-people") { setTab("find"); setSub(null); return; }
+    setSub(id);
+  };
   const closeSub = () => setSub(null);
 
   const togglePhase = () => {
