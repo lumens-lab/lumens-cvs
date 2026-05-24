@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { Ic, T, Av, gl, COLORS, showToast } from './ui';
 import { CardComp } from './CardComp';
 import { CryptoIcon } from './CryptoIcon';
@@ -458,7 +458,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
     r.readAsDataURL(f);
   });
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
+  const handleFile = async (e: ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
     const f = e.target.files?.[0];
     e.target.value = '';
     if (!f) return;
