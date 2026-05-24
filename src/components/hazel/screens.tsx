@@ -517,7 +517,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
 /* ── PROFILE ── */
 export function ProfileScreen({ openSub }: any) {
   const { state } = useHazelStore();
-  const p = state.profile;
+  const p = state.profile ?? { name: '', username: '', email: '', phone: '', dob: '', avatar: '', cover: '' } as any;
   const dobDate = p.dob ? new Date(p.dob) : null;
   // Hide year of birth from display (year is private to the user)
   const dobShown = dobDate ? dobDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'Not set';
@@ -539,7 +539,7 @@ export function ProfileScreen({ openSub }: any) {
       }} />
       <div style={{ padding: '0 20px' }}>
         <div style={{ marginTop: -48, display: 'flex', alignItems: 'flex-end', gap: 14 }}>
-          <Av ini={p.name.split(' ').map((w) => w[0]).join('').slice(0, 2)} src={p.avatar} sz={96} />
+          <Av ini={(p.name || '').split(' ').map((w: string) => w[0] || '').join('').slice(0, 2)} src={p.avatar} sz={96} />
           <div style={{ flex: 1, paddingBottom: 8 }}>
             <div style={{ color: W, fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>{p.name}</div>
             <div style={{ color: S, fontSize: 12 }}>{p.username}</div>
