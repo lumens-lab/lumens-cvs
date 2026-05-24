@@ -46,7 +46,7 @@ export type HazelState = {
   settings: {
     currency: string;
     language: string;
-    theme: 'dark' | 'light';
+    theme: 'dark' | 'light' | 'hazel' | 'peach';
     notifications: { transactions: boolean; budgetAlerts: boolean; chat: boolean; security: boolean; promotions: boolean; sound: boolean };
     security: { twoFA: boolean; biometrics: boolean };
     devices: { id: string; name: string; lastActive: string; current: boolean }[];
