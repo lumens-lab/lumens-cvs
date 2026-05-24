@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { Ic, T, Av, gl, COLORS, showToast } from './ui';
 import { CardComp } from './CardComp';
+import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
 
