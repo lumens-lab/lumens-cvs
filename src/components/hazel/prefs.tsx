@@ -55,31 +55,36 @@ export function NotificationsScreen({ onBack }: { onBack: () => void }) {
 export function AppearanceScreen({ onBack }: { onBack: () => void }) {
   const { state, set } = useHazelStore();
   const theme = state.settings.theme;
-  const setTheme = (t: 'dark' | 'light') => { set((s) => { s.settings.theme = t; }); showToast(`${t === 'light' ? 'Light' : 'Dark'} mode`); };
+  const setTheme = (t: 'dark' | 'light' | 'hazel' | 'peach') => {
+    set((s) => { s.settings.theme = t; });
+    showToast(`${t.charAt(0).toUpperCase() + t.slice(1)} theme`);
+  };
 
-  const options: { id: 'dark' | 'light'; label: string; desc: string; bg: string; ic: string }[] = [
-    { id: 'dark', label: 'Dark', desc: 'Deep navy with brilliant blue accents', bg: 'linear-gradient(135deg,#001535,#052250)', ic: 'Moon' },
-    { id: 'light', label: 'Light', desc: 'Crisp white with brilliant blue splash', bg: 'linear-gradient(135deg,#ffffff,#dceaff)', ic: 'Sun' },
+  const options: { id: 'dark' | 'light' | 'hazel' | 'peach'; label: string; desc: string; bg: string; ic: string; lightTxt?: boolean }[] = [
+    { id: 'dark', label: 'Navy & Blue', desc: 'Deep navy with brilliant blue', bg: 'linear-gradient(135deg,#001535,#052250)', ic: 'Moon' },
+    { id: 'light', label: 'White & Blue', desc: 'Crisp white with brilliant blue', bg: 'linear-gradient(135deg,#ffffff,#dceaff)', ic: 'Sun', lightTxt: true },
+    { id: 'hazel', label: 'Hazel & Teal', desc: '70% black with hazel + teal', bg: 'linear-gradient(135deg,#0a0a0a,#1a1a1a 60%,#2d1f17)', ic: 'Coffee' },
+    { id: 'peach', label: 'Peach & White', desc: 'Soft gray with peach accents', bg: 'linear-gradient(135deg,#f5f5f5,#ffd2be)', ic: 'Sunrise', lightTxt: true },
   ];
 
   return (
     <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Appearance" onBack={onBack} />
-      <div style={{ fontSize: 11, color: S, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Theme</div>
+      <div style={{ fontSize: 11, color: S, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Themes</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
         {options.map((o) => {
           const active = theme === o.id;
           return (
             <T key={o.id} onClick={() => setTheme(o.id)} style={{ padding: 14, borderRadius: 18, background: o.bg, border: active ? '2px solid #2563eb' : '2px solid rgba(255,255,255,0.1)', minHeight: 140, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', boxShadow: active ? '0 10px 30px rgba(37,99,235,0.35)' : '0 6px 18px rgba(0,0,0,0.25)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ width: 38, height: 38, borderRadius: 12, background: o.id === 'light' ? '#2563eb' : 'rgba(37,99,235,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Ic n={o.ic} s={18} c={o.id === 'light' ? '#fff' : BLUE_BRIGHT} />
+                <div style={{ width: 38, height: 38, borderRadius: 12, background: o.lightTxt ? 'rgba(37,99,235,0.85)' : 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ic n={o.ic} s={18} c={o.lightTxt ? '#fff' : '#fff'} />
                 </div>
                 {active && <Ic n="CheckCircle2" s={20} c={BLUE_BRIGHT} />}
               </div>
               <div>
-                <div style={{ color: o.id === 'light' ? '#0b1f44' : '#fff', fontSize: 16, fontWeight: 800, textAlign: 'left' }}>{o.label}</div>
-                <div style={{ color: o.id === 'light' ? 'rgba(11,31,68,0.65)' : 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 4, textAlign: 'left' }}>{o.desc}</div>
+                <div style={{ color: o.lightTxt ? '#0b1f44' : '#fff', fontSize: 15, fontWeight: 800, textAlign: 'left' }}>{o.label}</div>
+                <div style={{ color: o.lightTxt ? 'rgba(11,31,68,0.65)' : 'rgba(255,255,255,0.65)', fontSize: 11, marginTop: 4, textAlign: 'left' }}>{o.desc}</div>
               </div>
             </T>
           );
