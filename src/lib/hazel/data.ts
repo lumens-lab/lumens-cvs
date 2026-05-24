@@ -124,7 +124,7 @@ export const CURRENCIES: Currency[] = [
 
 export const LANGUAGES = [
 ].sort((a, b) => a.name.localeCompare(b.name));
-export const LANGUAGES = ([
+const _LANG_RAW = [
   { code:'af', name:'Afrikaans', native:'Afrikaans' },
   { code:'am', name:'Amharic', native:'አማርኛ' },
   { code:'ar', name:'Arabic', native:'العربية' },
@@ -150,7 +150,7 @@ export const LANGUAGES = ([
   { code:'xh', name:'Xhosa', native:'isiXhosa' },
   { code:'yo', name:'Yoruba', native:'Yorùbá' },
   { code:'zu', name:'Zulu', native:'isiZulu' },
-] as const).slice().sort((a, b) => a.name.localeCompare(b.name));
+];
 
 export const DEFAULT_INCOME_CATS = [
   { id:'salary', name:'Salary', icon:'Briefcase', color:'#34d399' },
