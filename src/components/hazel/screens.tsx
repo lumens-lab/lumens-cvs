@@ -22,7 +22,7 @@ export function HomeScreen({
   }, [txFilter, state.txs]);
 
   return (
-    <div className="afu" style={{ padding: '14px 20px 100px' }}>
+    <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
@@ -49,9 +49,9 @@ export function HomeScreen({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 24 }}>
         {[
           { icon: 'Send', label: 'Send', clr: AC, bg: 'rgba(94,234,212,0.08)', fn: () => openSheet('send') },
-          { icon: 'Download', label: 'Receive', clr: GN, bg: 'rgba(52,211,153,0.08)' },
-          { icon: 'ArrowLeftRight', label: 'Swap', clr: BL, bg: 'rgba(96,165,250,0.08)' },
-          { icon: 'Users', label: 'People', clr: PP, bg: 'rgba(192,132,252,0.08)', fn: () => openSub('find-people') },
+          { icon: 'Download', label: 'Receive', clr: GN, bg: 'rgba(52,211,153,0.08)', fn: () => openSheet('receive') },
+          { icon: 'ArrowLeftRight', label: 'Swap', clr: BL, bg: 'rgba(96,165,250,0.08)', fn: () => openSheet('swap') },
+          { icon: 'Coins', label: 'Assets', clr: PP, bg: 'rgba(192,132,252,0.08)', fn: () => openSub('assets') },
         ].map((a) => (
           <T key={a.label} onClick={a.fn} style={{ ...gl(a.bg, 16, { boxShadow: 'none' }), padding: '14px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: W, border: 'none' }}>
             <Ic n={a.icon} s={20} c={a.clr} />
@@ -151,7 +151,7 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
   });
 
   return (
-    <div className="afu" style={{ padding: '14px 20px 100px' }}>
+    <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Budget</h1>
         <T onClick={() => openSheet('month-picker', { monthKey, onPick: setMonthKey })} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', color: S, fontSize: 12, fontWeight: 600 }}>
@@ -245,7 +245,7 @@ export function CatDetailScreen({ catId, monthKey, onBack, onPickMonth }: any) {
   const [y, m] = monthKey.split('-').map(Number);
 
   return (
-    <div className="afu" style={{ padding: '14px 20px 100px' }}>
+    <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
         <T onClick={onBack} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="ChevronLeft" s={20} />
@@ -293,9 +293,9 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
   const cryptoTotal = useMemo(() => CRYPTO.reduce((s, c) => s + c.price * c.bal, 0), []);
 
   return (
-    <div className="afu" style={{ padding: '14px 20px 100px' }}>
+    <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Wallet</h1>
+        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Assets</h1>
         <T onClick={() => setCardVis(!cardVis)} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), padding: '8px 12px', color: S, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Ic n={cardVis ? 'EyeOff' : 'Eye'} s={14} /> {cardVis ? 'Hide' : 'Show'}
         </T>
@@ -366,7 +366,7 @@ export function ChatScreen({ openSub, openChat }: any) {
     });
   }, [q, state.conversations, state.contacts]);
   return (
-    <div className="afu" style={{ padding: '14px 20px 100px' }}>
+    <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
         <T onClick={() => openSub('find-people')} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: S }}>
@@ -502,7 +502,7 @@ export function ProfileScreen({ openSub }: any) {
     { icon: 'LogOut', label: 'Sign out', danger: true },
   ];
   return (
-    <div className="afu" style={{ padding: '0 0 100px' }}>
+    <div className="afu" style={{ padding: '0 0 140px' }}>
       {/* Cover */}
       <div style={{
         height: 160,
