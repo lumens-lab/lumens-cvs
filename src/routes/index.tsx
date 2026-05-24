@@ -108,6 +108,7 @@ function HazelApp() {
     // Legacy callers route certain ids to tabs instead of sub-screens.
     if (id === "find-people") { setTab("find"); setSub(null); return; }
     if (id === "settings") { setTab("settings"); setSub(null); return; }
+    if (id === "profile") { setTab("profile"); setSub(null); return; }
     setSub(id);
   };
   const closeSub = () => setSub(null);
