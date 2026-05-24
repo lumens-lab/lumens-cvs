@@ -368,6 +368,7 @@ function Sheets({ sheet, sheetData, closeSheet, chatId }: any) {
       <AddExpenseSheet open={sheet === "add-expense"} onClose={closeSheet} />
       <SwapSheet open={sheet === "swap"} onClose={closeSheet} />
       <ReceiveSheet open={sheet === "receive"} onClose={closeSheet} />
+      <PaySheet open={sheet === "pay"} onClose={closeSheet} />
     </>
   );
 }
