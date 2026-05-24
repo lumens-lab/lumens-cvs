@@ -28,6 +28,8 @@ import {
   CategoriesScreen,
   type SettingsScreen,
 } from "@/components/hazel/settings";
+import { ExpensesScreen, ExpenseDetailScreen, AddExpenseSheet } from "@/components/hazel/expenses";
+import { SwapSheet, ReceiveSheet } from "@/components/hazel/extras";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,19 +41,34 @@ export const Route = createFileRoute("/")({
   component: HazelApp,
 });
 
-type Tab = "home" | "budget" | "wallet" | "chat" | "profile";
+/** Wallet phase = wallet (home), budget, expenses, settings.
+ *  Chat phase = chat, find, profile. */
+type Tab =
+  | "wallet"
+  | "budget"
+  | "expenses"
+  | "settings"
+  | "chat"
+  | "find"
+  | "profile";
+
+const CHAT_TABS: Tab[] = ["chat", "find", "profile"];
+const WALLET_TABS: Tab[] = ["wallet", "budget", "expenses", "settings"];
+const phaseOf = (t: Tab): "chat" | "wallet" => (CHAT_TABS.includes(t) ? "chat" : "wallet");
+
 type Sub =
   | null
-  | "find-people"
+  | "assets"
   | "edit-profile"
   | "chat-view"
   | "cat-detail"
-  | SettingsScreen;
+  | "expense-detail"
+  | Exclude<SettingsScreen, "settings">;
 
 const { W, S, AC } = COLORS;
 
 function HazelApp() {
-  const [tab, setTab] = useState<Tab>("home");
+  const [tab, setTab] = useState<Tab>("wallet");
   const [sub, setSub] = useState<Sub>(null);
   const [sheet, setSheet] = useState<string | null>(null);
   const [sheetData, setSheetData] = useState<any>(null);
@@ -59,6 +76,7 @@ function HazelApp() {
   const [txFilter, setTxFilter] = useState("");
   const [chatId, setChatId] = useState<number | null>(null);
   const [catCtx, setCatCtx] = useState<{ catId: string; monthKey: string } | null>(null);
+  const [expenseId, setExpenseId] = useState<number | null>(null);
 
   const greeting = useMemo(() => {
     const h = new Date().getHours();
@@ -70,16 +88,28 @@ function HazelApp() {
   const openSub = (id: Sub) => setSub(id);
   const closeSub = () => setSub(null);
 
+  const togglePhase = () => {
+    setTab(phaseOf(tab) === "chat" ? "wallet" : "chat");
+    setSub(null);
+  };
+
   // Sub-screen routing (full-page overlays)
-  if (sub === "find-people") return <Shell><FindPeopleScreen onBack={closeSub} /></Shell>;
-  if (sub === "edit-profile") return <Shell><EditProfileScreen onBack={closeSub} /></Shell>;
-  if (sub === "settings") return <Shell><SettingsRoot go={(s) => setSub(s)} onBack={closeSub} /></Shell>;
-  if (sub === "set-currency") return <Shell><CurrencyScreen onBack={() => setSub("settings")} /></Shell>;
-  if (sub === "set-language") return <Shell><LanguageScreen onBack={() => setSub("settings")} /></Shell>;
-  if (sub === "set-backup") return <Shell><BackupScreen onBack={() => setSub("settings")} /></Shell>;
-  if (sub === "set-accounts") return <Shell><AccountsScreen onBack={() => setSub("settings")} /></Shell>;
-  if (sub === "set-income-cats") return <Shell><CategoriesScreen kind="income" onBack={() => setSub("settings")} /></Shell>;
-  if (sub === "set-expense-cats") return <Shell><CategoriesScreen kind="expense" onBack={() => setSub("settings")} /></Shell>;
+  const withNav = (node: React.ReactNode) => (
+    <Shell>
+      {node}
+      <BottomNav tab={tab} setTab={(t) => { setTab(t); setSub(null); }} togglePhase={togglePhase} />
+    </Shell>
+  );
+
+  if (sub === "assets") return withNav(<WalletScreen openSheet={openSheet} cardVis={cardVis} setCardVis={setCardVis} />);
+  if (sub === "edit-profile") return withNav(<EditProfileScreen onBack={closeSub} />);
+  if (sub === "set-currency") return withNav(<CurrencyScreen onBack={() => setSub(null)} />);
+  if (sub === "set-language") return withNav(<LanguageScreen onBack={() => setSub(null)} />);
+  if (sub === "set-backup") return withNav(<BackupScreen onBack={() => setSub(null)} />);
+  if (sub === "set-accounts") return withNav(<AccountsScreen onBack={() => setSub(null)} />);
+  if (sub === "set-income-cats") return withNav(<CategoriesScreen kind="income" onBack={() => setSub(null)} />);
+  if (sub === "set-expense-cats") return withNav(<CategoriesScreen kind="expense" onBack={() => setSub(null)} />);
+  if (sub === "expense-detail" && expenseId != null) return withNav(<ExpenseDetailScreen id={expenseId} onBack={() => { setSub(null); setExpenseId(null); }} />);
   if (sub === "cat-detail" && catCtx)
     return (
       <Shell>
@@ -89,6 +119,7 @@ function HazelApp() {
           onBack={() => setSub(null)}
           onPickMonth={() => openSheet("month-picker", { monthKey: catCtx.monthKey, onPick: (k: string) => setCatCtx({ ...catCtx, monthKey: k }) })}
         />
+        <BottomNav tab={tab} setTab={(t) => { setTab(t); setSub(null); }} togglePhase={togglePhase} />
         <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} />
       </Shell>
     );
@@ -108,7 +139,7 @@ function HazelApp() {
 
   return (
     <Shell>
-      {tab === "home" && (
+      {tab === "wallet" && (
         <HomeScreen
           goAnalytics={() => setTab("budget")}
           openSheet={openSheet}
@@ -126,16 +157,25 @@ function HazelApp() {
           openCatDetail={(catId: string, monthKey: string) => { setCatCtx({ catId, monthKey }); setSub("cat-detail"); }}
         />
       )}
-      {tab === "wallet" && <WalletScreen openSheet={openSheet} cardVis={cardVis} setCardVis={setCardVis} />}
+      {tab === "expenses" && (
+        <ExpensesScreen
+          openAdd={() => openSheet("add-expense")}
+          openDetail={(id) => { setExpenseId(id); setSub("expense-detail"); }}
+        />
+      )}
+      {tab === "settings" && (
+        <SettingsRoot go={(s) => { if (s === "settings") return; setSub(s); }} onBack={() => setTab("wallet")} />
+      )}
       {tab === "chat" && (
         <ChatScreen
           openSub={openSub}
           openChat={(id: number) => { setChatId(id); setSub("chat-view"); }}
         />
       )}
+      {tab === "find" && <FindPeopleScreen onBack={() => setTab("chat")} />}
       {tab === "profile" && <ProfileScreen openSub={openSub} />}
 
-      <BottomNav tab={tab} setTab={setTab} />
+      <BottomNav tab={tab} setTab={(t) => { setTab(t); setSub(null); }} togglePhase={togglePhase} />
       <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} />
     </Shell>
   );
@@ -155,36 +195,109 @@ function Shell({ children, hideNav }: { children: React.ReactNode; hideNav?: boo
   );
 }
 
-function BottomNav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
-  const items: { id: Tab; icon: string; label: string }[] = [
-    { id: "home", icon: "Home", label: "Home" },
-    { id: "budget", icon: "PieChart", label: "Budget" },
-    { id: "wallet", icon: "Wallet", label: "Wallet" },
-    { id: "chat", icon: "MessageCircle", label: "Chat" },
-    { id: "profile", icon: "User", label: "Profile" },
-  ];
+function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) => void; togglePhase: () => void }) {
+  const phase = phaseOf(tab);
+  // Per spec: chat phase → Find + Profile (chat removed). Wallet phase → Budget + Expenses + Settings (wallet removed).
+  const items: { id: Tab; icon: string; label: string }[] =
+    phase === "chat"
+      ? [
+          { id: "find", icon: "Search", label: "Find" },
+          { id: "profile", icon: "User", label: "Profile" },
+        ]
+      : [
+          { id: "budget", icon: "PieChart", label: "Budget" },
+          { id: "expenses", icon: "Receipt", label: "Expenses" },
+          { id: "settings", icon: "Settings", label: "Settings" },
+        ];
+
+  const toggleIcon = phase === "chat" ? "Wallet" : "MessageCircle";
+  const toggleLabel = phase === "chat" ? "Wallet" : "Chat";
+
   return (
-    <div className="safe-bottom" style={{
-      position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-      display: "flex", justifyContent: "center", pointerEvents: "none",
-    }}>
-      <div style={{
-        pointerEvents: "auto",
-        width: "100%", maxWidth: 480, padding: "10px 14px 14px",
-        background: "linear-gradient(180deg, transparent, rgba(0,21,53,0.95) 30%, #001535)",
-        display: "flex", justifyContent: "space-around", alignItems: "center",
-      }}>
+    <div
+      className="safe-bottom"
+      style={{
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 14,
+        zIndex: 100,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 10,
+        padding: "0 14px",
+        pointerEvents: "none",
+      }}
+    >
+      {/* Toggle (left circle) */}
+      <button
+        onClick={togglePhase}
+        aria-label={`Switch to ${toggleLabel}`}
+        style={{
+          pointerEvents: "auto",
+          width: 52,
+          height: 52,
+          borderRadius: 26,
+          background: "rgba(94,234,212,0.18)",
+          backdropFilter: "blur(22px)",
+          WebkitBackdropFilter: "blur(22px)",
+          border: "1px solid rgba(94,234,212,0.35)",
+          color: AC,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 1,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
+          cursor: "pointer",
+          flexShrink: 0,
+        }}
+      >
+        <Ic n={toggleIcon} s={18} c={AC} />
+        <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: "0.04em" }}>{toggleLabel}</span>
+      </button>
+
+      {/* Floating glass nav */}
+      <div
+        style={{
+          pointerEvents: "auto",
+          height: 52,
+          flex: "0 1 auto",
+          padding: "0 6px",
+          borderRadius: 26,
+          background: "rgba(8,28,68,0.55)",
+          backdropFilter: "blur(22px) saturate(160%)",
+          WebkitBackdropFilter: "blur(22px) saturate(160%)",
+          border: "1px solid rgba(255,255,255,0.14)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
         {items.map((it) => {
           const a = tab === it.id;
           return (
-            <T key={it.id} onClick={() => setTab(it.id)} style={{
-              flex: 1, padding: "8px 0", background: "none", border: "none",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-              color: a ? AC : "rgba(255,255,255,0.45)",
-            }}>
-              <Ic n={it.icon} s={20} c={a ? AC : "rgba(255,255,255,0.45)"} />
-              <span style={{ fontSize: 10, fontWeight: 700 }}>{it.label}</span>
-              {a && <div style={{ width: 4, height: 4, borderRadius: 2, background: AC }} />}
+            <T
+              key={it.id}
+              onClick={() => setTab(it.id)}
+              style={{
+                background: a ? "rgba(94,234,212,0.16)" : "transparent",
+                border: "none",
+                padding: "8px 12px",
+                borderRadius: 20,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                color: a ? AC : "rgba(255,255,255,0.65)",
+                fontSize: 11,
+                fontWeight: 700,
+                minHeight: 40,
+              }}
+            >
+              <Ic n={it.icon} s={16} c={a ? AC : "rgba(255,255,255,0.65)"} />
+              <span>{it.label}</span>
             </T>
           );
         })}
@@ -216,6 +329,9 @@ function Sheets({ sheet, sheetData, closeSheet, chatId }: any) {
         onSave={sheetData?.onSave ?? (() => {})}
       />
       <AddCatSheet open={sheet === "add-expense-cat"} onClose={closeSheet} kind="expense" />
+      <AddExpenseSheet open={sheet === "add-expense"} onClose={closeSheet} />
+      <SwapSheet open={sheet === "swap"} onClose={closeSheet} />
+      <ReceiveSheet open={sheet === "receive"} onClose={closeSheet} />
     </>
   );
 }
