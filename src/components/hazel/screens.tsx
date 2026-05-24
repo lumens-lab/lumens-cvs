@@ -452,13 +452,12 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
           <div key={m.id} style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
             <div style={{ maxWidth: '78%' }}>
               {m.type === 'money' ? (
-                <div className="chat-bubble" style={{
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
                     ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))'
                     : 'linear-gradient(135deg, rgba(80,62,52,0.45), rgba(58,46,38,0.45))',
                   color: '#fff',
                   padding: '14px 20px',
-                  borderRadius: 32,
                   textAlign: 'center',
                   minWidth: 160,
                   border: '1px solid rgba(255,255,255,0.08)',
@@ -467,16 +466,15 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
                   boxShadow: '0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07)',
                 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.85 }}>Sent 💵</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4, letterSpacing: '-0.02em' }}>{m.cur === 'ZAR' ? 'R' : '$'}{m.amt!.toFixed(2)}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4, letterSpacing: '-0.02em' }}>{getCurrencySym(m.cur || state.settings?.currency || 'ZAR')}{(m.amt ?? 0).toFixed(2)}</div>
                 </div>
               ) : (
-                <div className="chat-bubble" style={{
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
                     ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))'
                     : 'linear-gradient(135deg, rgba(80,62,52,0.42), rgba(58,46,38,0.42))',
                   color: '#fff',
                   padding: '14px 22px',
-                  borderRadius: 28,
                   fontSize: 15,
                   fontWeight: 500,
                   border: '1px solid rgba(255,255,255,0.08)',
