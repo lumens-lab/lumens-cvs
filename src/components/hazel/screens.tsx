@@ -16,10 +16,11 @@ export function HomeScreen({
   goAnalytics, openSheet, openSub, cardVis, setCardVis, txFilter, setTxFilter, greeting,
 }: any) {
   const { state } = useHazelStore();
-  const sym = getCurrencySym(state.settings.currency);
+  const sym = getCurrencySym(state.settings?.currency ?? 'ZAR');
+  const pName = state.profile?.name ?? 'Welcome';
   const filteredTx = useMemo(() => {
     const f = txFilter.toLowerCase();
-    return state.txs.filter((t) => t.name.toLowerCase().includes(f)).slice(0, 10);
+    return (state.txs ?? []).filter((t) => (t?.name ?? '').toLowerCase().includes(f)).slice(0, 10);
   }, [txFilter, state.txs]);
 
   return (
@@ -27,10 +28,10 @@ export function HomeScreen({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: W, letterSpacing: '-0.02em' }}>{state.profile.name}</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: W, letterSpacing: '-0.02em' }}>{pName}</div>
         </div>
         <T onClick={() => openSub('profile')} aria-label="Open profile" style={{ background: 'none', border: 'none', padding: 0, borderRadius: 22 }}>
-          <Av ini={state.profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2)} src={state.profile.avatar} sz={44} />
+          <Av ini={pName.split(' ').map((w) => w[0] || '').join('').slice(0, 2)} src={state.profile?.avatar} sz={44} />
         </T>
       </div>
 
@@ -451,13 +452,12 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
           <div key={m.id} style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
             <div style={{ maxWidth: '78%' }}>
               {m.type === 'money' ? (
-                <div className="chat-bubble" style={{
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
                     ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))'
                     : 'linear-gradient(135deg, rgba(80,62,52,0.45), rgba(58,46,38,0.45))',
                   color: '#fff',
                   padding: '14px 20px',
-                  borderRadius: 32,
                   textAlign: 'center',
                   minWidth: 160,
                   border: '1px solid rgba(255,255,255,0.08)',
@@ -466,16 +466,15 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
                   boxShadow: '0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07)',
                 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.85 }}>Sent 💵</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4, letterSpacing: '-0.02em' }}>{m.cur === 'ZAR' ? 'R' : '$'}{m.amt!.toFixed(2)}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4, letterSpacing: '-0.02em' }}>{getCurrencySym(m.cur || state.settings?.currency || 'ZAR')}{(m.amt ?? 0).toFixed(2)}</div>
                 </div>
               ) : (
-                <div className="chat-bubble" style={{
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
                     ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))'
                     : 'linear-gradient(135deg, rgba(80,62,52,0.42), rgba(58,46,38,0.42))',
                   color: '#fff',
                   padding: '14px 22px',
-                  borderRadius: 28,
                   fontSize: 15,
                   fontWeight: 500,
                   border: '1px solid rgba(255,255,255,0.08)',
@@ -516,7 +515,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
 /* ── PROFILE ── */
 export function ProfileScreen({ openSub }: any) {
   const { state } = useHazelStore();
-  const p = state.profile;
+  const p = state.profile ?? { name: '', username: '', email: '', phone: '', dob: '', avatar: '', cover: '' } as any;
   const dobDate = p.dob ? new Date(p.dob) : null;
   // Hide year of birth from display (year is private to the user)
   const dobShown = dobDate ? dobDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'Not set';
@@ -538,7 +537,7 @@ export function ProfileScreen({ openSub }: any) {
       }} />
       <div style={{ padding: '0 20px' }}>
         <div style={{ marginTop: -48, display: 'flex', alignItems: 'flex-end', gap: 14 }}>
-          <Av ini={p.name.split(' ').map((w) => w[0]).join('').slice(0, 2)} src={p.avatar} sz={96} />
+          <Av ini={(p.name || '').split(' ').map((w: string) => w[0] || '').join('').slice(0, 2)} src={p.avatar} sz={96} />
           <div style={{ flex: 1, paddingBottom: 8 }}>
             <div style={{ color: W, fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>{p.name}</div>
             <div style={{ color: S, fontSize: 12 }}>{p.username}</div>
