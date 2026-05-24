@@ -58,7 +58,7 @@ export function AuthScreen() {
         boxShadow: "0 30px 60px rgba(30,64,175,0.25)",
       }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-          <img src={logo} alt="Lumens" style={{ height: 56, objectFit: "contain" }} />
+          <img src={logo} alt="Lumens" style={{ height: 96, objectFit: "contain" }} />
         </div>
         <h1 style={{ fontSize: 22, fontWeight: 800, textAlign: "center", color: "#0f1b3d", margin: "0 0 4px" }}>
           {mode === "signup" ? "Create your account" : "Welcome back"}
