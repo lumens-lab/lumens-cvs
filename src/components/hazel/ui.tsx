@@ -102,11 +102,11 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
   return (
     <div className="afi" style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }} />
-      <div className="asu" style={{
+      <div className="asu no-scrollbar" style={{
         position: 'relative', width: '100%', maxWidth: 480, maxHeight: '92vh', overflow: 'auto',
         background: '#001a44', borderTop: '1px solid rgba(255,255,255,0.12)',
         borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: 32,
-      }} className="no-scrollbar">
+      }}>
         <div style={{ position: 'sticky', top: 0, background: 'linear-gradient(180deg,#001a44,#001a44 70%,transparent)', zIndex: 2, padding: '14px 20px 8px' }}>
           <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)', margin: '0 auto 14px' }} />
           {title && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
