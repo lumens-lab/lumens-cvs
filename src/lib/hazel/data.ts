@@ -29,6 +29,8 @@ export const CRYPTO = [
   { id:'usdt', name:'Tether', sym:'USDT', clr:'#34d399', price:1.00, chg:0.01, bal:320.5 },
   { id:'ada', name:'Cardano', sym:'ADA', clr:'#818cf8', price:0.45, chg:-2.18, bal:890 },
   { id:'hbar', name:'Hedera', sym:'HBAR', clr:'#94a3b8', price:0.32, chg:5.44, bal:15000 },
+  { id:'xvg', name:'Verge', sym:'XVG', clr:'#00d3c9', price:0.0084, chg:4.21, bal:25000 },
+  { id:'qnt', name:'Quant', sym:'QNT', clr:'#ff7a00', price:115.42, chg:-0.84, bal:12.5 },
 ];
 
 export const SEARCH_USERS = [
