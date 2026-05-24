@@ -293,9 +293,9 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
   const cryptoTotal = useMemo(() => CRYPTO.reduce((s, c) => s + c.price * c.bal, 0), []);
 
   return (
-    <div className="afu" style={{ padding: '14px 20px 100px' }}>
+    <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Wallet</h1>
+        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Assets</h1>
         <T onClick={() => setCardVis(!cardVis)} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), padding: '8px 12px', color: S, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Ic n={cardVis ? 'EyeOff' : 'Eye'} s={14} /> {cardVis ? 'Hide' : 'Show'}
         </T>
