@@ -320,20 +320,26 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
               key={it.id}
               onClick={() => setTab(it.id)}
               style={{
-                background: a ? "rgba(94,234,212,0.16)" : "transparent",
-                border: "none",
+                background: a
+                  ? "linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08))"
+                  : "transparent",
+                border: a ? "1px solid rgba(255,255,255,0.22)" : "1px solid transparent",
                 padding: "8px 12px",
                 borderRadius: 20,
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
-                color: a ? AC : "rgba(255,255,255,0.65)",
+                color: a ? "#fff" : "rgba(255,255,255,0.65)",
                 fontSize: 11,
                 fontWeight: 700,
                 minHeight: 40,
+                backdropFilter: a ? "blur(18px)" : "none",
+                WebkitBackdropFilter: a ? "blur(18px)" : "none",
+                boxShadow: a ? "inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 14px rgba(0,0,0,0.25)" : "none",
+                transition: "background .25s ease, color .2s ease, border-color .2s ease",
               }}
             >
-              <Ic n={it.icon} s={16} c={a ? AC : "rgba(255,255,255,0.65)"} />
+              <Ic n={it.icon} s={16} c={a ? "#fff" : "rgba(255,255,255,0.65)"} />
               <span>{it.label}</span>
             </T>
           );
