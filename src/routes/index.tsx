@@ -104,7 +104,7 @@ function HazelApp() {
 
   const openSheet = (id: string, data?: any) => { setSheet(id); setSheetData(data ?? null); };
   const closeSheet = () => { setSheet(null); setSheetData(null); };
-  const openSub = (id: Sub | "find-people" | "settings") => {
+  const openSub = (id: Sub | "find-people" | "settings" | "profile") => {
     // Legacy callers route certain ids to tabs instead of sub-screens.
     if (id === "find-people") { setTab("find"); setSub(null); return; }
     if (id === "settings") { setTab("settings"); setSub(null); return; }
