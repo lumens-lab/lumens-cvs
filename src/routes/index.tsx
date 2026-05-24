@@ -297,6 +297,8 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
 
       {/* Floating glass nav */}
       <div
+        key={phase}
+        className="afi"
         style={{
           pointerEvents: "auto",
           height: 52,
