@@ -412,6 +412,10 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
   const sym = getCurrencySym(state.settings.currency);
   const [msg, setMsg] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
+  const fileImgRef = useRef<HTMLInputElement>(null);
+  const fileVidRef = useRef<HTMLInputElement>(null);
+  const recRef = useRef<{ rec: MediaRecorder; chunks: Blob[]; start: number } | null>(null);
+  const [recording, setRecording] = useState(false);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [conv?.msgs?.length]);
   if (!ct) return null;
 
@@ -429,6 +433,66 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
       }
     });
     setMsg('');
+  };
+
+  const pushMsg = (m: Omit<ChatMsgInline, 'id' | 'time' | 'sent'> & { sent?: boolean }) => {
+    const ts = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    set((s) => {
+      const cv = s.conversations.find((c) => c.cid === contactId);
+      const preview = m.type === 'image' ? '📷 Photo' : m.type === 'video' ? '🎬 Video' : m.type === 'voice' ? '🎙️ Voice note' : (m.text ?? '');
+      const entry: any = { ...m, id: (cv?.msgs.length ?? 0) + 1, sent: true, time: ts };
+      if (cv) {
+        cv.msgs.push(entry);
+        cv.last = preview;
+        cv.time = 'Just now';
+      } else {
+        s.conversations = [{ cid: contactId, last: preview, time: 'Just now', unread: 0, msgs: [entry] }, ...s.conversations];
+      }
+    });
+  };
+
+  const fileToDataURL = (f: File) => new Promise<string>((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result));
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(f);
+  });
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f) return;
+    const media = await fileToDataURL(f);
+    pushMsg({ type, media });
+  };
+
+  const toggleRecord = async () => {
+    if (recording && recRef.current) {
+      recRef.current.rec.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+      const start = Date.now();
+      rec.ondataavailable = (ev) => { if (ev.data.size) chunks.push(ev.data); };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+        const media = await fileToDataURL(new File([blob], 'voice.webm', { type: blob.type }));
+        const dur = Math.max(1, Math.round((Date.now() - start) / 1000));
+        pushMsg({ type: 'voice', media, dur });
+        recRef.current = null;
+        setRecording(false);
+      };
+      recRef.current = { rec, chunks, start };
+      rec.start();
+      setRecording(true);
+    } catch (err) {
+      console.error('mic denied', err);
+      alert('Microphone permission denied');
+    }
   };
 
   return (
