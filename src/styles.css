@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -155,6 +156,30 @@
     min-height: 100vh;
   }
   html { background: #001535; }
+  html, body, button, input, textarea, select { font-family: 'Montserrat', system-ui, sans-serif; }
+
+  /* Light theme — splash of white & brilliant blue */
+  body.theme-light {
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 0%, rgba(37,99,235,0.55) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 60% at 100% 30%, rgba(96,165,250,0.45) 0%, transparent 60%),
+      linear-gradient(180deg, #ffffff 0%, #eef4ff 50%, #ffffff 100%);
+    color: #0b1f44;
+  }
+  body.theme-light input::placeholder, body.theme-light textarea::placeholder { color: rgba(11,31,68,0.45); }
+  body.theme-light #hazel-toast { color: #fff; background: rgba(37,99,235,0.95); border-color: rgba(37,99,235,0.4); }
+  /* Dark theme — splash of brilliant blue on navy */
+  body.theme-dark {
+    background:
+      radial-gradient(ellipse 80% 60% at 100% 0%, rgba(37,99,235,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 60% at 0% 30%, rgba(94,234,212,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse at top, #052250 0%, #001535 55%, #00102b 100%);
+  }
+
+  /* Light theme overrides for app text/glass surfaces */
+  body.theme-light h1, body.theme-light h2 { color: #0b1f44 !important; }
+  body.theme-light .lm-text { color: #0b1f44 !important; }
+  body.theme-light .lm-soft { color: rgba(11,31,68,0.6) !important; }
   input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
   select option { background: #0a2846; color: #fff; }
   ::-webkit-scrollbar { width: 0; height: 0; display: none; }
@@ -181,3 +206,18 @@
 .ring-anim { animation: ringDraw 1.2s ease-out .3s both; }
 .bar-anim { animation: barGrow .6s ease-out both; transform-origin: bottom; }
 .spend-anim { animation: spendDraw 1s ease-out .3s both; }
+
+/* Logo splash animations */
+@keyframes logoZoom {
+  0% { opacity: 0; transform: scale(0.7); filter: blur(8px); }
+  50% { opacity: 1; transform: scale(1.05); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+@keyframes logoGlow {
+  0%, 100% { box-shadow: 0 0 60px rgba(37,99,235,0.5), 0 0 120px rgba(96,165,250,0.3); }
+  50% { box-shadow: 0 0 100px rgba(37,99,235,0.8), 0 0 180px rgba(96,165,250,0.5); }
+}
+.logo-anim { animation: logoZoom 1.1s cubic-bezier(.16,1,.3,1) both; }
+.logo-glow { animation: logoGlow 2.4s ease-in-out infinite; }
+@keyframes pinShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.pin-shake { animation: pinShake .35s ease-in-out; }
