@@ -16,10 +16,11 @@ export function HomeScreen({
   goAnalytics, openSheet, openSub, cardVis, setCardVis, txFilter, setTxFilter, greeting,
 }: any) {
   const { state } = useHazelStore();
-  const sym = getCurrencySym(state.settings.currency);
+  const sym = getCurrencySym(state.settings?.currency ?? 'ZAR');
+  const pName = state.profile?.name ?? 'Welcome';
   const filteredTx = useMemo(() => {
     const f = txFilter.toLowerCase();
-    return state.txs.filter((t) => t.name.toLowerCase().includes(f)).slice(0, 10);
+    return (state.txs ?? []).filter((t) => (t?.name ?? '').toLowerCase().includes(f)).slice(0, 10);
   }, [txFilter, state.txs]);
 
   return (
@@ -27,10 +28,10 @@ export function HomeScreen({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: W, letterSpacing: '-0.02em' }}>{state.profile.name}</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: W, letterSpacing: '-0.02em' }}>{pName}</div>
         </div>
         <T onClick={() => openSub('profile')} aria-label="Open profile" style={{ background: 'none', border: 'none', padding: 0, borderRadius: 22 }}>
-          <Av ini={state.profile.name.split(' ').map((w) => w[0]).join('').slice(0, 2)} src={state.profile.avatar} sz={44} />
+          <Av ini={pName.split(' ').map((w) => w[0] || '').join('').slice(0, 2)} src={state.profile?.avatar} sz={44} />
         </T>
       </div>
 
