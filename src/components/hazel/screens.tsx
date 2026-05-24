@@ -525,7 +525,10 @@ export function ProfileScreen({ openSub }: any) {
     { icon: 'Bell', label: 'Notifications', fn: () => openSub('set-notifications') },
     { icon: 'Shield', label: 'Security', fn: () => openSub('security') },
     { icon: 'HelpCircle', label: 'Help & Support', fn: () => openSub('help') },
-    { icon: 'LogOut', label: 'Sign out', danger: true },
+    { icon: 'LogOut', label: 'Sign out', danger: true, fn: async () => {
+      const { supabase } = await import('@/integrations/supabase/client');
+      await supabase.auth.signOut();
+    } },
   ];
   return (
     <div className="afu" style={{ padding: '0 0 140px' }}>

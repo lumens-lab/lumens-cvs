@@ -35,6 +35,8 @@ import { WelcomeFlow, PinLock } from "@/components/hazel/onboarding";
 import { SecurityScreen, HelpScreen } from "@/components/hazel/security";
 import { NotificationsScreen, AppearanceScreen } from "@/components/hazel/prefs";
 import { useHazelStore } from "@/lib/hazel/store";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthScreen } from "@/components/hazel/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -76,6 +78,7 @@ const { W, S, AC } = COLORS;
 
 function HazelApp() {
   const { state } = useHazelStore();
+  const { user, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [pendingPhase, setPendingPhase] = useState<"wallet" | null>(null);
@@ -131,6 +134,8 @@ function HazelApp() {
   );
 
   if (!mounted) return <Shell>{null}</Shell>;
+  if (authLoading) return <Shell>{null}</Shell>;
+  if (!user) return <AuthScreen />;
   if (!state.onboarded) return <WelcomeFlow onDone={() => { setUnlocked(true); }} />;
   if (state.pin && !unlocked) {
     return <PinLock onUnlock={() => { setUnlocked(true); if (pendingPhase) { setTab(pendingPhase); setPendingPhase(null); } }} />;
