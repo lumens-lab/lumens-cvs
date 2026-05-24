@@ -27,7 +27,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
     { ic: 'MessageCircle', title: 'Chat &\nsend money', body: 'Pay friends straight from chat. Encrypted, fast, and friendly.', color: '#c084fc' },
   ];
 
-  const enterPin = (d: string) => {
+  const enterPin = async (d: string) => {
     if (d === 'back') {
       confirming ? setConfirm((c) => c.slice(0, -1)) : setPin((p) => p.slice(0, -1));
       return;
@@ -43,7 +43,9 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
       setConfirm(next);
       if (next.length === 4) {
         if (next === pin) {
-          set((s) => { s.pin = pin; s.onboarded = true; });
+          const { hashPin } = await import('@/lib/hazel/pin');
+          const hashed = await hashPin(pin);
+          set((s) => { s.pin = hashed; s.onboarded = true; });
           showToast('Welcome to Lumens ✨');
           setTimeout(onDone, 300);
         } else {
