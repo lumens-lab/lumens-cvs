@@ -275,7 +275,7 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
   );
 }
 
-const inp = {
+const inp: React.CSSProperties = {
   width: '100%',
   padding: '12px 14px',
   background: 'rgba(255,255,255,0.06)',
@@ -286,7 +286,7 @@ const inp = {
   outline: 'none',
   minHeight: 44,
   fontFamily: 'inherit',
-} as const;
+};
 
 function Field({ label, children }: { label: string; children: any }) {
   return (
