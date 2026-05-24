@@ -123,31 +123,34 @@ export const CURRENCIES: Currency[] = [
 ];
 
 export const LANGUAGES = [
-  { code:'en', name:'English', native:'English' },
+].sort((a, b) => a.name.localeCompare(b.name));
+export const LANGUAGES = ([
   { code:'af', name:'Afrikaans', native:'Afrikaans' },
-  { code:'zu', name:'Zulu', native:'isiZulu' },
-  { code:'xh', name:'Xhosa', native:'isiXhosa' },
-  { code:'st', name:'Sotho', native:'Sesotho' },
-  { code:'tn', name:'Tswana', native:'Setswana' },
-  { code:'fr', name:'French', native:'Français' },
-  { code:'es', name:'Spanish', native:'Español' },
-  { code:'pt', name:'Portuguese', native:'Português' },
-  { code:'de', name:'German', native:'Deutsch' },
-  { code:'it', name:'Italian', native:'Italiano' },
-  { code:'nl', name:'Dutch', native:'Nederlands' },
-  { code:'ar', name:'Arabic', native:'العربية' },
-  { code:'sw', name:'Swahili', native:'Kiswahili' },
-  { code:'ha', name:'Hausa', native:'Hausa' },
-  { code:'yo', name:'Yoruba', native:'Yorùbá' },
-  { code:'ig', name:'Igbo', native:'Igbo' },
   { code:'am', name:'Amharic', native:'አማርኛ' },
+  { code:'ar', name:'Arabic', native:'العربية' },
   { code:'zh', name:'Chinese', native:'中文' },
+  { code:'nl', name:'Dutch', native:'Nederlands' },
+  { code:'en', name:'English', native:'English' },
+  { code:'fr', name:'French', native:'Français' },
+  { code:'de', name:'German', native:'Deutsch' },
+  { code:'ha', name:'Hausa', native:'Hausa' },
+  { code:'hi', name:'Hindi', native:'हिन्दी' },
+  { code:'ig', name:'Igbo', native:'Igbo' },
+  { code:'it', name:'Italian', native:'Italiano' },
   { code:'ja', name:'Japanese', native:'日本語' },
   { code:'ko', name:'Korean', native:'한국어' },
-  { code:'hi', name:'Hindi', native:'हिन्दी' },
+  { code:'pt', name:'Portuguese', native:'Português' },
   { code:'ru', name:'Russian', native:'Русский' },
+  { code:'st', name:'Sotho', native:'Sesotho' },
+  { code:'es', name:'Spanish', native:'Español' },
+  { code:'sw', name:'Swahili', native:'Kiswahili' },
+  { code:'sv', name:'Swedish', native:'Svenska' },
+  { code:'tn', name:'Tswana', native:'Setswana' },
   { code:'tr', name:'Turkish', native:'Türkçe' },
-];
+  { code:'xh', name:'Xhosa', native:'isiXhosa' },
+  { code:'yo', name:'Yoruba', native:'Yorùbá' },
+  { code:'zu', name:'Zulu', native:'isiZulu' },
+] as const).slice().sort((a, b) => a.name.localeCompare(b.name));
 
 export const DEFAULT_INCOME_CATS = [
   { id:'salary', name:'Salary', icon:'Briefcase', color:'#34d399' },
