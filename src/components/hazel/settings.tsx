@@ -7,6 +7,15 @@ import type { Cat } from '@/lib/hazel/store';
 
 const { W, S, S2, AC, GN, RD, BL } = COLORS;
 
+/** Escape HTML special chars so user-controlled text cannot inject markup or scripts. */
+const esc = (v: unknown): string =>
+  String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 export type SettingsScreen =
   | 'settings'
   | 'set-currency'
@@ -115,7 +124,7 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
   };
   const exportXLS = () => {
     // Simple HTML-based XLS (Excel reads it). Avoids extra deps.
-    const rows = state.txs.map((t) => `<tr><td>${t.date}</td><td>${t.name}</td><td>${t.cat}</td><td>${t.amt.toFixed(2)}</td></tr>`).join('');
+    const rows = state.txs.map((t) => `<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td>${esc(t.cat)}</td><td>${t.amt.toFixed(2)}</td></tr>`).join('');
     const html = `<html><head><meta charset="utf-8"/></head><body><table border="1"><tr><th>Date</th><th>Name</th><th>Category</th><th>Amount</th></tr>${rows}</table></body></html>`;
     download(`expenses-${Date.now()}.xls`, html, 'application/vnd.ms-excel');
     showToast('Expenses exported as XLS');
@@ -124,7 +133,7 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
     // Open print-friendly HTML; user uses browser "Save as PDF"
     const win = window.open('', '_blank');
     if (!win) return showToast('Popup blocked');
-    const rows = state.txs.map((t) => `<tr><td>${t.date}</td><td>${t.name}</td><td>${t.cat}</td><td style="text-align:right">${t.amt.toFixed(2)}</td></tr>`).join('');
+    const rows = state.txs.map((t) => `<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td>${esc(t.cat)}</td><td style="text-align:right">${t.amt.toFixed(2)}</td></tr>`).join('');
     win.document.write(`<html><head><title>HazelPay Expenses</title><style>body{font-family:Inter,system-ui;padding:30px}h1{margin:0 0 20px}table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #eee;font-size:13px;text-align:left}</style></head><body><h1>HazelPay Expenses</h1><table><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><script>window.print()</script></body></html>`);
     win.document.close();
     showToast('Opening print view...');
