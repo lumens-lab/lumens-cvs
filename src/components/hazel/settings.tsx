@@ -26,7 +26,7 @@ export function SettingsRoot({ go, onBack }: { go: (s: SettingsScreen) => void; 
     { id: 'set-expense-cats', icon: 'TrendingDown', label: 'Expense Categories', desc: 'Add, edit or remove' },
   ];
   return (
-    <div className="afi" style={{ padding: '0 20px 100px' }}>
+    <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Settings" onBack={onBack} />
       {items.map((it) => (
         <T key={it.id} onClick={() => go(it.id)} active="rgba(255,255,255,0.08)" style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, color: W }}>
@@ -50,7 +50,7 @@ export function CurrencyScreen({ onBack }: { onBack: () => void }) {
   const cur = state.settings.currency;
   const filtered = CURRENCIES.filter((c) => (c.code + c.name).toLowerCase().includes(q.toLowerCase()));
   return (
-    <div className="afi" style={{ padding: '0 20px 100px' }}>
+    <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Preferred Currency" onBack={onBack} />
       <div style={{ position: 'relative', marginBottom: 12 }}>
         <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: S2 }}><Ic n="Search" s={16} /></div>
@@ -74,7 +74,7 @@ export function LanguageScreen({ onBack }: { onBack: () => void }) {
   const { state, set } = useHazelStore();
   const cur = state.settings.language;
   return (
-    <div className="afi" style={{ padding: '0 20px 100px' }}>
+    <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Language" onBack={onBack} />
       {LANGUAGES.map((l) => (
         <T key={l.code} onClick={() => { set((s) => { s.settings.language = l.code; }); showToast(`Language set to ${l.name}`); }} style={{ width: '100%', textAlign: 'left', padding: '14px 16px', borderRadius: 14, background: cur === l.code ? 'rgba(94,234,212,0.1)' : 'rgba(255,255,255,0.04)', border: cur === l.code ? '1px solid rgba(94,234,212,0.3)' : '1px solid transparent', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12, color: W }}>
@@ -147,7 +147,7 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
   );
 
   return (
-    <div className="afi" style={{ padding: '0 20px 100px' }}>
+    <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Backup & Export" onBack={onBack} />
       <div style={{ fontSize: 11, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Backup</div>
       <Btn icon="Download" label="Download backup" desc="Save your data to a file (JSON)" onClick={exportJSON} />
@@ -177,7 +177,7 @@ export function AccountsScreen({ onBack }: { onBack: () => void }) {
     setName(''); setNumber(''); setAdding(false); showToast('Account added');
   };
   return (
-    <div className="afi" style={{ padding: '0 20px 100px' }}>
+    <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Account Settings" onBack={onBack} right={
         <T onClick={() => setAdding(!adding)} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(94,234,212,0.15)', border: '1px solid rgba(94,234,212,0.3)', color: AC, fontSize: 12, fontWeight: 700 }}>{adding ? 'Cancel' : '+ Add'}</T>
       } />
@@ -229,7 +229,7 @@ export function CategoriesScreen({ kind, onBack }: { kind: 'income'|'expense'; o
   const remove = (id: string) => set((s) => { if (kind === 'expense') s.expenseCats = s.expenseCats.filter((c) => c.id !== id); else s.incomeCats = s.incomeCats.filter((c) => c.id !== id); });
 
   return (
-    <div className="afi" style={{ padding: '0 20px 100px' }}>
+    <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title={kind === 'income' ? 'Income Categories' : 'Expense Categories'} onBack={onBack} right={
         <T onClick={() => setAdding(!adding)} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(94,234,212,0.15)', border: '1px solid rgba(94,234,212,0.3)', color: AC, fontSize: 12, fontWeight: 700 }}>{adding ? 'Cancel' : '+ Add'}</T>
       } />
