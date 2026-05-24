@@ -120,6 +120,17 @@ export const CURRENCIES: Currency[] = [
   { code:'LBP', name:'Lebanese Pound', symbol:'ل.ل' },
   { code:'IQD', name:'Iraqi Dinar', symbol:'ع.د' },
   { code:'IRR', name:'Iranian Rial', symbol:'﷼' },
+  { code:'ETB', name:'Ethiopian Birr', symbol:'Br' },
+  { code:'RWF', name:'Rwandan Franc', symbol:'FRw' },
+  { code:'MUR', name:'Mauritian Rupee', symbol:'₨' },
+  { code:'MGA', name:'Malagasy Ariary', symbol:'Ar' },
+  { code:'AOA', name:'Angolan Kwanza', symbol:'Kz' },
+  { code:'SLL', name:'Sierra Leonean Leone', symbol:'Le' },
+  { code:'LRD', name:'Liberian Dollar', symbol:'L$' },
+  { code:'SCR', name:'Seychellois Rupee', symbol:'₨' },
+  { code:'LSL', name:'Lesotho Loti', symbol:'L' },
+  { code:'SZL', name:'Eswatini Lilangeni', symbol:'E' },
+  { code:'MWK', name:'Malawian Kwacha', symbol:'MK' },
 ];
 
 export const LANGUAGES: { code: string; name: string; native: string }[] = ([
