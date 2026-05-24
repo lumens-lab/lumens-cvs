@@ -122,7 +122,17 @@ function load(): HazelState {
     const raw = localStorage.getItem(KEY);
     if (!raw) return initial;
     const parsed = JSON.parse(raw);
-    return { ...initial, ...parsed, settings: { ...initial.settings, ...(parsed.settings || {}) } };
+    return {
+      ...initial,
+      ...parsed,
+      profile: { ...initial.profile, ...(parsed.profile || {}) },
+      settings: {
+        ...initial.settings,
+        ...(parsed.settings || {}),
+        notifications: { ...initial.settings.notifications, ...((parsed.settings || {}).notifications || {}) },
+        security: { ...initial.settings.security, ...((parsed.settings || {}).security || {}) },
+      },
+    };
   } catch { return initial; }
 }
 
