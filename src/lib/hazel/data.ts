@@ -122,9 +122,7 @@ export const CURRENCIES: Currency[] = [
   { code:'IRR', name:'Iranian Rial', symbol:'﷼' },
 ];
 
-export const LANGUAGES = [
-].sort((a, b) => a.name.localeCompare(b.name));
-const _LANG_RAW = [
+export const LANGUAGES: { code: string; name: string; native: string }[] = ([
   { code:'af', name:'Afrikaans', native:'Afrikaans' },
   { code:'am', name:'Amharic', native:'አማርኛ' },
   { code:'ar', name:'Arabic', native:'العربية' },
@@ -150,7 +148,7 @@ const _LANG_RAW = [
   { code:'xh', name:'Xhosa', native:'isiXhosa' },
   { code:'yo', name:'Yoruba', native:'Yorùbá' },
   { code:'zu', name:'Zulu', native:'isiZulu' },
-];
+] as { code: string; name: string; native: string }[]).slice().sort((a, b) => a.name.localeCompare(b.name));
 
 export const DEFAULT_INCOME_CATS = [
   { id:'salary', name:'Salary', icon:'Briefcase', color:'#34d399' },
