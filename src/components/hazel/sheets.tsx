@@ -287,7 +287,7 @@ export function EditProfileScreen({ onBack }: any) {
   const avRef = useRef<HTMLInputElement>(null);
   const cvRef = useRef<HTMLInputElement>(null);
 
-  const pickFile = (ref: React.RefObject<HTMLInputElement>, setter: (v: string) => void) => {
+  const pickFile = (ref: React.RefObject<HTMLInputElement | null>, setter: (v: string) => void) => {
     const f = ref.current?.files?.[0];
     if (!f) return;
     if (f.size > 5 * 1024 * 1024) return showToast('Image too large (max 5MB)');
