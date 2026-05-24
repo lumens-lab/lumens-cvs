@@ -134,8 +134,10 @@ export function PinLock({ onUnlock, onCancel }: { onUnlock: () => void; onCancel
     const next = pin + d;
     setPin(next);
     if (next.length === 4) {
-      setTimeout(() => {
-        if (next === state.pin) onUnlock();
+      setTimeout(async () => {
+        const { verifyPin } = await import('@/lib/hazel/pin');
+        const ok = await verifyPin(next, state.pin);
+        if (ok) onUnlock();
         else { setShake(true); showToast('Wrong PIN'); setTimeout(() => { setPin(''); setShake(false); }, 350); }
       }, 150);
     }
