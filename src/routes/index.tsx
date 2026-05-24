@@ -35,6 +35,8 @@ import { WelcomeFlow, PinLock } from "@/components/hazel/onboarding";
 import { SecurityScreen, HelpScreen } from "@/components/hazel/security";
 import { NotificationsScreen, AppearanceScreen } from "@/components/hazel/prefs";
 import { useHazelStore } from "@/lib/hazel/store";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthScreen } from "@/components/hazel/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
