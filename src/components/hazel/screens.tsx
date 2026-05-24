@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { Ic, T, Av, gl, COLORS, showToast } from './ui';
 import { CardComp } from './CardComp';
 import { CryptoIcon } from './CryptoIcon';
@@ -412,6 +412,10 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
   const sym = getCurrencySym(state.settings.currency);
   const [msg, setMsg] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
+  const fileImgRef = useRef<HTMLInputElement>(null);
+  const fileVidRef = useRef<HTMLInputElement>(null);
+  const recRef = useRef<{ rec: MediaRecorder; chunks: Blob[]; start: number } | null>(null);
+  const [recording, setRecording] = useState(false);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [conv?.msgs?.length]);
   if (!ct) return null;
 
@@ -429,6 +433,66 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
       }
     });
     setMsg('');
+  };
+
+  const pushMsg = (m: { type?: 'image' | 'video' | 'voice' | 'money'; text?: string; media?: string; dur?: number; amt?: number; cur?: string }) => {
+    const ts = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    set((s) => {
+      const cv = s.conversations.find((c) => c.cid === contactId);
+      const preview = m.type === 'image' ? '📷 Photo' : m.type === 'video' ? '🎬 Video' : m.type === 'voice' ? '🎙️ Voice note' : (m.text ?? '');
+      const entry: any = { ...m, id: (cv?.msgs.length ?? 0) + 1, sent: true, time: ts };
+      if (cv) {
+        cv.msgs.push(entry);
+        cv.last = preview;
+        cv.time = 'Just now';
+      } else {
+        s.conversations = [{ cid: contactId, last: preview, time: 'Just now', unread: 0, msgs: [entry] }, ...s.conversations];
+      }
+    });
+  };
+
+  const fileToDataURL = (f: File) => new Promise<string>((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result));
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(f);
+  });
+
+  const handleFile = async (e: ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f) return;
+    const media = await fileToDataURL(f);
+    pushMsg({ type, media });
+  };
+
+  const toggleRecord = async () => {
+    if (recording && recRef.current) {
+      recRef.current.rec.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+      const start = Date.now();
+      rec.ondataavailable = (ev) => { if (ev.data.size) chunks.push(ev.data); };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+        const media = await fileToDataURL(new File([blob], 'voice.webm', { type: blob.type }));
+        const dur = Math.max(1, Math.round((Date.now() - start) / 1000));
+        pushMsg({ type: 'voice', media, dur });
+        recRef.current = null;
+        setRecording(false);
+      };
+      recRef.current = { rec, chunks, start };
+      rec.start();
+      setRecording(true);
+    } catch (err) {
+      console.error('mic denied', err);
+      alert('Microphone permission denied');
+    }
   };
 
   return (
@@ -468,6 +532,20 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
                   <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.85 }}>Sent 💵</div>
                   <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4, letterSpacing: '-0.02em' }}>{getCurrencySym(m.cur || state.settings?.currency || 'ZAR')}{(m.amt ?? 0).toFixed(2)}</div>
                 </div>
+              ) : m.type === 'image' && m.media ? (
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ padding: 4, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', overflow: 'hidden' }}>
+                  <img src={m.media} alt="attachment" style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16, objectFit: 'cover' }} />
+                </div>
+              ) : m.type === 'video' && m.media ? (
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ padding: 4, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', overflow: 'hidden' }}>
+                  <video src={m.media} controls style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16 }} />
+                </div>
+              ) : m.type === 'voice' && m.media ? (
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', background: m.sent ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))' : 'linear-gradient(135deg, rgba(80,62,52,0.45), rgba(58,46,38,0.45))', boxShadow: '0 6px 22px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+                  <Ic n="Mic" s={16} />
+                  <audio src={m.media} controls style={{ height: 32 }} />
+                  {m.dur ? <span style={{ fontSize: 11, opacity: 0.7 }}>{m.dur}s</span> : null}
+                </div>
               ) : (
                 <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
@@ -493,8 +571,16 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
 
       <div style={{ padding: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,21,53,0.85)', backdropFilter: 'blur(20px)' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <T onClick={onSendMoney} style={{ width: 44, height: 44, borderRadius: 22, background: 'rgba(255,255,255,0.07)', border: 'none', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Ic n="Plus" s={18} />
+          <input ref={fileImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'image')} />
+          <input ref={fileVidRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'video')} />
+          <T onClick={onSendMoney} aria-label="Send money" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Ic n="DollarSign" s={16} />
+          </T>
+          <T onClick={() => fileImgRef.current?.click()} aria-label="Attach photo" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Ic n="ImagePlus" s={16} />
+          </T>
+          <T onClick={() => fileVidRef.current?.click()} aria-label="Attach video" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Ic n="Video" s={16} />
           </T>
           <input
             value={msg}
@@ -503,10 +589,17 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
             placeholder="Type a message..."
             style={{ flex: 1, padding: '11px 16px', ...gl('rgba(255,255,255,0.07)', 24, { boxShadow: 'none' }), color: W, fontSize: 14, outline: 'none', minHeight: 44, minWidth: 0 }}
           />
-          <T onClick={send} style={{ width: 44, height: 44, borderRadius: 22, background: AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Ic n="ArrowUp" s={18} />
-          </T>
+          {msg.trim() ? (
+            <T onClick={send} aria-label="Send" style={{ width: 44, height: 44, borderRadius: 22, background: AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Ic n="ArrowUp" s={18} />
+            </T>
+          ) : (
+            <T onClick={toggleRecord} aria-label={recording ? 'Stop recording' : 'Record voice note'} style={{ width: 44, height: 44, borderRadius: 22, background: recording ? '#ef4444' : AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: recording ? '0 0 0 4px rgba(239,68,68,0.25)' : 'none' }}>
+              <Ic n={recording ? 'Square' : 'Mic'} s={18} />
+            </T>
+          )}
         </div>
+        {recording && <div style={{ marginTop: 8, fontSize: 11, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: 4, background: '#ef4444', animation: 'pulse 1s infinite' }} /> Recording…</div>}
       </div>
     </div>
   );

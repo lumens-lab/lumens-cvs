@@ -28,7 +28,19 @@ export type Profile = {
   avatar?: string; cover?: string;
 };
 export type Contact = { id: number; name: string; ini: string; ph: string; g: string; on: boolean };
-export type ChatMsg = { id: number; text?: string; type?: 'money'; amt?: number; cur?: string; sent: boolean; time: string };
+export type ChatMsg = {
+  id: number;
+  text?: string;
+  type?: 'money' | 'image' | 'video' | 'voice';
+  amt?: number;
+  cur?: string;
+  /** data URL for image/video/voice attachments */
+  media?: string;
+  /** voice note duration in seconds */
+  dur?: number;
+  sent: boolean;
+  time: string;
+};
 export type Conv = { cid: number; last: string; time: string; unread: number; msgs: ChatMsg[] };
 export type PendingReq = { id: number; name: string; ini: string; dir: 'sent'|'received'; g: string };
 
