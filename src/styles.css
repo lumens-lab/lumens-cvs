@@ -176,6 +176,34 @@
       radial-gradient(ellipse at top, #052250 0%, #001535 55%, #00102b 100%);
   }
 
+  /* Hazel & Teal — 70% black with teal/hazel accents */
+  body.theme-hazel {
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 0%, rgba(94,234,212,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 100% 50%, rgba(180,120,80,0.20) 0%, transparent 60%),
+      linear-gradient(180deg, #0a0a0a 0%, #141414 50%, #0a0a0a 100%);
+    color: #f5e8d8;
+  }
+  body.theme-hazel #hazel-toast { background: rgba(94,234,212,0.92); color:#0a0a0a; border-color: rgba(94,234,212,0.4); }
+
+  /* Peach & White — soft gray with peach accents */
+  body.theme-peach {
+    background:
+      radial-gradient(ellipse 70% 60% at 0% 0%, rgba(255,183,153,0.55) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 100% 30%, rgba(255,210,190,0.45) 0%, transparent 60%),
+      linear-gradient(180deg, #f5f5f5 0%, #ececec 50%, #f7f7f7 100%);
+    color: #3a2a22;
+  }
+  body.theme-peach h1, body.theme-peach h2, body.theme-peach .lm-text { color:#3a2a22 !important; }
+  body.theme-peach .lm-soft { color: rgba(58,42,34,0.6) !important; }
+  body.theme-peach input::placeholder, body.theme-peach textarea::placeholder { color: rgba(58,42,34,0.45); }
+  body.theme-peach .frost {
+    background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.45));
+    border: 1px solid rgba(255,140,90,0.25);
+    box-shadow: 0 10px 30px rgba(58,42,34,0.10), inset 0 1px 0 rgba(255,255,255,0.7);
+  }
+  body.theme-peach #hazel-toast { background: rgba(255,140,90,0.95); color:#fff; border-color: rgba(255,140,90,0.4); }
+
   /* Light theme overrides for app text/glass surfaces */
   body.theme-light h1, body.theme-light h2 { color: #0b1f44 !important; }
   body.theme-light .lm-text { color: #0b1f44 !important; }
@@ -245,3 +273,6 @@ body.theme-light .frost {
 
 /* Chat bubble subtle pop-in */
 .chat-bubble { animation: fadeUp .22s ease-out both; }
+/* Signal-style asymmetric bubble shape (shape changes, not colour) */
+.bubble-sent  { border-radius: 22px 22px 6px 22px; }
+.bubble-recv  { border-radius: 22px 22px 22px 6px; }
