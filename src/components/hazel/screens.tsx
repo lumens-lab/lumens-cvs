@@ -151,7 +151,7 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
   });
 
   return (
-    <div className="afu" style={{ padding: '14px 20px 100px' }}>
+    <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Budget</h1>
         <T onClick={() => openSheet('month-picker', { monthKey, onPick: setMonthKey })} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', color: S, fontSize: 12, fontWeight: 600 }}>
@@ -245,7 +245,7 @@ export function CatDetailScreen({ catId, monthKey, onBack, onPickMonth }: any) {
   const [y, m] = monthKey.split('-').map(Number);
 
   return (
-    <div className="afu" style={{ padding: '14px 20px 100px' }}>
+    <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
         <T onClick={onBack} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="ChevronLeft" s={20} />
@@ -366,7 +366,7 @@ export function ChatScreen({ openSub, openChat }: any) {
     });
   }, [q, state.conversations, state.contacts]);
   return (
-    <div className="afu" style={{ padding: '14px 20px 100px' }}>
+    <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
         <T onClick={() => openSub('find-people')} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: S }}>
@@ -502,7 +502,7 @@ export function ProfileScreen({ openSub }: any) {
     { icon: 'LogOut', label: 'Sign out', danger: true },
   ];
   return (
-    <div className="afu" style={{ padding: '0 0 100px' }}>
+    <div className="afu" style={{ padding: '0 0 140px' }}>
       {/* Cover */}
       <div style={{
         height: 160,

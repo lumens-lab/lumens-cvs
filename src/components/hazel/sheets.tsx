@@ -228,7 +228,7 @@ export function FindPeopleScreen({ onBack }: any) {
     showToast(`${name} added`);
   };
   return (
-    <div className="afi" style={{ padding: '14px 20px 100px' }}>
+    <div className="afi" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <T onClick={onBack} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="ChevronLeft" s={20} /></T>
         <h1 style={{ color: W, fontSize: 20, fontWeight: 800 }}>Find People</h1>
@@ -303,7 +303,7 @@ export function EditProfileScreen({ onBack }: any) {
   };
 
   return (
-    <div className="afi" style={{ padding: '0 0 100px' }}>
+    <div className="afi" style={{ padding: '0 0 140px' }}>
       {/* Cover with edit */}
       <div style={{ height: 160, background: cover ? `url(${cover}) center/cover` : 'linear-gradient(135deg,#0a2858,#143a82,#2563eb)', position: 'relative' }}>
         <T onClick={onBack} style={{ position: 'absolute', top: 14, left: 14, width: 40, height: 40, borderRadius: 14, background: 'rgba(0,0,0,0.4)', color: W, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}><Ic n="ChevronLeft" s={20} /></T>
