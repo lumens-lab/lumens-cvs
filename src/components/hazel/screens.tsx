@@ -571,8 +571,16 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
 
       <div style={{ padding: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,21,53,0.85)', backdropFilter: 'blur(20px)' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <T onClick={onSendMoney} style={{ width: 44, height: 44, borderRadius: 22, background: 'rgba(255,255,255,0.07)', border: 'none', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Ic n="Plus" s={18} />
+          <input ref={fileImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'image')} />
+          <input ref={fileVidRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'video')} />
+          <T onClick={onSendMoney} aria-label="Send money" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Ic n="DollarSign" s={16} />
+          </T>
+          <T onClick={() => fileImgRef.current?.click()} aria-label="Attach photo" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Ic n="ImagePlus" s={16} />
+          </T>
+          <T onClick={() => fileVidRef.current?.click()} aria-label="Attach video" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Ic n="Video" s={16} />
           </T>
           <input
             value={msg}
@@ -581,10 +589,17 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
             placeholder="Type a message..."
             style={{ flex: 1, padding: '11px 16px', ...gl('rgba(255,255,255,0.07)', 24, { boxShadow: 'none' }), color: W, fontSize: 14, outline: 'none', minHeight: 44, minWidth: 0 }}
           />
-          <T onClick={send} style={{ width: 44, height: 44, borderRadius: 22, background: AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Ic n="ArrowUp" s={18} />
-          </T>
+          {msg.trim() ? (
+            <T onClick={send} aria-label="Send" style={{ width: 44, height: 44, borderRadius: 22, background: AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Ic n="ArrowUp" s={18} />
+            </T>
+          ) : (
+            <T onClick={toggleRecord} aria-label={recording ? 'Stop recording' : 'Record voice note'} style={{ width: 44, height: 44, borderRadius: 22, background: recording ? '#ef4444' : AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: recording ? '0 0 0 4px rgba(239,68,68,0.25)' : 'none' }}>
+              <Ic n={recording ? 'Square' : 'Mic'} s={18} />
+            </T>
+          )}
         </div>
+        {recording && <div style={{ marginTop: 8, fontSize: 11, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: 4, background: '#ef4444', animation: 'pulse 1s infinite' }} /> Recording…</div>}
       </div>
     </div>
   );
