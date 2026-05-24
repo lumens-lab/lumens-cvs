@@ -3,6 +3,7 @@ import { Ic, T, gl, COLORS, Sheet, showToast } from './ui';
 import { CRYPTO } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
 import { getCurrencySym } from './screens';
+import { CryptoIcon } from './CryptoIcon';
 
 const { W, S, S2, AC, GN } = COLORS;
 
@@ -43,7 +44,11 @@ export function SwapSheet({ open, onClose }: { open: boolean; onClose: () => voi
           const key = a.sym ?? a.name;
           return (
             <T key={key} onClick={() => { picking === 'from' ? setFromId(key) : setToId(key); setPicking(null); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'rgba(255,255,255,0.04)', border: 'none', borderRadius: 14, marginBottom: 8, textAlign: 'left' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 18, background: a.clr, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13 }}>{(a.sym ?? a.name)[0]}</div>
+              {a.sym && a.sym !== a.name ? (
+                <CryptoIcon sym={a.sym} size={36} />
+              ) : (
+                <div style={{ width: 36, height: 36, borderRadius: 18, background: a.clr, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13 }}>{(a.sym ?? a.name)[0]}</div>
+              )}
               <div style={{ flex: 1 }}>
                 <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{a.name}</div>
                 <div style={{ color: S, fontSize: 11 }}>Balance: {a.bal} {a.sym ?? ''}</div>
@@ -66,7 +71,7 @@ export function SwapSheet({ open, onClose }: { open: boolean; onClose: () => voi
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" style={{ flex: 1, background: 'transparent', border: 'none', color: W, fontSize: 26, fontWeight: 800, outline: 'none', minWidth: 0 }} />
           <T onClick={() => setPicking('from')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 14, background: 'rgba(255,255,255,0.08)', border: 'none', color: W, fontWeight: 700, fontSize: 13 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 11, background: from.clr, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>{(from.sym ?? from.name)[0]}</div>
+            {from.sym && from.sym !== from.name ? <CryptoIcon sym={from.sym} size={22} /> : <div style={{ width: 22, height: 22, borderRadius: 11, background: from.clr, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>{(from.sym ?? from.name)[0]}</div>}
             {from.sym ?? from.name}
             <Ic n="ChevronDown" s={14} />
           </T>
@@ -88,7 +93,7 @@ export function SwapSheet({ open, onClose }: { open: boolean; onClose: () => voi
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div style={{ flex: 1, color: W, fontSize: 26, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis' }}>{outN > 0 ? outN.toFixed(4) : '0.00'}</div>
           <T onClick={() => setPicking('to')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', borderRadius: 14, background: 'rgba(255,255,255,0.08)', border: 'none', color: W, fontWeight: 700, fontSize: 13 }}>
-            <div style={{ width: 22, height: 22, borderRadius: 11, background: to.clr, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>{(to.sym ?? to.name)[0]}</div>
+            {to.sym && to.sym !== to.name ? <CryptoIcon sym={to.sym} size={22} /> : <div style={{ width: 22, height: 22, borderRadius: 11, background: to.clr, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>{(to.sym ?? to.name)[0]}</div>}
             {to.sym ?? to.name}
             <Ic n="ChevronDown" s={14} />
           </T>

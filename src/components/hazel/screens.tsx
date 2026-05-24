@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { Ic, T, Av, gl, COLORS, showToast } from './ui';
 import { CardComp } from './CardComp';
+import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
 
@@ -334,9 +335,7 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
           return (
             <div key={c.id} style={{ ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 18, background: c.clr, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14 }}>
-                  {c.sym[0]}
-                </div>
+                <CryptoIcon sym={c.sym} size={36} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{c.name}</div>
                   <div style={{ color: S, fontSize: 11 }}>{c.sym}</div>
@@ -452,13 +451,39 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
           <div key={m.id} style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
             <div style={{ maxWidth: '78%' }}>
               {m.type === 'money' ? (
-                <div style={{ background: m.sent ? 'linear-gradient(135deg,#5eead4,#2dd4bf)' : 'rgba(255,255,255,0.08)', color: m.sent ? '#001535' : '#fff', padding: '12px 16px', borderRadius: 18, textAlign: 'center', minWidth: 140 }}>
-                  <div style={{ fontSize: 18, marginBottom: 4 }}>💰</div>
-                  <div style={{ fontSize: 18, fontWeight: 800 }}>{m.cur === 'ZAR' ? 'R' : '$'}{m.amt!.toFixed(2)}</div>
-                  <div style={{ fontSize: 10, opacity: 0.7, marginTop: 2 }}>{m.cur} sent</div>
+                <div className="chat-bubble" style={{
+                  background: m.sent
+                    ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))'
+                    : 'linear-gradient(135deg, rgba(80,62,52,0.45), rgba(58,46,38,0.45))',
+                  color: '#fff',
+                  padding: '14px 20px',
+                  borderRadius: 32,
+                  textAlign: 'center',
+                  minWidth: 160,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  backdropFilter: 'blur(22px)',
+                  WebkitBackdropFilter: 'blur(22px)',
+                  boxShadow: '0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07)',
+                }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.85 }}>Sent 💵</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4, letterSpacing: '-0.02em' }}>{m.cur === 'ZAR' ? 'R' : '$'}{m.amt!.toFixed(2)}</div>
                 </div>
               ) : (
-                <div style={{ background: m.sent ? AC : 'rgba(255,255,255,0.08)', color: m.sent ? '#001535' : '#fff', padding: '10px 14px', borderRadius: 16, fontSize: 14 }}>{m.text}</div>
+                <div className="chat-bubble" style={{
+                  background: m.sent
+                    ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))'
+                    : 'linear-gradient(135deg, rgba(80,62,52,0.42), rgba(58,46,38,0.42))',
+                  color: '#fff',
+                  padding: '14px 22px',
+                  borderRadius: 28,
+                  fontSize: 15,
+                  fontWeight: 500,
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  backdropFilter: 'blur(22px)',
+                  WebkitBackdropFilter: 'blur(22px)',
+                  boxShadow: '0 6px 22px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)',
+                  lineHeight: 1.4,
+                }}>{m.text}</div>
               )}
               <div style={{ fontSize: 10, color: S2, marginTop: 4, textAlign: m.sent ? 'right' : 'left' }}>{m.time}</div>
             </div>
