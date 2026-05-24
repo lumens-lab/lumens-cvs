@@ -72,14 +72,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lumens — Pay, Budget, Chat" },
-      { name: "description", content: "Lumens: send money, set budgets, scan to pay and chat with friends." },
+      { title: "lumens — Chat & Pay" },
+      { name: "description", content: "Lumens: send money, set budgets, manage your expenses, scan to pay and chat with friends." },
       { name: "author", content: "Lumens" },
-      { property: "og:title", content: "Lumens" },
-      { property: "og:description", content: "Send money, budget, chat — illuminated." },
+      { property: "og:title", content: "lumens — Chat & Pay" },
+      { property: "og:description", content: "Lumens: send money, set budgets, manage your expenses, scan to pay and chat with friends." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "lumens — Chat & Pay" },
+      { name: "twitter:description", content: "Lumens: send money, set budgets, manage your expenses, scan to pay and chat with friends." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/zYPpD5bNEXhp5A6FtvNXkWcJ8fC3/social-images/social-1779662510561-86ea9fe0-6213-491e-8488-2fdc1d74997d.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/zYPpD5bNEXhp5A6FtvNXkWcJ8fC3/social-images/social-1779662510561-86ea9fe0-6213-491e-8488-2fdc1d74997d.webp" },
     ],
     links: [
       {
