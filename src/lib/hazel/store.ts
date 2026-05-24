@@ -4,7 +4,24 @@ import { DEFAULT_EXPENSE_CATS, DEFAULT_INCOME_CATS, SEED_TXS } from './data';
 export type Card = { id: number; num: string; holder: string; exp: string; theme: number };
 export type Account = { id: number; name: string; type: string; number: string };
 export type Cat = { id: string; name: string; icon: string; color: string; budget?: number };
-export type Tx = { id?: number; name: string; cat: string; icon: string; ibg: string; ic: string; date: string; amt: number };
+export type Tx = {
+  id?: number;
+  name: string;
+  cat: string;
+  icon: string;
+  ibg: string;
+  ic: string;
+  date: string;
+  amt: number;
+  /** Merchant captured from receipt */
+  merchant?: string;
+  /** Free-form note */
+  note?: string;
+  /** Base64 image data of a scanned receipt */
+  receipt?: string;
+  /** Itemized receipt lines */
+  items?: { name: string; amt: number }[];
+};
 export type Profile = {
   name: string; email: string; username: string; phone: string;
   dob: string; // YYYY-MM-DD
