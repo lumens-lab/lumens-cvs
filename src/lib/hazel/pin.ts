@@ -11,10 +11,25 @@ export async function hashPin(pin: string): Promise<string> {
   return 'sha256:' + toHex(digest);
 }
 
+/** Constant-time string comparison (length-leak resistant via fixed XOR). */
+function timingSafeEqual(a: string, b: string): boolean {
+  const len = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < len; i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return diff === 0;
+}
+
 export async function verifyPin(input: string, stored: string | null): Promise<boolean> {
   if (!stored) return false;
-  // Back-compat: legacy plaintext PINs (pre-hash rollout)
-  if (!stored.startsWith('sha256:')) return input === stored;
+  // Back-compat: legacy plaintext PINs are compared in constant time by
+  // hashing both sides, so timing cannot leak how many digits match.
+  if (!stored.startsWith('sha256:')) {
+    const hInput = await hashPin(input);
+    const hStored = await hashPin(stored);
+    return timingSafeEqual(hInput, hStored);
+  }
   const h = await hashPin(input);
-  return h === stored;
+  return timingSafeEqual(h, stored);
 }
