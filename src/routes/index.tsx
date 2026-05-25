@@ -237,14 +237,14 @@ function HazelApp() {
           openSheet={openSheet}
           openSub={openSub}
           cardVis={cardVis}
-          setCardVis={setCardVis}
+          setCardVis={guardedSetCardVis}
           txFilter={txFilter}
           setTxFilter={setTxFilter}
           greeting={greeting}
         />
       )}
       {tab === "assets" && (
-        <WalletScreen openSheet={openSheet} cardVis={cardVis} setCardVis={setCardVis} />
+        <WalletScreen openSheet={openSheet} cardVis={cardVis} setCardVis={guardedSetCardVis} />
       )}
       {tab === "budget" && (
         <BudgetScreen
@@ -272,7 +272,7 @@ function HazelApp() {
       {tab === "profile" && <ProfileScreen openSub={openSub} />}
 
       <BottomNav tab={tab} setTab={(t) => { setTab(t); setSub(null); }} togglePhase={togglePhase} />
-      <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} />
+      <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} requirePin={requirePin} />
     </Shell>
   );
 }
