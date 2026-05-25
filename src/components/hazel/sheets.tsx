@@ -141,7 +141,7 @@ export function AddCatSheet({ open, onClose, kind = 'expense' }: { open: boolean
 }
 
 /* ── Send Money ── */
-export function SendSheet({ open, onClose, fromChat, recip, onSent }: any) {
+export function SendSheet({ open, onClose, fromChat, recip, onSent, requirePin }: any) {
   const { state } = useHazelStore();
   const [step, setStep] = useState(fromChat ? 2 : 1);
   const [chosen, setChosen] = useState(recip ?? null);
@@ -151,13 +151,20 @@ export function SendSheet({ open, onClose, fromChat, recip, onSent }: any) {
 
   const close = () => { onClose(); setStep(fromChat ? 2 : 1); setChosen(recip ?? null); setMethod(null); setAmt(''); setNote(''); };
 
-  const confirm = () => {
+  const doSend = () => {
     const n = parseFloat(amt);
     if (!n || n <= 0) return showToast('Enter a valid amount');
     if (!method) return showToast('Choose a payment method');
     onSent?.({ recip: chosen, method, amt: n, note });
     showToast(`${method.sym}${n.toFixed(2)} sent to ${chosen.name}`);
     close();
+  };
+  const confirm = () => {
+    const n = parseFloat(amt);
+    if (!n || n <= 0) return showToast('Enter a valid amount');
+    if (!method) return showToast('Choose a payment method');
+    if (requirePin) requirePin(doSend, 'Confirm transfer', `Enter PIN to send ${method.sym}${n.toFixed(2)}`);
+    else doSend();
   };
 
   return (
