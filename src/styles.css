@@ -204,6 +204,36 @@
   }
   body.theme-peach #hazel-toast { background: rgba(255,140,90,0.95); color:#fff; border-color: rgba(255,140,90,0.4); }
 
+  /* Graphite — premium charcoal with soft amber accent */
+  body.theme-graphite {
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 0%, rgba(255,200,140,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 60% at 100% 50%, rgba(110,110,120,0.18) 0%, transparent 60%),
+      linear-gradient(180deg, #16181d 0%, #1f2228 50%, #14161a 100%);
+    color: #e8e6df;
+  }
+  body.theme-graphite .frost {
+    background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  body.theme-graphite #hazel-toast { background: rgba(232,200,140,0.92); color:#1f2228; border-color: rgba(232,200,140,0.45); }
+
+  /* Deep Navy — true midnight blue with crystalline cyan accent */
+  body.theme-deepnavy {
+    background:
+      radial-gradient(ellipse 80% 60% at 100% 0%, rgba(56,189,248,0.22) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 60% at 0% 40%, rgba(99,102,241,0.18) 0%, transparent 60%),
+      linear-gradient(180deg, #050b1f 0%, #07142e 55%, #03081a 100%);
+    color: #eaf2ff;
+  }
+  body.theme-deepnavy .frost {
+    background: linear-gradient(135deg, rgba(99,179,255,0.10), rgba(99,179,255,0.04));
+    border: 1px solid rgba(99,179,255,0.18);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  body.theme-deepnavy #hazel-toast { background: rgba(56,189,248,0.95); color:#03081a; border-color: rgba(56,189,248,0.4); }
+
   /* Light theme overrides for app text/glass surfaces */
   body.theme-light h1, body.theme-light h2 { color: #0b1f44 !important; }
   body.theme-light .lm-text { color: #0b1f44 !important; }

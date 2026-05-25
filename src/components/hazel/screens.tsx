@@ -44,8 +44,18 @@ export function HomeScreen({
             <T onClick={() => openSheet('add-card')} style={{ ...gl('rgba(94,234,212,0.08)', 10, { boxShadow: 'none', border: '1px solid rgba(94,234,212,0.2)' }), padding: '6px 10px', color: AC, fontSize: 11, fontWeight: 600 }}>+ Add</T>
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          {state.cards[0] && <CardComp card={state.cards[0]} visible={cardVis} w={340} />}
+        <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', gap: 12, scrollSnapType: 'x mandatory', margin: '0 -20px', padding: '0 20px 4px' }}>
+          {state.cards.length === 0 ? (
+            <div className="frost" style={{ width: 340, minHeight: 180, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', color: S, fontSize: 12, padding: 16, textAlign: 'center', flex: '0 0 auto', scrollSnapAlign: 'center' }}>
+              No cards yet — tap “+ Add” to add your first card.
+            </div>
+          ) : (
+            state.cards.map((c) => (
+              <div key={c.id} style={{ flex: '0 0 auto', scrollSnapAlign: 'center' }}>
+                <CardComp card={c} visible={cardVis} w={340} />
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -308,16 +318,16 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
       {/* Cards section — centered */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: W, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7 }}>Cards</div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+        <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', gap: 14, scrollSnapType: 'x mandatory', padding: '4px 4px 8px', margin: '0 -20px 0', paddingLeft: 20, paddingRight: 20 }}>
           {state.cards.map((c) => (
-            <div key={c.id} style={{ position: 'relative' }}>
+            <div key={c.id} style={{ position: 'relative', flex: '0 0 auto', scrollSnapAlign: 'center' }}>
               <CardComp card={c} visible={cardVis} w={340} />
               <T onClick={() => { set((s) => { s.cards = s.cards.filter((x) => x.id !== c.id); }); showToast('Card removed'); }} style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 14, background: 'rgba(0,0,0,0.4)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Ic n="X" s={14} />
               </T>
             </div>
           ))}
-          <T onClick={() => openSheet('add-card')} style={{ width: 340, maxWidth: '100%', ...gl('rgba(94,234,212,0.08)', 18, { border: '1px solid rgba(94,234,212,0.2)' }), padding: 14, color: AC, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52 }}>
+          <T onClick={() => openSheet('add-card')} style={{ flex: '0 0 auto', scrollSnapAlign: 'center', width: 340, ...gl('rgba(94,234,212,0.08)', 18, { border: '1px solid rgba(94,234,212,0.2)' }), padding: 14, color: AC, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 200 }}>
             <Ic n="Plus" s={16} /> Add New Card
           </T>
         </div>
@@ -518,8 +528,8 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
               {m.type === 'money' ? (
                 <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
-                    ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))'
-                    : 'linear-gradient(135deg, rgba(80,62,52,0.45), rgba(58,46,38,0.45))',
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))'
+                    : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))',
                   color: '#fff',
                   padding: '14px 20px',
                   textAlign: 'center',
@@ -541,7 +551,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
                   <video src={m.media} controls style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16 }} />
                 </div>
               ) : m.type === 'voice' && m.media ? (
-                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', background: m.sent ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))' : 'linear-gradient(135deg, rgba(80,62,52,0.45), rgba(58,46,38,0.45))', boxShadow: '0 6px 22px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', background: m.sent ? 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))' : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))', boxShadow: '0 6px 22px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
                   <Ic n="Mic" s={16} />
                   <audio src={m.media} controls style={{ height: 32 }} />
                   {m.dur ? <span style={{ fontSize: 11, opacity: 0.7 }}>{m.dur}s</span> : null}
@@ -549,8 +559,8 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
               ) : (
                 <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
-                    ? 'linear-gradient(135deg, rgba(74,57,48,0.55), rgba(54,42,36,0.55))'
-                    : 'linear-gradient(135deg, rgba(80,62,52,0.42), rgba(58,46,38,0.42))',
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))'
+                    : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))',
                   color: '#fff',
                   padding: '14px 22px',
                   fontSize: 15,

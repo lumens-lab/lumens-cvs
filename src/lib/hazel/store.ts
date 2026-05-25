@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { DEFAULT_EXPENSE_CATS, DEFAULT_INCOME_CATS, SEED_TXS } from './data';
+import { DEFAULT_EXPENSE_CATS, DEFAULT_INCOME_CATS } from './data';
 
 export type Card = { id: number; num: string; holder: string; exp: string; theme: number };
 export type Account = { id: number; name: string; type: string; number: string; icon?: string; color?: string };
@@ -58,7 +58,7 @@ export type HazelState = {
   settings: {
     currency: string;
     language: string;
-    theme: 'dark' | 'light' | 'hazel' | 'peach';
+    theme: 'dark' | 'light' | 'hazel' | 'peach' | 'graphite' | 'deepnavy';
     notifications: { transactions: boolean; budgetAlerts: boolean; chat: boolean; security: boolean; promotions: boolean; sound: boolean };
     security: { twoFA: boolean; biometrics: boolean };
     devices: { id: string; name: string; lastActive: string; current: boolean }[];
@@ -71,58 +71,30 @@ const KEY = 'lumens-state-v2';
 
 const initial: HazelState = {
   profile: {
-    name: 'Kojo Ayim',
-    email: 'kojo@hazelpay.app',
-    username: '@kojoayim',
-    phone: '+27 82 555 0142',
-    dob: '1995-06-12',
+    name: '',
+    email: '',
+    username: '',
+    phone: '',
+    dob: '',
     avatar: '',
     cover: '',
   },
-  cards: [{ id: 1, num: '4583123456784829', holder: 'KOJO AYIM', exp: '09/28', theme: 0 }],
-  accounts: [
-    { id: 1, name: 'Standard Bank', type: 'Cheque', number: '••••4829' },
-    { id: 2, name: 'Capitec', type: 'Savings', number: '••••1129' },
-  ],
-  txs: SEED_TXS.map((t, i) => ({ ...t, id: i + 1 })),
-  contacts: [
-    { id: 1, name: 'Sarah Rodriguez', ini: 'SR', ph: '+27 82 345 6789', g: 'from-pink-400 to-rose-500', on: true },
-    { id: 2, name: 'James Davidson', ini: 'JD', ph: '+27 71 234 5678', g: 'from-blue-400 to-indigo-500', on: false },
-    { id: 3, name: 'Alex Kim', ini: 'AK', ph: '+27 63 456 7890', g: 'from-emerald-400 to-teal-500', on: true },
-  ],
-  conversations: [
-    { cid: 1, last: 'Thanks for the payment! 🎉', time: '2m', unread: 2, msgs: [
-      { id: 1, text: 'Hey Sarah! Sending you the money for dinner', sent: true, time: '10:30 AM' },
-      { id: 2, text: 'Awesome! How much was it?', sent: false, time: '10:31 AM' },
-      { id: 3, type: 'money', amt: 850, cur: 'ZAR', sent: true, time: '10:32 AM' },
-      { id: 4, text: 'Thanks for the payment! 🎉', sent: false, time: '10:33 AM' },
-    ]},
-    { cid: 3, last: "Sure, I'll send it via Stellar", time: '15m', unread: 0, msgs: [
-      { id: 1, text: 'Can you send me $200 in XLM?', sent: false, time: '9:45 AM' },
-      { id: 2, text: "Sure, I'll send it via Stellar", sent: true, time: '9:47 AM' },
-    ]},
-    { cid: 2, last: 'Let me check my balance', time: '1h', unread: 1, msgs: [
-      { id: 1, text: 'Hey James, can we split the Uber fare?', sent: true, time: '8:20 AM' },
-      { id: 2, text: 'Let me check my balance', sent: false, time: '8:25 AM' },
-    ]},
-  ],
-  pendingReqs: [
-    { id: 1, name: 'Nana Akuffo', ini: 'NA', dir: 'sent', g: 'from-amber-400 to-yellow-500' },
-    { id: 2, name: 'Kwame Asante', ini: 'KA', dir: 'received', g: 'from-lime-400 to-green-500' },
-  ],
+  cards: [],
+  accounts: [],
+  txs: [],
+  contacts: [],
+  conversations: [],
+  pendingReqs: [],
   incomeCats: DEFAULT_INCOME_CATS,
   expenseCats: DEFAULT_EXPENSE_CATS,
-  budgets: { '2024-12': { total: 3000, period: 'month' } },
+  budgets: {},
   settings: {
     currency: 'ZAR',
     language: 'en',
     theme: 'dark',
     notifications: { transactions: true, budgetAlerts: true, chat: true, security: true, promotions: false, sound: true },
     security: { twoFA: false, biometrics: false },
-    devices: [
-      { id: 'd1', name: 'iPhone 15 Pro', lastActive: 'Active now', current: true },
-      { id: 'd2', name: 'MacBook Air', lastActive: '2 days ago', current: false },
-    ],
+    devices: [],
   },
   onboarded: false,
   pin: null,
