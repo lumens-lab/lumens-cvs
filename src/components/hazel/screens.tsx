@@ -308,16 +308,16 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
       {/* Cards section — centered */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: W, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7 }}>Cards</div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+        <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', gap: 14, scrollSnapType: 'x mandatory', padding: '4px 4px 8px', margin: '0 -20px 0', paddingLeft: 20, paddingRight: 20 }}>
           {state.cards.map((c) => (
-            <div key={c.id} style={{ position: 'relative' }}>
+            <div key={c.id} style={{ position: 'relative', flex: '0 0 auto', scrollSnapAlign: 'center' }}>
               <CardComp card={c} visible={cardVis} w={340} />
               <T onClick={() => { set((s) => { s.cards = s.cards.filter((x) => x.id !== c.id); }); showToast('Card removed'); }} style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 14, background: 'rgba(0,0,0,0.4)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Ic n="X" s={14} />
               </T>
             </div>
           ))}
-          <T onClick={() => openSheet('add-card')} style={{ width: 340, maxWidth: '100%', ...gl('rgba(94,234,212,0.08)', 18, { border: '1px solid rgba(94,234,212,0.2)' }), padding: 14, color: AC, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 52 }}>
+          <T onClick={() => openSheet('add-card')} style={{ flex: '0 0 auto', scrollSnapAlign: 'center', width: 340, ...gl('rgba(94,234,212,0.08)', 18, { border: '1px solid rgba(94,234,212,0.2)' }), padding: 14, color: AC, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 200 }}>
             <Ic n="Plus" s={16} /> Add New Card
           </T>
         </div>
