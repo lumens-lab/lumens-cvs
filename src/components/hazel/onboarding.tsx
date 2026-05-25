@@ -78,7 +78,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
       <Cover>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px 36px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <img src={logo} alt="Lumens" style={{ height: 44, filter: 'brightness(0) invert(1)' }} />
+            <img src={logo} alt="Lumens" style={{ height: 88, filter: 'brightness(0) invert(1)' }} />
             <T onClick={() => setStage('pin')} style={{ color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', fontSize: 13, fontWeight: 600 }}>Skip</T>
           </div>
           <div key={slide} className="afu" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 24 }}>
