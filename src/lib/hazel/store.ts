@@ -132,7 +132,19 @@ function boot() {
 
 function persist() {
   if (typeof window === 'undefined') return;
-  try { localStorage.setItem(KEY, JSON.stringify(mem)); } catch {}
+  try {
+    // Strip sensitive PII (phone, dob, email) from the persisted snapshot —
+    // these are reloaded from Supabase on each session, so localStorage
+    // never holds plaintext PII that an XSS payload could exfiltrate.
+    const { profile, ...rest } = mem;
+    const safeProfile = {
+      ...profile,
+      email: '',
+      phone: '',
+      dob: '',
+    };
+    localStorage.setItem(KEY, JSON.stringify({ ...rest, profile: safeProfile }));
+  } catch {}
 }
 
 export function useHazelStore() {
