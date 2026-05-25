@@ -14,33 +14,383 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          number_mask: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          number_mask?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          number_mask?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      budgets: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          id: string
+          month_key: string
+          period: string
+          start_date: string | null
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          month_key: string
+          period?: string
+          start_date?: string | null
+          total: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          month_key?: string
+          period?: string
+          start_date?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calls: {
+        Row: {
+          callee_id: string
+          caller_id: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          callee_id: string
+          caller_id: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          callee_id?: string
+          caller_id?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      cards: {
+        Row: {
+          created_at: string
+          exp: string
+          holder: string
+          id: string
+          last4: string
+          num_enc: string | null
+          theme: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exp: string
+          holder: string
+          id?: string
+          last4: string
+          num_enc?: string | null
+          theme?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exp?: string
+          holder?: string
+          id?: string
+          last4?: string
+          num_enc?: string | null
+          theme?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          budget: number | null
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          kind: string
+          name: string
+          slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget?: number | null
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          kind: string
+          name: string
+          slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget?: number | null
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          kind?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          confirmed: boolean
+          contact_user_id: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          confirmed?: boolean
+          contact_user_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          confirmed?: boolean
+          contact_user_id?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_at: string
+          last_preview: string | null
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_at?: string
+          last_preview?: string | null
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_at?: string
+          last_preview?: string | null
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          ciphertext: string
+          conversation_id: string
+          created_at: string
+          id: string
+          kind: string
+          nonce: string
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          ciphertext: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          kind?: string
+          nonce: string
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          ciphertext?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          nonce?: string
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
+          cover_url: string | null
           created_at: string
           currency: string | null
           display_name: string | null
+          dob: string | null
           id: string
           language: string | null
+          phone: string | null
           updated_at: string
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
+          cover_url?: string | null
           created_at?: string
           currency?: string | null
           display_name?: string | null
+          dob?: string | null
           id: string
           language?: string | null
+          phone?: string | null
           updated_at?: string
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
+          cover_url?: string | null
           created_at?: string
           currency?: string | null
           display_name?: string | null
+          dob?: string | null
           id?: string
           language?: string | null
+          phone?: string | null
           updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      txs: {
+        Row: {
+          amt: number
+          cat: string
+          created_at: string
+          date: string
+          ibg: string | null
+          ic: string | null
+          icon: string
+          id: string
+          items: Json | null
+          merchant: string | null
+          name: string
+          note: string | null
+          receipt: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amt: number
+          cat: string
+          created_at?: string
+          date: string
+          ibg?: string | null
+          ic?: string | null
+          icon?: string
+          id?: string
+          items?: Json | null
+          merchant?: string | null
+          name: string
+          note?: string | null
+          receipt?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amt?: number
+          cat?: string
+          created_at?: string
+          date?: string
+          ibg?: string | null
+          ic?: string | null
+          icon?: string
+          id?: string
+          items?: Json | null
+          merchant?: string | null
+          name?: string
+          note?: string | null
+          receipt?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
