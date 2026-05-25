@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Ic, T, Av, gl, COLORS, Sheet, showToast } from './ui';
 import { CardComp } from './CardComp';
-import { CARD_THEMES, MONTHS, PAY_METHODS, SEARCH_USERS, GRAD_MAP } from '@/lib/hazel/data';
+import { CARD_THEMES, MONTHS, PAY_METHODS, GRAD_MAP } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
 import { ICON_LIBRARY, ICON_COLORS } from '@/lib/hazel/icons';
+import { supabase } from '@/integrations/supabase/client';
 
 const { W, S, S2, AC, GN, RD, BL, PP } = COLORS;
 
