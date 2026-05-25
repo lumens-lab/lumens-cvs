@@ -123,7 +123,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
 }
 
 /** Lock screen — verifies user PIN before entering wallet phase. */
-export function PinLock({ onUnlock, onCancel }: { onUnlock: () => void; onCancel?: () => void }) {
+export function PinLock({ onUnlock, onCancel, title, subtitle }: { onUnlock: () => void; onCancel?: () => void; title?: string; subtitle?: string }) {
   const { state } = useHazelStore();
   const [pin, setPin] = useState('');
   const [shake, setShake] = useState(false);
@@ -153,8 +153,8 @@ export function PinLock({ onUnlock, onCancel }: { onUnlock: () => void; onCancel
         )}
         <img src={logo} alt="Lumens" style={{ height: 64, filter: 'brightness(0) invert(1)', opacity: 0.95 }} />
         <div style={{ textAlign: 'center' }}>
-          <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>Enter your PIN</h1>
-          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 6 }}>Unlock to view your wallet</p>
+          <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{title ?? 'Enter your PIN'}</h1>
+          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 6 }}>{subtitle ?? 'Unlock to view your wallet'}</p>
         </div>
         <div className={shake ? 'pin-shake' : ''}><PinDots value={pin} /></div>
         <Keypad onTap={handle} />
