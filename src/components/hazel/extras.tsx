@@ -120,7 +120,7 @@ export function ReceiveSheet({ open, onClose }: { open: boolean; onClose: () => 
   const ADDRESSES = useMemo(
     () => [
       { id: fiat, name: `${fiat} Account`, sym: getCurrencySym(fiat), addr: 'IBAN ZA12 0000 0000 4829 0011', type: 'fiat' },
-      { id: 'BTC', name: 'Bitcoin', sym: '₿', addr: 'bc1qhazelpay9x0u3kt7v8g6n2zk5q8e4r5t6y7u8i9', type: 'crypto' },
+      { id: 'BTC', name: 'Bitcoin', sym: '₿', addr: 'bc1qlumensmoney9x0u3kt7v8g6n2zk5q8e4r5t6y7u8', type: 'crypto' },
       { id: 'ETH', name: 'Ethereum', sym: 'Ξ', addr: '0xHazel1234abcd5678ef901234567890abcdef1234', type: 'crypto' },
       { id: 'XLM', name: 'Stellar', sym: 'XLM', addr: 'GHAZELPAY7K2X3M4N5P6Q7R8S9T0U1V2W3X4Y5Z6A7B8C', type: 'crypto' },
     ],

@@ -114,7 +114,7 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
     URL.revokeObjectURL(url);
   };
 
-  const exportJSON = () => { download(`hazelpay-backup-${Date.now()}.json`, exportState(), 'application/json'); showToast('Backup downloaded'); };
+  const exportJSON = () => { download(`lumens-money-backup-${Date.now()}.json`, exportState(), 'application/json'); showToast('Backup downloaded'); };
   const exportCSV = () => {
     const headers = ['Date', 'Name', 'Category', 'Amount'];
     const rows = state.txs.map((t) => [t.date, `"${t.name.replace(/"/g, '""')}"`, t.cat, t.amt.toFixed(2)]);
@@ -134,7 +134,7 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
     const win = window.open('', '_blank');
     if (!win) return showToast('Popup blocked');
     const rows = state.txs.map((t) => `<tr><td>${esc(t.date)}</td><td>${esc(t.name)}</td><td>${esc(t.cat)}</td><td style="text-align:right">${t.amt.toFixed(2)}</td></tr>`).join('');
-    win.document.write(`<html><head><title>HazelPay Expenses</title><style>body{font-family:Inter,system-ui;padding:30px}h1{margin:0 0 20px}table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #eee;font-size:13px;text-align:left}</style></head><body><h1>HazelPay Expenses</h1><table><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><script>window.print()</script></body></html>`);
+    win.document.write(`<html><head><title>Lumens Money Expenses</title><style>body{font-family:Inter,system-ui;padding:30px}h1{margin:0 0 20px}table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #eee;font-size:13px;text-align:left}</style></head><body><h1>Lumens Money Expenses</h1><table><thead><tr><th>Date</th><th>Name</th><th>Category</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><script>window.print()</script></body></html>`);
     win.document.close();
     showToast('Opening print view...');
   };
@@ -173,7 +173,7 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
       <Btn icon="FileSpreadsheet" label="Export as CSV" desc="Comma-separated values" onClick={exportCSV} color={BL} />
 
       <div style={{ fontSize: 11, color: S, margin: '18px 0 8px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Danger zone</div>
-      <Btn icon="Trash2" label="Reset all data" desc="Wipes local data and restores defaults" danger onClick={() => { if (confirm('Reset all HazelPay data on this device?')) { resetState(); showToast('Data reset'); } }} />
+      <Btn icon="Trash2" label="Reset all data" desc="Wipes local data and restores defaults" danger onClick={() => { if (confirm('Reset all Lumens Money data on this device?')) { resetState(); showToast('Data reset'); } }} />
     </div>
   );
 }

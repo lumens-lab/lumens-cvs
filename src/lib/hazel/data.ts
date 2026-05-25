@@ -1,4 +1,4 @@
-// Static data for HazelPay
+// Static data for Lumens Money
 export const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 export const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -33,13 +33,8 @@ export const CRYPTO = [
   { id:'qnt', name:'Quant', sym:'QNT', clr:'#ff7a00', price:115.42, chg:-0.84, bal:12.5 },
 ];
 
-export const SEARCH_USERS = [
-  { id:101, name:'Ama Osei', ini:'AO', email:'ama@gmail.com', ph:'+233 24 555 1234', uid:'@amaosei', g:'from-teal-400 to-cyan-500' },
-  { id:102, name:'Kofi Boateng', ini:'KB', email:'kofi.b@yahoo.com', ph:'+233 20 666 7890', uid:'@kboating', g:'from-orange-400 to-red-500' },
-  { id:103, name:'Abena Darko', ini:'AD', email:'abena.d@outlook.com', ph:'+233 50 111 2233', uid:'@abenadarko', g:'from-pink-400 to-fuchsia-500' },
-  { id:104, name:'Yaw Adjei', ini:'YA', email:'yaw.a@gmail.com', ph:'+233 27 888 4455', uid:'@yawadjei', g:'from-indigo-400 to-blue-500' },
-  { id:105, name:'Efua Mensah', ini:'EM', email:'efua.m@lumens.app', ph:'+233 53 222 3344', uid:'@efuamensah', g:'from-rose-400 to-pink-500' },
-];
+/** Legacy demo users — now empty. User search reads live profiles from Supabase. */
+export const SEARCH_USERS: { id: number; name: string; ini: string; email: string; ph: string; uid: string; g: string }[] = [];
 
 export const GRAD_MAP: Record<string,string> = {
   'from-teal-400 to-cyan-500':'linear-gradient(135deg,#2dd4bf,#06b6d4)',
@@ -178,23 +173,8 @@ export const DEFAULT_EXPENSE_CATS = [
   { id:'entertainment', name:'Entertainment', icon:'PlayCircle', color:'#fbbf24', budget: 250 },
 ];
 
-// Demo transactions across several months
-export const SEED_TXS = [
-  { name:'Shopping', cat:'shopping', icon:'ShoppingBag', ibg:'rgba(248,113,113,0.12)', ic:'#f87171', date:'2024-12-15', amt:-344.93 },
-  { name:'Salary Deposit', cat:'salary', icon:'Building2', ibg:'rgba(52,211,153,0.12)', ic:'#34d399', date:'2024-12-14', amt:8500 },
-  { name:'Starbucks', cat:'food', icon:'Coffee', ibg:'rgba(96,165,250,0.12)', ic:'#60a5fa', date:'2024-12-14', amt:-12.50 },
-  { name:'Netflix', cat:'subs', icon:'PlayCircle', ibg:'rgba(248,113,113,0.12)', ic:'#f87171', date:'2024-12-13', amt:-15.99 },
-  { name:'Uber Ride', cat:'transport', icon:'Car', ibg:'rgba(255,255,255,0.06)', ic:'#94a3b8', date:'2024-12-12', amt:-24.50 },
-  { name:'Freelance Project', cat:'freelance', icon:'Code', ibg:'rgba(192,132,252,0.12)', ic:'#c084fc', date:'2024-12-11', amt:1200 },
-  { name:'Groceries', cat:'food', icon:'ShoppingCart', ibg:'rgba(52,211,153,0.12)', ic:'#34d399', date:'2024-12-10', amt:-87.32 },
-  { name:'Spotify', cat:'subs', icon:'Music', ibg:'rgba(192,132,252,0.12)', ic:'#c084fc', date:'2024-12-08', amt:-9.99 },
-  { name:'Electric bill', cat:'bills', icon:'Receipt', ibg:'rgba(94,234,212,0.12)', ic:'#5eead4', date:'2024-12-05', amt:-180 },
-  { name:'Cinema', cat:'entertainment', icon:'PlayCircle', ibg:'rgba(251,191,36,0.12)', ic:'#fbbf24', date:'2024-12-03', amt:-45 },
-  { name:'Salary Deposit', cat:'salary', icon:'Building2', ibg:'rgba(52,211,153,0.12)', ic:'#34d399', date:'2024-11-14', amt:8500 },
-  { name:'Zara', cat:'shopping', icon:'ShoppingBag', ibg:'rgba(248,113,113,0.12)', ic:'#f87171', date:'2024-11-21', amt:-520 },
-  { name:'Restaurant', cat:'food', icon:'Coffee', ibg:'rgba(251,146,60,0.12)', ic:'#fb923c', date:'2024-11-19', amt:-78 },
-  { name:'Bus pass', cat:'transport', icon:'Car', ibg:'rgba(255,255,255,0.06)', ic:'#94a3b8', date:'2024-11-02', amt:-60 },
-];
+/** Mock transactions removed — real txs come from Supabase. */
+export const SEED_TXS: { name: string; cat: string; icon: string; ibg: string; ic: string; date: string; amt: number }[] = [];
 
 export const fmtM = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export const fmtCard = (n: string) => n.replace(/(.{4})/g, '$1 ').trim();
