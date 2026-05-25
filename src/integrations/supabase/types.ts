@@ -191,6 +191,33 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_requests: {
+        Row: {
+          created_at: string
+          from_user: string
+          id: string
+          status: string
+          to_user: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          from_user: string
+          id?: string
+          status?: string
+          to_user: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          from_user?: string
+          id?: string
+          status?: string
+          to_user?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           confirmed: boolean
@@ -399,7 +426,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_contact_request: {
+        Args: { request_id: string }
+        Returns: undefined
+      }
+      decline_contact_request: {
+        Args: { request_id: string }
+        Returns: undefined
+      }
+      search_profiles: {
+        Args: { q: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          username: string
+        }[]
+      }
+      send_contact_request: { Args: { to_user_id: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
