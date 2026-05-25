@@ -369,8 +369,57 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
   );
 }
 
+/** Encrypted voice-call screen — UI scaffold over confirmed contacts. */
+function CallScreen() {
+  const { state } = useHazelStore();
+  const [q, setQ] = useState("");
+  const list = state.contacts.filter((c) =>
+    !q || c.name.toLowerCase().includes(q.toLowerCase())
+  );
+  return (
+    <div className="afi" style={{ padding: "14px 20px 140px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em" }}>Calls</h1>
+        <div style={{ ...{ padding: "6px 10px", borderRadius: 999, background: "rgba(94,234,212,0.12)", color: AC as any, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em" } }}>
+          END-TO-END
+        </div>
+      </div>
+      <div className="frost" style={{ padding: 10, borderRadius: 16, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+        <Ic n="Search" s={16} c={S as any} />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search confirmed contacts"
+          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: W, fontSize: 13 }}
+        />
+      </div>
+      {list.length === 0 ? (
+        <div className="frost" style={{ padding: 28, borderRadius: 20, textAlign: "center" }}>
+          <div style={{ width: 56, height: 56, borderRadius: 28, background: "rgba(94,234,212,0.12)", margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Ic n="PhoneOff" s={22} c={AC as any} />
+          </div>
+          <div style={{ color: W, fontSize: 15, fontWeight: 700 }}>No contacts yet</div>
+          <div style={{ color: S, fontSize: 12, marginTop: 6 }}>Add confirmed contacts to start an encrypted call.</div>
+        </div>
+      ) : (
+        list.map((c) => (
+          <div key={c.id} className="frost" style={{ padding: 12, borderRadius: 16, marginBottom: 8, display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 42, height: 42, borderRadius: 21, background: "linear-gradient(135deg,#5eead4,#2563eb)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>{c.ini}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{c.name}</div>
+              <div style={{ color: S, fontSize: 11 }}>{c.on ? "Online" : "Offline"}</div>
+            </div>
+            <T onClick={() => { (window as any).__toast?.("Calling " + c.name + "…"); }} style={{ width: 40, height: 40, borderRadius: 20, background: "rgba(94,234,212,0.18)", border: "1px solid rgba(94,234,212,0.35)", color: AC as any, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Ic n="Phone" s={18} />
+            </T>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
 function Sheets({ sheet, sheetData, closeSheet, chatId }: any) {
-  void chatId;
   return (
     <>
       <AddCardSheet open={sheet === "add-card"} onClose={closeSheet} />
