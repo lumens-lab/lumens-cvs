@@ -370,6 +370,7 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
 }
 
 function Sheets({ sheet, sheetData, closeSheet, chatId }: any) {
+  void chatId;
   return (
     <>
       <AddCardSheet open={sheet === "add-card"} onClose={closeSheet} />
