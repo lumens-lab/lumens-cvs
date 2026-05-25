@@ -57,10 +57,11 @@ type Tab =
   | "expenses"
   | "settings"
   | "chat"
+  | "call"
   | "find"
   | "profile";
 
-const CHAT_TABS: Tab[] = ["chat", "find", "profile"];
+const CHAT_TABS: Tab[] = ["chat", "call", "find", "profile"];
 const WALLET_TABS: Tab[] = ["wallet", "assets", "budget", "expenses", "settings"];
 const phaseOf = (t: Tab): "chat" | "wallet" => (CHAT_TABS.includes(t) ? "chat" : "wallet");
 
@@ -87,7 +88,7 @@ function HazelApp() {
     if (typeof document === "undefined") return;
     const t = state.settings.theme;
     const body = document.body;
-    ["theme-light", "theme-dark", "theme-hazel", "theme-peach"].forEach((c) => body.classList.remove(c));
+    ["theme-light", "theme-dark", "theme-hazel", "theme-peach", "theme-graphite", "theme-deepnavy"].forEach((c) => body.classList.remove(c));
     body.classList.add(`theme-${t}`);
   }, [state.settings.theme]);
 
@@ -135,8 +136,9 @@ function HazelApp() {
 
   if (!mounted) return <Shell>{null}</Shell>;
   if (authLoading) return <Shell>{null}</Shell>;
-  if (!user) return <AuthScreen />;
+  // Order: Welcome flow first, then Auth, then PIN unlock.
   if (!state.onboarded) return <WelcomeFlow onDone={() => { setUnlocked(true); }} />;
+  if (!user) return <AuthScreen />;
   if (state.pin && !unlocked) {
     return <PinLock onUnlock={() => { setUnlocked(true); if (pendingPhase) { setTab(pendingPhase); setPendingPhase(null); } }} />;
   }
@@ -218,6 +220,7 @@ function HazelApp() {
           openChat={(id: number) => { setChatId(id); setSub("chat-view"); }}
         />
       )}
+      {tab === "call" && <CallScreen />}
       {tab === "find" && <FindPeopleScreen onBack={() => setTab("chat")} />}
       {tab === "profile" && <ProfileScreen openSub={openSub} />}
 
@@ -247,6 +250,8 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
   const items: { id: Tab; icon: string; label: string }[] =
     phase === "chat"
       ? [
+          { id: "chat", icon: "MessageCircle", label: "Chat" },
+          { id: "call", icon: "Phone", label: "Call" },
           { id: "find", icon: "UserSearch", label: "Find" },
           { id: "profile", icon: "CircleUserRound", label: "Profile" },
         ]
