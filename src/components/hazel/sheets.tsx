@@ -21,7 +21,8 @@ export function AddCardSheet({ open, onClose }: any) {
     if (n.length < 13) return showToast('Enter a valid card number');
     if (!name.trim()) return showToast('Enter cardholder name');
     if (!/^\d{2}\/\d{2}$/.test(exp)) return showToast('Enter expiry as MM/YY');
-    set((s) => { s.cards = [...s.cards, { id: Date.now(), num: n, holder: name.trim().toUpperCase(), exp, theme }]; });
+    // Store only the last 4 digits — full PAN is never persisted to localStorage or backups.
+    set((s) => { s.cards = [...s.cards, { id: Date.now(), num: n.slice(-4), holder: name.trim().toUpperCase(), exp, theme }]; });
     setNum(''); setName(''); setExp(''); setCvv(''); setTheme(0);
     onClose(); showToast('Card added');
   };

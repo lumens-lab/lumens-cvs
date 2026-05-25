@@ -11,7 +11,7 @@ export function CardComp({ card, visible, preview, previewData, w = 320 }: {
   const theme = CARD_THEMES[preview ? (previewData?.theme ?? 0) : (card?.theme ?? 0)];
   const num = preview
     ? (previewData?.num ? fmtCard(previewData.num) : '•••• •••• •••• ••••')
-    : (visible ? fmtCard(card!.num) : '•••• •••• •••• ' + card!.num.slice(-4));
+    : (visible ? '•••• •••• •••• ' + card!.num.slice(-4) : '•••• •••• •••• ••••');
   const holder = preview ? (previewData?.holder || 'YOUR NAME') : card!.holder;
   const exp = preview ? (previewData?.exp || 'MM/YY') : card!.exp;
   return (
