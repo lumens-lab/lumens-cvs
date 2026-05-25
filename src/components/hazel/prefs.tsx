@@ -55,16 +55,19 @@ export function NotificationsScreen({ onBack }: { onBack: () => void }) {
 export function AppearanceScreen({ onBack }: { onBack: () => void }) {
   const { state, set } = useHazelStore();
   const theme = state.settings.theme;
-  const setTheme = (t: 'dark' | 'light' | 'hazel' | 'peach') => {
+  type Theme = 'dark' | 'light' | 'hazel' | 'peach' | 'graphite' | 'deepnavy';
+  const setTheme = (t: Theme) => {
     set((s) => { s.settings.theme = t; });
     showToast(`${t.charAt(0).toUpperCase() + t.slice(1)} theme`);
   };
 
-  const options: { id: 'dark' | 'light' | 'hazel' | 'peach'; label: string; desc: string; bg: string; ic: string; lightTxt?: boolean }[] = [
+  const options: { id: Theme; label: string; desc: string; bg: string; ic: string; lightTxt?: boolean }[] = [
     { id: 'dark', label: 'Navy & Blue', desc: 'Deep navy with brilliant blue', bg: 'linear-gradient(135deg,#001535,#052250)', ic: 'Moon' },
     { id: 'light', label: 'White & Blue', desc: 'Crisp white with brilliant blue', bg: 'linear-gradient(135deg,#ffffff,#dceaff)', ic: 'Sun', lightTxt: true },
     { id: 'hazel', label: 'Hazel & Teal', desc: '70% black with hazel + teal', bg: 'linear-gradient(135deg,#0a0a0a,#1a1a1a 60%,#2d1f17)', ic: 'Coffee' },
     { id: 'peach', label: 'Peach & White', desc: 'Soft gray with peach accents', bg: 'linear-gradient(135deg,#f5f5f5,#ffd2be)', ic: 'Sunrise', lightTxt: true },
+    { id: 'graphite', label: 'Graphite', desc: 'Premium charcoal with amber', bg: 'linear-gradient(135deg,#16181d,#1f2228 60%,#2a2418)', ic: 'Square' },
+    { id: 'deepnavy', label: 'Deep Navy', desc: 'Midnight blue with crystal cyan', bg: 'linear-gradient(135deg,#050b1f,#07142e 60%,#0a3a7a)', ic: 'Anchor' },
   ];
 
   return (
