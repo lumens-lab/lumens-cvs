@@ -44,8 +44,18 @@ export function HomeScreen({
             <T onClick={() => openSheet('add-card')} style={{ ...gl('rgba(94,234,212,0.08)', 10, { boxShadow: 'none', border: '1px solid rgba(94,234,212,0.2)' }), padding: '6px 10px', color: AC, fontSize: 11, fontWeight: 600 }}>+ Add</T>
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          {state.cards[0] && <CardComp card={state.cards[0]} visible={cardVis} w={340} />}
+        <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', gap: 12, scrollSnapType: 'x mandatory', margin: '0 -20px', padding: '0 20px 4px' }}>
+          {state.cards.length === 0 ? (
+            <div className="frost" style={{ width: 340, minHeight: 180, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', color: S, fontSize: 12, padding: 16, textAlign: 'center', flex: '0 0 auto', scrollSnapAlign: 'center' }}>
+              No cards yet — tap “+ Add” to add your first card.
+            </div>
+          ) : (
+            state.cards.map((c) => (
+              <div key={c.id} style={{ flex: '0 0 auto', scrollSnapAlign: 'center' }}>
+                <CardComp card={c} visible={cardVis} w={340} />
+              </div>
+            ))
+          )}
         </div>
       </div>
 
