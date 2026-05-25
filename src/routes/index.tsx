@@ -466,7 +466,7 @@ function CallScreen() {
   );
 }
 
-function Sheets({ sheet, sheetData, closeSheet, chatId }: any) {
+function Sheets({ sheet, sheetData, closeSheet, chatId, requirePin }: any) {
   return (
     <>
       <AddCardSheet open={sheet === "add-card"} onClose={closeSheet} />
@@ -475,6 +475,7 @@ function Sheets({ sheet, sheetData, closeSheet, chatId }: any) {
         onClose={closeSheet}
         fromChat={sheetData?.fromChat}
         recip={sheetData?.fromChat && chatId != null ? undefined : null}
+        requirePin={requirePin}
       />
       <MonthPickerSheet
         open={sheet === "month-picker"}
