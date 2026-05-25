@@ -37,6 +37,7 @@ import { NotificationsScreen, AppearanceScreen } from "@/components/hazel/prefs"
 import { useHazelStore } from "@/lib/hazel/store";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthScreen } from "@/components/hazel/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -78,12 +79,35 @@ type Sub =
 const { W, S, AC } = COLORS;
 
 function HazelApp() {
-  const { state } = useHazelStore();
+  const { state, set } = useHazelStore();
   const { user, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [pendingPhase, setPendingPhase] = useState<"wallet" | null>(null);
+  const [pinChallenge, setPinChallenge] = useState<null | { onOk: () => void; title?: string; subtitle?: string }>(null);
   useEffect(() => { setMounted(true); }, []);
+  // Populate profile from Supabase + signup metadata on auth.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const meta: any = user.user_metadata || {};
+      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+      if (cancelled) return;
+      set((s) => {
+        s.profile = {
+          name: data?.display_name || meta.full_name || meta.name || s.profile.name || "",
+          email: user.email || s.profile.email || "",
+          username: data?.username || s.profile.username || "",
+          phone: data?.phone || meta.phone || s.profile.phone || "",
+          dob: data?.dob || s.profile.dob || "",
+          avatar: data?.avatar_url || meta.avatar_url || s.profile.avatar || "",
+          cover: data?.cover_url || s.profile.cover || "",
+        };
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [user, set]);
   useEffect(() => {
     if (typeof document === "undefined") return;
     const t = state.settings.theme;
@@ -119,6 +143,19 @@ function HazelApp() {
   };
   const closeSub = () => setSub(null);
 
+  const requirePin = (onOk: () => void, title?: string, subtitle?: string) => {
+    if (!state.pin) return onOk();
+    setPinChallenge({ onOk, title, subtitle });
+  };
+
+  const guardedSetCardVis = (next: boolean) => {
+    if (next && state.pin && !cardVis) {
+      requirePin(() => setCardVis(true), "Reveal card details", "Enter PIN to view your card number");
+    } else {
+      setCardVis(next);
+    }
+  };
+
   const togglePhase = () => {
     const next = phaseOf(tab) === "chat" ? "wallet" : "chat";
     if (next === "wallet" && state.pin && !unlocked) { setPendingPhase("wallet"); return; }
@@ -141,6 +178,16 @@ function HazelApp() {
   if (!user) return <AuthScreen />;
   if (state.pin && !unlocked) {
     return <PinLock onUnlock={() => { setUnlocked(true); if (pendingPhase) { setTab(pendingPhase); setPendingPhase(null); } }} />;
+  }
+  if (pinChallenge) {
+    return (
+      <PinLock
+        title={pinChallenge.title}
+        subtitle={pinChallenge.subtitle}
+        onUnlock={() => { const fn = pinChallenge.onOk; setPinChallenge(null); fn(); }}
+        onCancel={() => setPinChallenge(null)}
+      />
+    );
   }
 
   if (sub === "edit-profile") return withNav(<EditProfileScreen onBack={closeSub} />);
@@ -165,7 +212,7 @@ function HazelApp() {
           onPickMonth={() => openSheet("month-picker", { monthKey: catCtx.monthKey, onPick: (k: string) => setCatCtx({ ...catCtx, monthKey: k }) })}
         />
         <BottomNav tab={tab} setTab={(t) => { setTab(t); setSub(null); }} togglePhase={togglePhase} />
-        <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} />
+        <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} requirePin={requirePin} />
       </Shell>
     );
 
@@ -177,7 +224,7 @@ function HazelApp() {
           onBack={() => { setSub(null); setChatId(null); }}
           onSendMoney={() => openSheet("send", { fromChat: true, chatId })}
         />
-        <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} />
+        <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} requirePin={requirePin} />
       </Shell>
     );
   }
@@ -190,14 +237,14 @@ function HazelApp() {
           openSheet={openSheet}
           openSub={openSub}
           cardVis={cardVis}
-          setCardVis={setCardVis}
+          setCardVis={guardedSetCardVis}
           txFilter={txFilter}
           setTxFilter={setTxFilter}
           greeting={greeting}
         />
       )}
       {tab === "assets" && (
-        <WalletScreen openSheet={openSheet} cardVis={cardVis} setCardVis={setCardVis} />
+        <WalletScreen openSheet={openSheet} cardVis={cardVis} setCardVis={guardedSetCardVis} />
       )}
       {tab === "budget" && (
         <BudgetScreen
@@ -225,7 +272,7 @@ function HazelApp() {
       {tab === "profile" && <ProfileScreen openSub={openSub} />}
 
       <BottomNav tab={tab} setTab={(t) => { setTab(t); setSub(null); }} togglePhase={togglePhase} />
-      <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} />
+      <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} requirePin={requirePin} />
     </Shell>
   );
 }
@@ -419,7 +466,7 @@ function CallScreen() {
   );
 }
 
-function Sheets({ sheet, sheetData, closeSheet, chatId }: any) {
+function Sheets({ sheet, sheetData, closeSheet, chatId, requirePin }: any) {
   return (
     <>
       <AddCardSheet open={sheet === "add-card"} onClose={closeSheet} />
@@ -428,6 +475,7 @@ function Sheets({ sheet, sheetData, closeSheet, chatId }: any) {
         onClose={closeSheet}
         fromChat={sheetData?.fromChat}
         recip={sheetData?.fromChat && chatId != null ? undefined : null}
+        requirePin={requirePin}
       />
       <MonthPickerSheet
         open={sheet === "month-picker"}
