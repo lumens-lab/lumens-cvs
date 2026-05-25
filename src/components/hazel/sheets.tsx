@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Ic, T, Av, gl, COLORS, Sheet, showToast } from './ui';
 import { CardComp } from './CardComp';
-import { CARD_THEMES, MONTHS, PAY_METHODS, SEARCH_USERS, GRAD_MAP } from '@/lib/hazel/data';
+import { CARD_THEMES, MONTHS, PAY_METHODS, GRAD_MAP } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
 import { ICON_LIBRARY, ICON_COLORS } from '@/lib/hazel/icons';
+import { supabase } from '@/integrations/supabase/client';
 
 const { W, S, S2, AC, GN, RD, BL, PP } = COLORS;
 
@@ -219,22 +220,75 @@ export function SendSheet({ open, onClose, fromChat, recip, onSent, requirePin }
 
 /* ── Find People ── */
 export function FindPeopleScreen({ onBack }: any) {
-  const { state, set } = useHazelStore();
+  const { set } = useHazelStore();
   const [q, setQ] = useState('');
-  const ci = new Set(state.contacts.map((c) => c.id));
-  const filtered = q ? SEARCH_USERS.filter((u) => !ci.has(u.id) && (u.name + u.email + u.ph + u.uid).toLowerCase().includes(q.toLowerCase())) : [];
-  const sendReq = (u: typeof SEARCH_USERS[0]) => {
-    set((s) => { s.pendingReqs = [...s.pendingReqs, { id: Date.now(), name: u.name, ini: u.ini, dir: 'sent' as const, g: u.g }]; });
-    showToast(`Request sent to ${u.name}`);
+  type Found = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
+  type Req = { id: string; from_user: string; to_user: string; name: string; ini: string; g: string; dir: 'sent'|'received' };
+  const [results, setResults] = useState<Found[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [reqs, setReqs] = useState<Req[]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const gs = Object.keys(GRAD_MAP);
+  const pickG = (seed: string) => gs[Math.abs(seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % gs.length];
+  const initials = (n: string) => n.split(' ').filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+
+  const loadReqs = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('contact_requests')
+      .select('id, from_user, to_user, status')
+      .eq('status', 'pending');
+    if (error || !data) return;
+    setReqs(data.map((r) => {
+      const isSent = r.from_user === user.id;
+      const other = isSent ? r.to_user : r.from_user;
+      const name = 'User ' + other.slice(0, 6);
+      return { id: r.id, from_user: r.from_user, to_user: r.to_user, name, ini: initials(name), g: pickG(other), dir: isSent ? 'sent' : 'received' };
+    }));
+  }, []);
+
+  useEffect(() => { loadReqs(); }, [loadReqs]);
+
+  useEffect(() => {
+    const term = q.trim();
+    if (term.length < 2) { setResults([]); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const { data, error } = await supabase.rpc('search_profiles', { q: term });
+      setSearching(false);
+      if (error) { showToast(error.message); return; }
+      setResults((data || []) as Found[]);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const sendReq = async (u: Found) => {
+    setBusy(u.id);
+    const { error } = await supabase.rpc('send_contact_request', { to_user_id: u.id });
+    setBusy(null);
+    if (error) return showToast(error.message);
+    showToast(`Request sent to ${u.display_name || u.username || 'user'}`);
+    setResults((r) => r.filter((x) => x.id !== u.id));
+    loadReqs();
   };
-  const accept = (name: string) => {
+  const accept = async (r: Req) => {
+    setBusy(r.id);
+    const { error } = await supabase.rpc('accept_contact_request', { request_id: r.id });
+    setBusy(null);
+    if (error) return showToast(error.message);
+    showToast(`${r.name} added to contacts`);
     set((s) => {
-      s.pendingReqs = s.pendingReqs.filter((r) => r.name !== name);
-      const gs = Object.keys(GRAD_MAP);
-      const rg = gs[Math.floor(Math.random() * gs.length)];
-      s.contacts = [...s.contacts, { id: Date.now() + Math.random(), name, ini: name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase(), ph: 'Added via request', g: rg, on: false }];
+      s.contacts = [...s.contacts, { id: Date.now() + Math.random(), name: r.name, ini: r.ini, ph: 'Confirmed contact', g: r.g, on: false }];
     });
-    showToast(`${name} added`);
+    loadReqs();
+  };
+  const decline = async (r: Req) => {
+    setBusy(r.id);
+    const { error } = await supabase.rpc('decline_contact_request', { request_id: r.id });
+    setBusy(null);
+    if (error) return showToast(error.message);
+    loadReqs();
   };
   return (
     <div className="afi" style={{ padding: '14px 20px 140px' }}>
@@ -246,36 +300,46 @@ export function FindPeopleScreen({ onBack }: any) {
         <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: S2 }}><Ic n="Search" s={16} /></div>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, email, phone, @username" style={{ width: '100%', padding: '12px 16px 12px 40px', ...gl(), color: W, fontSize: 13, outline: 'none', minHeight: 48 }} />
       </div>
-      {state.pendingReqs.length > 0 && (
+      {reqs.length > 0 && (
         <div style={{ marginBottom: 18 }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Pending Requests</div>
-          {state.pendingReqs.map((r) => (
+          {reqs.map((r) => (
             <div key={r.id} style={{ ...gl('rgba(255,255,255,0.04)', 14, { boxShadow: 'none' }), padding: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
               <Av ini={r.ini} g={r.g} sz={40} />
               <div style={{ flex: 1 }}>
                 <div style={{ color: W, fontSize: 13, fontWeight: 600 }}>{r.name}</div>
                 <div style={{ color: S, fontSize: 11 }}>{r.dir === 'sent' ? 'Request sent' : 'Wants to connect'}</div>
               </div>
-              {r.dir === 'received' && <T onClick={() => accept(r.name)} style={{ padding: '6px 12px', borderRadius: 10, background: AC, color: '#001535', fontSize: 11, fontWeight: 700, border: 'none' }}>Accept</T>}
+              {r.dir === 'received' && (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <T onClick={() => accept(r)} disabled={busy === r.id} style={{ padding: '6px 12px', borderRadius: 10, background: AC, color: '#001535', fontSize: 11, fontWeight: 700, border: 'none' }}>Accept</T>
+                  <T onClick={() => decline(r)} disabled={busy === r.id} style={{ padding: '6px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', color: W, fontSize: 11, fontWeight: 700, border: 'none' }}>Decline</T>
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
-      {q && (
+      {q.trim().length >= 2 && (
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Results</div>
-          {filtered.length === 0 ? (
-            <div style={{ ...gl(), padding: 20, textAlign: 'center', color: S }}>No results</div>
-          ) : filtered.map((u) => (
-            <div key={u.id} style={{ ...gl('rgba(255,255,255,0.04)', 14, { boxShadow: 'none' }), padding: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Av ini={u.ini} g={u.g} sz={40} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: W, fontSize: 13, fontWeight: 600 }}>{u.name}</div>
-                <div style={{ color: S, fontSize: 11 }}>{u.uid}</div>
+          {searching ? (
+            <div style={{ ...gl(), padding: 20, textAlign: 'center', color: S }}>Searching…</div>
+          ) : results.length === 0 ? (
+            <div style={{ ...gl(), padding: 20, textAlign: 'center', color: S }}>No users found</div>
+          ) : results.map((u) => {
+            const name = u.display_name || u.username || 'User';
+            return (
+              <div key={u.id} style={{ ...gl('rgba(255,255,255,0.04)', 14, { boxShadow: 'none' }), padding: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Av ini={initials(name)} g={pickG(u.id)} sz={40} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: W, fontSize: 13, fontWeight: 600 }}>{name}</div>
+                  <div style={{ color: S, fontSize: 11 }}>{u.username ? '@' + u.username : ''}</div>
+                </div>
+                <T onClick={() => sendReq(u)} disabled={busy === u.id} style={{ padding: '6px 12px', borderRadius: 10, background: 'rgba(94,234,212,0.15)', color: AC, fontSize: 11, fontWeight: 700, border: '1px solid rgba(94,234,212,0.3)' }}>{busy === u.id ? '…' : 'Connect'}</T>
               </div>
-              <T onClick={() => sendReq(u)} style={{ padding: '6px 12px', borderRadius: 10, background: 'rgba(94,234,212,0.15)', color: AC, fontSize: 11, fontWeight: 700, border: '1px solid rgba(94,234,212,0.3)' }}>Connect</T>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
