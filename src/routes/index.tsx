@@ -212,7 +212,7 @@ function HazelApp() {
           onPickMonth={() => openSheet("month-picker", { monthKey: catCtx.monthKey, onPick: (k: string) => setCatCtx({ ...catCtx, monthKey: k }) })}
         />
         <BottomNav tab={tab} setTab={(t) => { setTab(t); setSub(null); }} togglePhase={togglePhase} />
-        <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} />
+        <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} requirePin={requirePin} />
       </Shell>
     );
 
@@ -224,7 +224,7 @@ function HazelApp() {
           onBack={() => { setSub(null); setChatId(null); }}
           onSendMoney={() => openSheet("send", { fromChat: true, chatId })}
         />
-        <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} />
+        <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} requirePin={requirePin} />
       </Shell>
     );
   }
