@@ -4,7 +4,7 @@ import { lovable } from "@/integrations/lovable";
 import logo from "@/assets/lumens-logo.png";
 
 export function AuthScreen() {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -15,7 +15,13 @@ export function AuthScreen() {
     e.preventDefault();
     setBusy(true); setMsg(null);
     try {
-      if (mode === "signup") {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        setMsg("Check your email for a password reset link.");
+      } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email, password,
           options: {
@@ -64,16 +70,16 @@ export function AuthScreen() {
         boxShadow: "0 30px 60px rgba(30,64,175,0.25)",
       }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-          <img src={logo} alt="Lumens" style={{ height: 96, objectFit: "contain" }} />
+          <img src={logo} alt="Lumens" style={{ height: 156, objectFit: "contain" }} />
         </div>
         <h1 style={{ fontSize: 22, fontWeight: 800, textAlign: "center", color: "#0f1b3d", margin: "0 0 4px" }}>
-          {mode === "signup" ? "Create your account" : "Welcome back"}
+          {mode === "signup" ? "Create your account" : mode === "forgot" ? "Reset your password" : "Welcome back"}
         </h1>
         <p style={{ fontSize: 13, textAlign: "center", color: "#475569", margin: "0 0 20px" }}>
-          {mode === "signup" ? "Join Lumens in seconds." : "Sign in to continue."}
+          {mode === "signup" ? "Join Lumens in seconds." : mode === "forgot" ? "We'll email you a reset link." : "Sign in to continue."}
         </p>
 
-        <button
+        {mode !== "forgot" && <button
           type="button"
           onClick={google}
           disabled={busy}
@@ -87,9 +93,9 @@ export function AuthScreen() {
         >
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34.3 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.3l-6.3-5.3C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4 5.7l6.3 5.3C41.5 35.7 44 30.3 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
           Continue with Google
-        </button>
+        </button>}
 
-        <button
+        {mode !== "forgot" && <button
           type="button"
           onClick={apple}
           disabled={busy}
@@ -103,11 +109,11 @@ export function AuthScreen() {
         >
           <svg width="16" height="18" viewBox="0 0 384 512" fill="#ffffff" xmlns="http://www.w3.org/2000/svg"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zM256.6 84.5c30.1-35.7 27.4-68.2 26.5-79.9-26.6 1.5-57.4 18.1-74.9 38.5-19.3 21.9-30.6 49-28.2 78.6 28.8 2.2 55-12.6 76.6-37.2z"/></svg>
           Continue with Apple
-        </button>
+        </button>}
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0", color: "#94a3b8", fontSize: 11 }}>
+        {mode !== "forgot" && <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0", color: "#94a3b8", fontSize: 11 }}>
           <div style={{ flex: 1, height: 1, background: "#cbd5e1" }} /> OR <div style={{ flex: 1, height: 1, background: "#cbd5e1" }} />
-        </div>
+        </div>}
 
         <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {mode === "signup" && (
@@ -120,10 +126,21 @@ export function AuthScreen() {
             type="email" required placeholder="Email" value={email}
             onChange={(e) => setEmail(e.target.value)} style={inputStyle}
           />
-          <input
-            type="password" required placeholder="Password" minLength={6}
-            value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle}
-          />
+          {mode !== "forgot" && (
+            <input
+              type="password" required placeholder="Password" minLength={6}
+              value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle}
+            />
+          )}
+          {mode === "signin" && (
+            <button
+              type="button"
+              onClick={() => { setMode("forgot"); setMsg(null); }}
+              style={{ alignSelf: "flex-end", background: "none", border: "none", color: "#1e40af", fontWeight: 600, fontSize: 12, cursor: "pointer", padding: 0 }}
+            >
+              Forgot password?
+            </button>
+          )}
           <button
             type="submit" disabled={busy}
             style={{
@@ -133,7 +150,7 @@ export function AuthScreen() {
               boxShadow: "0 10px 24px rgba(30,64,175,0.35)",
             }}
           >
-            {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
+            {busy ? "Please wait…" : mode === "signup" ? "Create account" : mode === "forgot" ? "Send reset link" : "Sign in"}
           </button>
         </form>
 
@@ -141,6 +158,17 @@ export function AuthScreen() {
           <p style={{ fontSize: 12, color: "#0f1b3d", textAlign: "center", marginTop: 14 }}>{msg}</p>
         )}
 
+        {mode === "forgot" ? (
+          <p style={{ fontSize: 12, textAlign: "center", color: "#475569", marginTop: 18 }}>
+            <button
+              type="button"
+              onClick={() => { setMode("signin"); setMsg(null); }}
+              style={{ background: "none", border: "none", color: "#1e40af", fontWeight: 700, cursor: "pointer" }}
+            >
+              Back to sign in
+            </button>
+          </p>
+        ) : (
         <p style={{ fontSize: 12, textAlign: "center", color: "#475569", marginTop: 18 }}>
           {mode === "signup" ? "Already have an account?" : "New to Lumens?"}{" "}
           <button
@@ -151,6 +179,7 @@ export function AuthScreen() {
             {mode === "signup" ? "Sign in" : "Create account"}
           </button>
         </p>
+        )}
       </div>
     </div>
   );

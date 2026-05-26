@@ -27,7 +27,7 @@ export type Profile = {
   dob: string; // YYYY-MM-DD
   avatar?: string; cover?: string;
 };
-export type Contact = { id: number; name: string; ini: string; ph: string; g: string; on: boolean };
+export type Contact = { id: number; name: string; ini: string; ph: string; g: string; on: boolean; confirmed?: boolean };
 export type ChatMsg = {
   id: number;
   text?: string;
