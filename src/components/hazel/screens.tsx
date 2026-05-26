@@ -448,6 +448,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
   const [recording, setRecording] = useState(false);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [conv?.msgs?.length]);
   if (!ct) return null;
+  const canRichSend = ct.confirmed === true;
 
   const send = () => {
     if (!msg.trim()) return;
@@ -600,16 +601,22 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
       </div>
 
       <div style={{ padding: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,21,53,0.85)', backdropFilter: 'blur(20px)' }}>
+        {!canRichSend && (
+          <div style={{ marginBottom: 8, padding: '8px 12px', borderRadius: 12, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', color: '#fecaca', fontSize: 11, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Ic n="Lock" s={14} />
+            Both users must accept the request to share money, media and location.
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input ref={fileImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'image')} />
           <input ref={fileVidRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'video')} />
-          <T onClick={onSendMoney} aria-label="Send money" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
             <Ic n="DollarSign" s={16} />
           </T>
-          <T onClick={() => fileImgRef.current?.click()} aria-label="Attach photo" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <T onClick={() => fileImgRef.current?.click()} disabled={!canRichSend} aria-label="Attach photo" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
             <Ic n="ImagePlus" s={16} />
           </T>
-          <T onClick={() => fileVidRef.current?.click()} aria-label="Attach video" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <T onClick={() => fileVidRef.current?.click()} disabled={!canRichSend} aria-label="Attach video" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
             <Ic n="Video" s={16} />
           </T>
           <input
@@ -624,7 +631,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
               <Ic n="ArrowUp" s={18} />
             </T>
           ) : (
-            <T onClick={toggleRecord} aria-label={recording ? 'Stop recording' : 'Record voice note'} style={{ width: 44, height: 44, borderRadius: 22, background: recording ? '#ef4444' : AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: recording ? '0 0 0 4px rgba(239,68,68,0.25)' : 'none' }}>
+            <T onClick={toggleRecord} disabled={!canRichSend} aria-label={recording ? 'Stop recording' : 'Record voice note'} style={{ width: 44, height: 44, borderRadius: 22, background: recording ? '#ef4444' : AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: recording ? '0 0 0 4px rgba(239,68,68,0.25)' : 'none', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
               <Ic n={recording ? 'Square' : 'Mic'} s={18} />
             </T>
           )}
