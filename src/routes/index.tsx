@@ -268,7 +268,12 @@ function HazelApp() {
         />
       )}
       {tab === "call" && <CallScreen />}
-      {tab === "find" && <FindPeopleScreen onBack={() => setTab("chat")} />}
+      {tab === "find" && (
+        <FindPeopleScreen
+          onBack={() => setTab("chat")}
+          onOpenChat={(id: number) => { setChatId(id); setTab("chat"); setSub("chat-view"); }}
+        />
+      )}
       {tab === "profile" && <ProfileScreen openSub={openSub} />}
 
       <BottomNav tab={tab} setTab={(t) => { setTab(t); setSub(null); }} togglePhase={togglePhase} />
