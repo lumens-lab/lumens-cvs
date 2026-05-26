@@ -219,8 +219,8 @@ export function SendSheet({ open, onClose, fromChat, recip, onSent, requirePin }
 }
 
 /* ── Find People ── */
-export function FindPeopleScreen({ onBack }: any) {
-  const { set } = useHazelStore();
+export function FindPeopleScreen({ onBack, onOpenChat }: any) {
+  const { state, set } = useHazelStore();
   const [q, setQ] = useState('');
   type Found = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
   type Req = { id: string; from_user: string; to_user: string; name: string; ini: string; g: string; dir: 'sent'|'received' };
@@ -279,7 +279,7 @@ export function FindPeopleScreen({ onBack }: any) {
     if (error) return showToast(error.message);
     showToast(`${r.name} added to contacts`);
     set((s) => {
-      s.contacts = [...s.contacts, { id: Date.now() + Math.random(), name: r.name, ini: r.ini, ph: 'Confirmed contact', g: r.g, on: false }];
+      s.contacts = [...s.contacts, { id: Date.now() + Math.random(), name: r.name, ini: r.ini, ph: 'Confirmed contact', g: r.g, on: false, confirmed: true }];
     });
     loadReqs();
   };
@@ -342,6 +342,27 @@ export function FindPeopleScreen({ onBack }: any) {
           })}
         </div>
       )}
+      {(() => {
+        const confirmed = state.contacts.filter((c) => c.confirmed);
+        if (q.trim().length >= 2) return null;
+        return (
+          <div style={{ marginTop: 8 }}>
+            <div style={{ fontSize: 12, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your Contacts</div>
+            {confirmed.length === 0 ? (
+              <div style={{ ...gl(), padding: 20, textAlign: 'center', color: S, fontSize: 12 }}>No confirmed contacts yet. Search above to connect.</div>
+            ) : confirmed.map((c) => (
+              <T key={c.id} onClick={() => onOpenChat?.(c.id)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.04)', 14, { boxShadow: 'none' }), padding: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
+                <Av ini={c.ini} g={c.g} on={c.on} sz={40} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: W, fontSize: 13, fontWeight: 600 }}>{c.name}</div>
+                  <div style={{ color: S, fontSize: 11 }}>Tap to chat</div>
+                </div>
+                <Ic n="MessageCircle" s={16} c={AC as any} />
+              </T>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }
