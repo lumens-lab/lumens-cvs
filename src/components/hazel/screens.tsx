@@ -377,6 +377,11 @@ export function ChatScreen({ openSub, openChat }: any) {
       return ct && ct.name.toLowerCase().includes(f);
     });
   }, [q, state.conversations, state.contacts]);
+  const confirmedContacts = useMemo(() => {
+    const f = q.toLowerCase();
+    const convIds = new Set(state.conversations.map((c) => c.cid));
+    return state.contacts.filter((c) => c.confirmed && !convIds.has(c.id) && c.name.toLowerCase().includes(f));
+  }, [q, state.contacts, state.conversations]);
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -390,8 +395,8 @@ export function ChatScreen({ openSub, openChat }: any) {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search chats..." style={{ width: '100%', padding: '12px 16px 12px 40px', ...gl(), color: W, fontSize: 13, outline: 'none', minHeight: 48 }} />
       </div>
       <div>
-        {filtered.length === 0 ? (
-          <div style={{ ...gl(), padding: 24, textAlign: 'center', color: S }}>No chats found</div>
+        {filtered.length === 0 && confirmedContacts.length === 0 ? (
+          <div style={{ ...gl(), padding: 24, textAlign: 'center', color: S }}>No chats yet. Tap the + icon to find people.</div>
         ) : filtered.map((conv) => {
           const ct = state.contacts.find((x) => x.id === conv.cid);
           if (!ct) return null;
@@ -409,6 +414,21 @@ export function ChatScreen({ openSub, openChat }: any) {
             </T>
           );
         })}
+        {confirmedContacts.length > 0 && (
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontSize: 11, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Contacts</div>
+            {confirmedContacts.map((ct) => (
+              <T key={ct.id} onClick={() => openChat(ct.id)} active="rgba(255,255,255,0.06)" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'left' }}>
+                <Av ini={ct.ini} g={ct.g} on={ct.on} sz={42} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: W, fontSize: 14, fontWeight: 600 }}>{ct.name}</div>
+                  <div style={{ color: S, fontSize: 11 }}>Tap to start a chat</div>
+                </div>
+                <Ic n="MessageCircle" s={16} c={AC as any} />
+              </T>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
