@@ -38,6 +38,7 @@ import { useHazelStore } from "@/lib/hazel/store";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthScreen } from "@/components/hazel/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useChatSync } from "@/lib/hazel/chat-sync";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -123,7 +124,9 @@ function HazelApp() {
   const [cardVis, setCardVis] = useState(false);
   const [txFilter, setTxFilter] = useState("");
   const [chatId, setChatId] = useState<number | null>(null);
+  // legacy state above is replaced below
   const [catCtx, setCatCtx] = useState<{ catId: string; monthKey: string } | null>(null);
+  useChatSync(user?.id ?? null);
   const [expenseId, setExpenseId] = useState<number | null>(null);
 
   const greeting = useMemo(() => {
