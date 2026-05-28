@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useHazelStore, type Contact, type Conv, type ChatMsg } from './store';
+import { useHazelStore, type Contact, type Conv } from './store';
+import { GRAD_MAP } from './data';
 
-/** Avatar gradient palette keys used by Av component. */
-const GRADS = ['ocean', 'sunset', 'forest', 'royal', 'fire', 'mint', 'rose', 'cosmos'];
+const GRADS = Object.keys(GRAD_MAP);
 const pickG = (seed: string) => GRADS[Math.abs(seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % GRADS.length];
 const initials = (n: string) => n.split(' ').filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
 
