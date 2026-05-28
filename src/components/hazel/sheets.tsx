@@ -223,7 +223,7 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
   const { state, set } = useHazelStore();
   const [q, setQ] = useState('');
   type Found = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
-  type Req = { id: string; from_user: string; to_user: string; name: string; ini: string; g: string; dir: 'sent'|'received' };
+  type Req = { id: string; from_user: string; to_user: string; name: string; ini: string; g: string; dir: 'sent'|'received'; avatar?: string | null };
   const [results, setResults] = useState<Found[]>([]);
   const [searching, setSearching] = useState(false);
   const [reqs, setReqs] = useState<Req[]>([]);
@@ -233,18 +233,12 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
   const initials = (n: string) => n.split(' ').filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
 
   const loadReqs = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data, error } = await supabase
-      .from('contact_requests')
-      .select('id, from_user, to_user, status')
-      .eq('status', 'pending');
+    const { data, error } = await supabase.rpc('list_contact_requests');
     if (error || !data) return;
-    setReqs(data.map((r) => {
-      const isSent = r.from_user === user.id;
-      const other = isSent ? r.to_user : r.from_user;
-      const name = 'User ' + other.slice(0, 6);
-      return { id: r.id, from_user: r.from_user, to_user: r.to_user, name, ini: initials(name), g: pickG(other), dir: isSent ? 'sent' : 'received' };
+    setReqs((data as any[]).map((r) => {
+      const name = r.display_name || r.username || 'User';
+      const other = r.direction === 'sent' ? r.to_user : r.from_user;
+      return { id: r.id, from_user: r.from_user, to_user: r.to_user, name, ini: initials(name), g: pickG(other), dir: r.direction, avatar: r.avatar_url };
     }));
   }, []);
 
@@ -278,9 +272,7 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
     setBusy(null);
     if (error) return showToast(error.message);
     showToast(`${r.name} added to contacts`);
-    set((s) => {
-      s.contacts = [...s.contacts, { id: Date.now() + Math.random(), name: r.name, ini: r.ini, ph: 'Confirmed contact', g: r.g, on: false, confirmed: true }];
-    });
+    // chat-sync subscription on `contacts` will refresh the local list.
     loadReqs();
   };
   const decline = async (r: Req) => {

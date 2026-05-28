@@ -4,6 +4,7 @@ import { CardComp } from './CardComp';
 import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
+import { sendChatMessage } from '@/lib/hazel/chat-sync';
 
 const { W, S, S2, AC, GN, RD, BL, PP, AM } = COLORS;
 
@@ -452,26 +453,37 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
 
   const send = () => {
     if (!msg.trim()) return;
+    const text = msg.trim();
     const ts = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const tmpId = `tmp-${Date.now()}`;
     set((s) => {
       const cv = s.conversations.find((c) => c.cid === contactId);
+      const entry = { id: tmpId, text, sent: true, time: ts, pending: true };
       if (cv) {
-        cv.msgs.push({ id: cv.msgs.length + 1, text: msg, sent: true, time: ts });
-        cv.last = msg;
+        cv.msgs.push(entry);
+        cv.last = text;
         cv.time = 'Just now';
       } else {
-        s.conversations = [{ cid: contactId, last: msg, time: 'Just now', unread: 0, msgs: [{ id: 1, text: msg, sent: true, time: ts }] }, ...s.conversations];
+        s.conversations = [{ cid: contactId, last: text, time: 'Just now', unread: 0, msgs: [entry] }, ...s.conversations];
       }
     });
     setMsg('');
+    sendChatMessage(contactId, { text }).catch((e) => {
+      showToast(e?.message || 'Failed to send');
+      set((s) => {
+        const cv = s.conversations.find((c) => c.cid === contactId);
+        if (cv) cv.msgs = cv.msgs.filter((m) => m.id !== tmpId);
+      });
+    });
   };
 
   const pushMsg = (m: { type?: 'image' | 'video' | 'voice' | 'money'; text?: string; media?: string; dur?: number; amt?: number; cur?: string }) => {
     const ts = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const preview = m.type === 'image' ? '📷 Photo' : m.type === 'video' ? '🎬 Video' : m.type === 'voice' ? '🎙️ Voice note' : m.type === 'money' ? `💸 ${m.cur || ''}${m.amt ?? ''}` : (m.text ?? '');
+    const tmpId = `tmp-${Date.now()}`;
     set((s) => {
       const cv = s.conversations.find((c) => c.cid === contactId);
-      const preview = m.type === 'image' ? '📷 Photo' : m.type === 'video' ? '🎬 Video' : m.type === 'voice' ? '🎙️ Voice note' : (m.text ?? '');
-      const entry: any = { ...m, id: (cv?.msgs.length ?? 0) + 1, sent: true, time: ts };
+      const entry: any = { ...m, id: tmpId, sent: true, time: ts, pending: true };
       if (cv) {
         cv.msgs.push(entry);
         cv.last = preview;
@@ -479,6 +491,13 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
       } else {
         s.conversations = [{ cid: contactId, last: preview, time: 'Just now', unread: 0, msgs: [entry] }, ...s.conversations];
       }
+    });
+    sendChatMessage(contactId, m).catch((e) => {
+      showToast(e?.message || 'Failed to send');
+      set((s) => {
+        const cv = s.conversations.find((c) => c.cid === contactId);
+        if (cv) cv.msgs = cv.msgs.filter((mm) => mm.id !== tmpId);
+      });
     });
   };
 

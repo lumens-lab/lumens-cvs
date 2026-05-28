@@ -367,6 +367,33 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          device: string | null
+          id: string
+          subscription: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device?: string | null
+          id?: string
+          subscription: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device?: string | null
+          id?: string
+          subscription?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       txs: {
         Row: {
           amt: number
@@ -433,6 +460,24 @@ export type Database = {
       decline_contact_request: {
         Args: { request_id: string }
         Returns: undefined
+      }
+      get_or_create_conversation: {
+        Args: { other_user_id: string }
+        Returns: string
+      }
+      list_contact_requests: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          created_at: string
+          direction: string
+          display_name: string
+          from_user: string
+          id: string
+          status: string
+          to_user: string
+          username: string
+        }[]
       }
       search_profiles: {
         Args: { q: string }

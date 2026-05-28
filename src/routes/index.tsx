@@ -38,6 +38,7 @@ import { useHazelStore } from "@/lib/hazel/store";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthScreen } from "@/components/hazel/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useChatSync } from "@/lib/hazel/chat-sync";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -122,8 +123,9 @@ function HazelApp() {
   const [sheetData, setSheetData] = useState<any>(null);
   const [cardVis, setCardVis] = useState(false);
   const [txFilter, setTxFilter] = useState("");
-  const [chatId, setChatId] = useState<number | null>(null);
+  const [chatId, setChatId] = useState<string | null>(null);
   const [catCtx, setCatCtx] = useState<{ catId: string; monthKey: string } | null>(null);
+  useChatSync(user?.id ?? null);
   const [expenseId, setExpenseId] = useState<number | null>(null);
 
   const greeting = useMemo(() => {
@@ -264,14 +266,14 @@ function HazelApp() {
       {tab === "chat" && (
         <ChatScreen
           openSub={openSub}
-          openChat={(id: number) => { setChatId(id); setSub("chat-view"); }}
+          openChat={(id: string) => { setChatId(id); setSub("chat-view"); }}
         />
       )}
       {tab === "call" && <CallScreen />}
       {tab === "find" && (
         <FindPeopleScreen
           onBack={() => setTab("chat")}
-          onOpenChat={(id: number) => { setChatId(id); setTab("chat"); setSub("chat-view"); }}
+          onOpenChat={(id: string) => { setChatId(id); setTab("chat"); setSub("chat-view"); }}
         />
       )}
       {tab === "profile" && <ProfileScreen openSub={openSub} />}
