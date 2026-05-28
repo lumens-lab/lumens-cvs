@@ -123,8 +123,7 @@ function HazelApp() {
   const [sheetData, setSheetData] = useState<any>(null);
   const [cardVis, setCardVis] = useState(false);
   const [txFilter, setTxFilter] = useState("");
-  const [chatId, setChatId] = useState<number | null>(null);
-  // legacy state above is replaced below
+  const [chatId, setChatId] = useState<string | null>(null);
   const [catCtx, setCatCtx] = useState<{ catId: string; monthKey: string } | null>(null);
   useChatSync(user?.id ?? null);
   const [expenseId, setExpenseId] = useState<number | null>(null);
@@ -267,14 +266,14 @@ function HazelApp() {
       {tab === "chat" && (
         <ChatScreen
           openSub={openSub}
-          openChat={(id: number) => { setChatId(id); setSub("chat-view"); }}
+          openChat={(id: string) => { setChatId(id); setSub("chat-view"); }}
         />
       )}
       {tab === "call" && <CallScreen />}
       {tab === "find" && (
         <FindPeopleScreen
           onBack={() => setTab("chat")}
-          onOpenChat={(id: number) => { setChatId(id); setTab("chat"); setSub("chat-view"); }}
+          onOpenChat={(id: string) => { setChatId(id); setTab("chat"); setSub("chat-view"); }}
         />
       )}
       {tab === "profile" && <ProfileScreen openSub={openSub} />}
