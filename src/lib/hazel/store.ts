@@ -27,9 +27,9 @@ export type Profile = {
   dob: string; // YYYY-MM-DD
   avatar?: string; cover?: string;
 };
-export type Contact = { id: number; name: string; ini: string; ph: string; g: string; on: boolean; confirmed?: boolean };
+export type Contact = { id: string; name: string; ini: string; ph: string; g: string; on: boolean; confirmed?: boolean; avatar?: string };
 export type ChatMsg = {
-  id: number;
+  id: string;
   text?: string;
   type?: 'money' | 'image' | 'video' | 'voice';
   amt?: number;
@@ -40,9 +40,10 @@ export type ChatMsg = {
   dur?: number;
   sent: boolean;
   time: string;
+  pending?: boolean;
 };
-export type Conv = { cid: number; last: string; time: string; unread: number; msgs: ChatMsg[] };
-export type PendingReq = { id: number; name: string; ini: string; dir: 'sent'|'received'; g: string };
+export type Conv = { cid: string; convId?: string; last: string; time: string; unread: number; msgs: ChatMsg[] };
+export type PendingReq = { id: string; name: string; ini: string; dir: 'sent'|'received'; g: string };
 
 export type HazelState = {
   profile: Profile;
