@@ -221,7 +221,7 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
         orders={orders}
         sym={sym}
         onAdd={() => openSheet('add-debit-order')}
-        onEdit={(o) => openSheet('add-debit-order', { order: o })}
+        onEdit={(o: DebitOrder) => openSheet('add-debit-order', { order: o })}
       />
 
       {/* Categories */}
