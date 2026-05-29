@@ -4,7 +4,9 @@ import { CardComp } from './CardComp';
 import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
-import { sendChatMessage } from '@/lib/hazel/chat-sync';
+import { sendChatMessage, deleteChatMessage } from '@/lib/hazel/chat-sync';
+import { useDebitOrders, deleteDebitOrder, daysUntil, isDue, type DebitOrder } from '@/lib/hazel/debit-orders';
+import { useAuth } from '@/hooks/use-auth';
 
 const { W, S, S2, AC, GN, RD, BL, PP, AM } = COLORS;
 
@@ -121,6 +123,8 @@ export function HomeScreen({
 /* ── BUDGET (analytics) ── */
 export function BudgetScreen({ openSheet, openCatDetail }: any) {
   const { state, set } = useHazelStore();
+  const { user } = useAuth();
+  const { orders } = useDebitOrders(user?.id ?? null);
   const sym = getCurrencySym(state.settings.currency);
   const [monthKey, setMonthKey] = useState(() => {
     const d = new Date();
@@ -211,6 +215,14 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
           })}
         </div>
       </div>
+
+      {/* Debit Orders */}
+      <DebitOrdersBlock
+        orders={orders}
+        sym={sym}
+        onAdd={() => openSheet('add-debit-order')}
+        onEdit={(o: DebitOrder) => openSheet('add-debit-order', { order: o })}
+      />
 
       {/* Categories */}
       <div>
@@ -563,7 +575,24 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
 
       <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
         {conv?.msgs?.map((m) => (
-          <div key={m.id} style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
+          <div key={m.id} style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8, alignItems: 'flex-end', gap: 6 }}>
+            {m.sent && !m.pending && (
+              <T
+                aria-label="Delete message"
+                onClick={() => {
+                  if (!confirm('Delete this message?')) return;
+                  // Optimistic remove
+                  set((s) => {
+                    const cv = s.conversations.find((c) => c.cid === contactId);
+                    if (cv) cv.msgs = cv.msgs.filter((mm) => mm.id !== m.id);
+                  });
+                  deleteChatMessage(m.id).catch((e) => showToast(e?.message || 'Failed to delete'));
+                }}
+                style={{ width: 28, height: 28, borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(248,113,113,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.55 }}
+              >
+                <Ic n="Trash2" s={13} />
+              </T>
+            )}
             <div style={{ maxWidth: '78%' }}>
               {m.type === 'money' ? (
                 <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
@@ -730,6 +759,57 @@ function Row({ icon, label, value, last }: { icon: string; label: string; value:
         <div style={{ fontSize: 11, color: S }}>{label}</div>
         <div style={{ fontSize: 13, color: W, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</div>
       </div>
+    </div>
+  );
+}
+
+/* ── DEBIT ORDERS BLOCK ── */
+function DebitOrdersBlock({ orders, sym, onAdd, onEdit }: { orders: DebitOrder[]; sym: string; onAdd: () => void; onEdit: (o: DebitOrder) => void }) {
+  const due = orders.filter(isDue);
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: W, display: 'flex', alignItems: 'center', gap: 8 }}>
+          Debit Orders
+          {due.length > 0 && (
+            <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 999, background: 'rgba(251,191,36,0.18)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.35)' }}>
+              {due.length} due
+            </span>
+          )}
+        </div>
+        <T onClick={onAdd} style={{ fontSize: 12, color: AC, background: 'none', border: 'none', fontWeight: 600 }}>+ Add</T>
+      </div>
+      {orders.length === 0 ? (
+        <div style={{ ...gl('rgba(255,255,255,0.05)', 16), padding: 18, textAlign: 'center', color: S, fontSize: 12 }}>
+          No debit orders yet. Add your recurring debits to get reminders before they hit.
+        </div>
+      ) : (
+        orders.map((o) => {
+          const d = daysUntil(o);
+          const overdue = d < 0;
+          const soon = d >= 0 && d <= o.remind_days_before;
+          const tint = overdue ? '#f87171' : soon ? '#fbbf24' : '#5eead4';
+          return (
+            <T key={o.id} onClick={() => onEdit(o)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: tint + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Ic n="CalendarClock" s={18} c={tint} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ color: W, fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</span>
+                  <span style={{ color: W, fontSize: 13, fontWeight: 700 }}>{sym}{o.amount.toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: S }}>
+                  <span style={{ textTransform: 'capitalize' }}>{o.period}</span>
+                  <span style={{ color: tint, fontWeight: 700 }}>
+                    {overdue ? `Overdue ${Math.abs(d)}d` : d === 0 ? 'Today' : `in ${d}d · ${new Date(o.next_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                  </span>
+                </div>
+              </div>
+            </T>
+          );
+        })
+      )}
     </div>
   );
 }

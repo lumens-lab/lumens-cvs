@@ -86,6 +86,44 @@ export type Database = {
         }
         Relationships: []
       }
+      call_signals: {
+        Row: {
+          call_id: string
+          created_at: string
+          from_user: string
+          id: string
+          kind: string
+          payload: Json
+          to_user: string
+        }
+        Insert: {
+          call_id: string
+          created_at?: string
+          from_user: string
+          id?: string
+          kind: string
+          payload: Json
+          to_user: string
+        }
+        Update: {
+          call_id?: string
+          created_at?: string
+          from_user?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          to_user?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_signals_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calls: {
         Row: {
           callee_id: string
@@ -281,6 +319,51 @@ export type Database = {
           last_preview?: string | null
           user_a?: string
           user_b?: string
+        }
+        Relationships: []
+      }
+      debit_orders: {
+        Row: {
+          account_id: string | null
+          active: boolean
+          amount: number
+          category_slug: string | null
+          created_at: string
+          id: string
+          name: string
+          next_date: string
+          period: string
+          remind_days_before: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          active?: boolean
+          amount: number
+          category_slug?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          next_date: string
+          period?: string
+          remind_days_before?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          active?: boolean
+          amount?: number
+          category_slug?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          next_date?: string
+          period?: string
+          remind_days_before?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
