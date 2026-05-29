@@ -745,3 +745,54 @@ function Row({ icon, label, value, last }: { icon: string; label: string; value:
     </div>
   );
 }
+
+/* ── DEBIT ORDERS BLOCK ── */
+function DebitOrdersBlock({ orders, sym, onAdd, onEdit }: { orders: DebitOrder[]; sym: string; onAdd: () => void; onEdit: (o: DebitOrder) => void }) {
+  const due = orders.filter(isDue);
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: W, display: 'flex', alignItems: 'center', gap: 8 }}>
+          Debit Orders
+          {due.length > 0 && (
+            <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 999, background: 'rgba(251,191,36,0.18)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.35)' }}>
+              {due.length} due
+            </span>
+          )}
+        </div>
+        <T onClick={onAdd} style={{ fontSize: 12, color: AC, background: 'none', border: 'none', fontWeight: 600 }}>+ Add</T>
+      </div>
+      {orders.length === 0 ? (
+        <div style={{ ...gl('rgba(255,255,255,0.05)', 16), padding: 18, textAlign: 'center', color: S, fontSize: 12 }}>
+          No debit orders yet. Add your recurring debits to get reminders before they hit.
+        </div>
+      ) : (
+        orders.map((o) => {
+          const d = daysUntil(o);
+          const overdue = d < 0;
+          const soon = d >= 0 && d <= o.remind_days_before;
+          const tint = overdue ? '#f87171' : soon ? '#fbbf24' : '#5eead4';
+          return (
+            <T key={o.id} onClick={() => onEdit(o)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: tint + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Ic n="CalendarClock" s={18} c={tint} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ color: W, fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</span>
+                  <span style={{ color: W, fontSize: 13, fontWeight: 700 }}>{sym}{o.amount.toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: S }}>
+                  <span style={{ textTransform: 'capitalize' }}>{o.period}</span>
+                  <span style={{ color: tint, fontWeight: 700 }}>
+                    {overdue ? `Overdue ${Math.abs(d)}d` : d === 0 ? 'Today' : `in ${d}d · ${new Date(o.next_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                  </span>
+                </div>
+              </div>
+            </T>
+          );
+        })
+      )}
+    </div>
+  );
+}
