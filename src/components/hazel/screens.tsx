@@ -575,7 +575,24 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
 
       <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
         {conv?.msgs?.map((m) => (
-          <div key={m.id} style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
+          <div key={m.id} style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8, alignItems: 'flex-end', gap: 6 }}>
+            {m.sent && !m.pending && (
+              <T
+                aria-label="Delete message"
+                onClick={() => {
+                  if (!confirm('Delete this message?')) return;
+                  // Optimistic remove
+                  set((s) => {
+                    const cv = s.conversations.find((c) => c.cid === contactId);
+                    if (cv) cv.msgs = cv.msgs.filter((mm) => mm.id !== m.id);
+                  });
+                  deleteChatMessage(m.id).catch((e) => showToast(e?.message || 'Failed to delete'));
+                }}
+                style={{ width: 28, height: 28, borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(248,113,113,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.55 }}
+              >
+                <Ic n="Trash2" s={13} />
+              </T>
+            )}
             <div style={{ maxWidth: '78%' }}>
               {m.type === 'money' ? (
                 <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
