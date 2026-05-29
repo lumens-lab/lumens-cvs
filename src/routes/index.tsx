@@ -502,6 +502,7 @@ function Sheets({ sheet, sheetData, closeSheet, chatId, requirePin }: any) {
       <SwapSheet open={sheet === "swap"} onClose={closeSheet} />
       <ReceiveSheet open={sheet === "receive"} onClose={closeSheet} />
       <PaySheet open={sheet === "pay"} onClose={closeSheet} />
+      <AddDebitOrderSheet open={sheet === "add-debit-order"} onClose={closeSheet} order={sheetData?.order} />
     </>
   );
 }
