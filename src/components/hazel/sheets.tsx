@@ -5,6 +5,8 @@ import { CARD_THEMES, MONTHS, PAY_METHODS, GRAD_MAP } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
 import { ICON_LIBRARY, ICON_COLORS } from '@/lib/hazel/icons';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
+import { createDebitOrder, updateDebitOrder, deleteDebitOrder, type DebitOrder } from '@/lib/hazel/debit-orders';
 
 const { W, S, S2, AC, GN, RD, BL, PP } = COLORS;
 
