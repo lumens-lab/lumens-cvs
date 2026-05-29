@@ -123,6 +123,8 @@ export function HomeScreen({
 /* ── BUDGET (analytics) ── */
 export function BudgetScreen({ openSheet, openCatDetail }: any) {
   const { state, set } = useHazelStore();
+  const { user } = useAuth();
+  const { orders } = useDebitOrders(user?.id ?? null);
   const sym = getCurrencySym(state.settings.currency);
   const [monthKey, setMonthKey] = useState(() => {
     const d = new Date();
@@ -213,6 +215,14 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
           })}
         </div>
       </div>
+
+      {/* Debit Orders */}
+      <DebitOrdersBlock
+        orders={orders}
+        sym={sym}
+        onAdd={() => openSheet('add-debit-order')}
+        onEdit={(o) => openSheet('add-debit-order', { order: o })}
+      />
 
       {/* Categories */}
       <div>
