@@ -18,6 +18,7 @@ import {
   AddCatSheet,
   FindPeopleScreen,
   EditProfileScreen,
+  AddDebitOrderSheet,
 } from "@/components/hazel/sheets";
 import {
   SettingsRoot,
