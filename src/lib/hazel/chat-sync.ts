@@ -131,6 +131,22 @@ export function useChatSync(userId: string | null) {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, (payload) => {
         applyIncoming(payload.new as any, userId, set);
       })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload) => {
+        const old: any = payload.old || {};
+        // Only act if this user is a party
+        if (old.sender_id !== userId && old.recipient_id !== userId) return;
+        set((s) => {
+          for (const cv of s.conversations) {
+            const before = cv.msgs.length;
+            cv.msgs = cv.msgs.filter((m) => m.id !== old.id);
+            if (cv.msgs.length !== before) {
+              const last = cv.msgs[cv.msgs.length - 1];
+              if (last) cv.last = last.text || (last.type === 'image' ? '📷 Photo' : last.type === 'video' ? '🎬 Video' : last.type === 'voice' ? '🎙️ Voice note' : last.type === 'money' ? '💸 Money' : '');
+              else cv.last = '';
+            }
+          }
+        });
+      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'contacts', filter: `user_id=eq.${userId}` }, () => { loadAll(); })
       .subscribe();
 
@@ -194,4 +210,10 @@ export async function sendChatMessage(otherUserId: string, payload: { text?: str
   if (me) throw me;
   await supabase.from('conversations').update({ last_preview: preview.slice(0, 200), last_at: new Date().toISOString() }).eq('id', convId as string);
   return convId as string;
+}
+
+/** Delete one of your own messages. RLS allows only the sender to delete. */
+export async function deleteChatMessage(messageId: string): Promise<void> {
+  const { error } = await supabase.from('messages').delete().eq('id', messageId);
+  if (error) throw error;
 }
