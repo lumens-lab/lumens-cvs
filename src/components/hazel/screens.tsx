@@ -4,7 +4,9 @@ import { CardComp } from './CardComp';
 import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
-import { sendChatMessage } from '@/lib/hazel/chat-sync';
+import { sendChatMessage, deleteChatMessage } from '@/lib/hazel/chat-sync';
+import { useDebitOrders, deleteDebitOrder, daysUntil, isDue, type DebitOrder } from '@/lib/hazel/debit-orders';
+import { useAuth } from '@/hooks/use-auth';
 
 const { W, S, S2, AC, GN, RD, BL, PP, AM } = COLORS;
 
