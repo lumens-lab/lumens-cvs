@@ -40,6 +40,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AuthScreen } from "@/components/hazel/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useChatSync } from "@/lib/hazel/chat-sync";
+import { useCalls } from "@/lib/hazel/calls";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -270,7 +271,7 @@ function HazelApp() {
           openChat={(id: string) => { setChatId(id); setSub("chat-view"); }}
         />
       )}
-      {tab === "call" && <CallScreen />}
+      {tab === "call" && <CallScreen userId={user?.id ?? null} />}
       {tab === "find" && (
         <FindPeopleScreen
           onBack={() => setTab("chat")}
