@@ -438,3 +438,120 @@ export const inp: React.CSSProperties = {
   background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
   color: '#fff', fontSize: 14, outline: 'none', minHeight: 46,
 };
+
+/* ── Add / Edit Debit Order ── */
+export function AddDebitOrderSheet({ open, onClose, order }: { open: boolean; onClose: () => void; order?: DebitOrder }) {
+  const { user } = useAuth();
+  const { state } = useHazelStore();
+  const editing = !!order;
+  const today = new Date().toISOString().slice(0, 10);
+  const [name, setName] = useState(order?.name ?? '');
+  const [amount, setAmount] = useState(order ? String(order.amount) : '');
+  const [period, setPeriod] = useState<DebitOrder['period']>(order?.period ?? 'monthly');
+  const [categorySlug, setCategorySlug] = useState<string>(order?.category_slug ?? '');
+  const [accountId, setAccountId] = useState<string>(order?.account_id ?? '');
+  const [nextDate, setNextDate] = useState(order?.next_date ?? today);
+  const [remind, setRemind] = useState(order?.remind_days_before ?? 1);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setName(order?.name ?? '');
+    setAmount(order ? String(order.amount) : '');
+    setPeriod(order?.period ?? 'monthly');
+    setCategorySlug(order?.category_slug ?? '');
+    setAccountId(order?.account_id ?? '');
+    setNextDate(order?.next_date ?? today);
+    setRemind(order?.remind_days_before ?? 1);
+  }, [open, order, today]);
+
+  const save = async () => {
+    if (!user) return showToast('Sign in first');
+    const n = parseFloat(amount);
+    if (!name.trim()) return showToast('Name required');
+    if (!n || n <= 0) return showToast('Enter a valid amount');
+    if (!nextDate) return showToast('Pick a date');
+    setBusy(true);
+    try {
+      const payload = {
+        name: name.trim(),
+        amount: n,
+        period,
+        category_slug: categorySlug || null,
+        account_id: accountId || null,
+        next_date: nextDate,
+        remind_days_before: Math.max(0, Math.min(30, Number(remind) || 0)),
+        active: true,
+      };
+      if (editing && order) await updateDebitOrder(order.id, payload);
+      else await createDebitOrder(user.id, payload);
+      showToast(editing ? 'Debit order updated' : 'Debit order added');
+      onClose();
+    } catch (e: any) {
+      showToast(e?.message || 'Failed to save');
+    } finally { setBusy(false); }
+  };
+
+  const remove = async () => {
+    if (!order || !confirm('Delete this debit order?')) return;
+    setBusy(true);
+    try { await deleteDebitOrder(order.id); showToast('Removed'); onClose(); }
+    catch (e: any) { showToast(e?.message || 'Failed to delete'); }
+    finally { setBusy(false); }
+  };
+
+  const periods: DebitOrder['period'][] = ['weekly', 'monthly', 'quarterly', 'yearly'];
+
+  return (
+    <Sheet open={open} onClose={onClose} title={editing ? 'Edit Debit Order' : 'New Debit Order'}>
+      <div style={{ marginTop: 4 }}>
+        <Field label="Name">
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Netflix" style={inp} />
+        </Field>
+        <Field label="Amount">
+          <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" style={inp} />
+        </Field>
+        <Field label="Period">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6 }}>
+            {periods.map((p) => (
+              <T key={p} onClick={() => setPeriod(p)} style={{ padding: '10px 0', borderRadius: 12, background: period === p ? 'rgba(94,234,212,0.15)' : 'rgba(255,255,255,0.05)', border: period === p ? '1px solid rgba(94,234,212,0.3)' : '1px solid transparent', color: period === p ? AC : S, fontSize: 11, fontWeight: 700, textTransform: 'capitalize' }}>{p}</T>
+            ))}
+          </div>
+        </Field>
+        <Field label="Next debit date">
+          <input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} style={inp} />
+        </Field>
+        <Field label="Category">
+          <select value={categorySlug} onChange={(e) => setCategorySlug(e.target.value)} style={{ ...inp, appearance: 'none' }}>
+            <option value="" style={{ color: '#000' }}>None</option>
+            {state.expenseCats.map((c) => (
+              <option key={c.id} value={c.id} style={{ color: '#000' }}>{c.name}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Account">
+          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} style={{ ...inp, appearance: 'none' }}>
+            <option value="" style={{ color: '#000' }}>Default</option>
+            {state.accounts.map((a) => (
+              <option key={a.id} value={String(a.id)} style={{ color: '#000' }}>{a.name}{a.number ? ` · ${a.number}` : ''}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label={`Remind me (${remind} day${remind === 1 ? '' : 's'} before)`}>
+          <input type="range" min={0} max={14} value={remind} onChange={(e) => setRemind(Number(e.target.value))} style={{ width: '100%' }} />
+        </Field>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+          {editing && (
+            <T disabled={busy} onClick={remove} style={{ flex: 0, padding: '14px 18px', borderRadius: 16, background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.3)', color: RD, fontSize: 14, fontWeight: 700 }}>
+              <Ic n="Trash2" s={16} />
+            </T>
+          )}
+          <T disabled={busy} onClick={save} style={{ flex: 1, padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800 }}>
+            {busy ? 'Saving…' : editing ? 'Save changes' : 'Add Debit Order'}
+          </T>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
