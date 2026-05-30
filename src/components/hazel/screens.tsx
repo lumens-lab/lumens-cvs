@@ -32,6 +32,8 @@ export function HomeScreen({
   goAnalytics, openSheet, openSub, cardVis, setCardVis, txFilter, setTxFilter, greeting,
 }: any) {
   const { state } = useHazelStore();
+  const { user } = useAuth();
+  const { wallet, refresh: refreshWallet } = useDomicileWallet(user?.id ?? null, state.settings?.currency);
   const sym = getCurrencySym(state.settings?.currency ?? 'ZAR');
   const pName = state.profile?.name ?? 'Welcome';
   const filteredTx = useMemo(() => {
@@ -41,6 +43,10 @@ export function HomeScreen({
 
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
+      {/* Brand wordmark */}
+      <div style={{ marginBottom: 14, display: 'flex', justifyContent: 'flex-start' }}>
+        <LumensWordmark height={26} />
+      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
@@ -50,6 +56,20 @@ export function HomeScreen({
           <Av ini={pName.split(' ').map((w) => w[0] || '').join('').slice(0, 2)} src={state.profile?.avatar} sz={44} />
         </T>
       </div>
+
+      {/* Domicile multi-currency wallet */}
+      <DomicileWalletTile
+        wallet={wallet}
+        sym={sym}
+        onSend={() => openSheet('send', { fromWallet: true })}
+        onDeposit={async () => {
+          try {
+            await depositToWallet(50);
+            await refreshWallet();
+            showToast(`Deposited ${sym}50.00`);
+          } catch (e: any) { showToast(e?.message || 'Deposit failed'); }
+        }}
+      />
 
       {/* Cards */}
       <div style={{ marginBottom: 24 }}>
