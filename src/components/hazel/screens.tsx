@@ -430,6 +430,9 @@ export function ChatScreen({ openSub, openChat }: any) {
   }, [q, state.contacts, state.conversations]);
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
+      <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
+        <LumensWordmark height={22} />
+      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
         <T onClick={() => openSub('find-people')} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: S }}>
@@ -601,9 +604,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
           <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{ct.name}</div>
           <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? 'Online' : 'Offline'}</div>
         </div>
-        <T onClick={onSendMoney} aria-label="Send money" style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--brilliant-blue, #2563eb)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(37,99,235,0.5)' }}>
-          <Ic n="Send" s={18} />
-        </T>
+        {/* Per spec: top-right Send Money in chat header was moved to the wallet's domicile tile. */}
       </div>
 
       <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
