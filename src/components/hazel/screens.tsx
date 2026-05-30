@@ -7,6 +7,19 @@ import { useHazelStore } from '@/lib/hazel/store';
 import { sendChatMessage, deleteChatMessage } from '@/lib/hazel/chat-sync';
 import { useDebitOrders, deleteDebitOrder, daysUntil, isDue, type DebitOrder } from '@/lib/hazel/debit-orders';
 import { useAuth } from '@/hooks/use-auth';
+import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel/wallet';
+import lumensWordmark from '@/assets/lumens-wordmark.png';
+
+export function LumensWordmark({ height = 22 }: { height?: number }) {
+  return (
+    <img
+      src={lumensWordmark}
+      alt="Lumens"
+      height={height}
+      style={{ height, width: 'auto', display: 'block' }}
+    />
+  );
+}
 
 const { W, S, S2, AC, GN, RD, BL, PP, AM } = COLORS;
 
@@ -19,6 +32,8 @@ export function HomeScreen({
   goAnalytics, openSheet, openSub, cardVis, setCardVis, txFilter, setTxFilter, greeting,
 }: any) {
   const { state } = useHazelStore();
+  const { user } = useAuth();
+  const { wallet, refresh: refreshWallet } = useDomicileWallet(user?.id ?? null, state.settings?.currency);
   const sym = getCurrencySym(state.settings?.currency ?? 'ZAR');
   const pName = state.profile?.name ?? 'Welcome';
   const filteredTx = useMemo(() => {
@@ -28,6 +43,10 @@ export function HomeScreen({
 
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
+      {/* Brand wordmark */}
+      <div style={{ marginBottom: 14, display: 'flex', justifyContent: 'flex-start' }}>
+        <LumensWordmark height={26} />
+      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
@@ -37,6 +56,20 @@ export function HomeScreen({
           <Av ini={pName.split(' ').map((w) => w[0] || '').join('').slice(0, 2)} src={state.profile?.avatar} sz={44} />
         </T>
       </div>
+
+      {/* Domicile multi-currency wallet */}
+      <DomicileWalletTile
+        wallet={wallet}
+        sym={sym}
+        onSend={() => openSheet('send', { fromWallet: true })}
+        onDeposit={async () => {
+          try {
+            await depositToWallet(50);
+            await refreshWallet();
+            showToast(`Deposited ${sym}50.00`);
+          } catch (e: any) { showToast(e?.message || 'Deposit failed'); }
+        }}
+      />
 
       {/* Cards */}
       <div style={{ marginBottom: 24 }}>
@@ -397,6 +430,9 @@ export function ChatScreen({ openSub, openChat }: any) {
   }, [q, state.contacts, state.conversations]);
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
+      <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
+        <LumensWordmark height={22} />
+      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
         <T onClick={() => openSub('find-people')} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: S }}>
@@ -568,9 +604,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
           <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{ct.name}</div>
           <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? 'Online' : 'Offline'}</div>
         </div>
-        <T onClick={onSendMoney} aria-label="Send money" style={{ width: 44, height: 44, borderRadius: 14, background: 'var(--brilliant-blue, #2563eb)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(37,99,235,0.5)' }}>
-          <Ic n="Send" s={18} />
-        </T>
+        {/* Per spec: top-right Send Money in chat header was moved to the wallet's domicile tile. */}
       </div>
 
       <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
@@ -810,6 +844,82 @@ function DebitOrdersBlock({ orders, sym, onAdd, onEdit }: { orders: DebitOrder[]
           );
         })
       )}
+    </div>
+  );
+}
+/* ── DOMICILE WALLET TILE (glassmorphic Send + Deposit) ── */
+function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; sym: string; onSend: () => void; onDeposit: () => void }) {
+  return (
+    <div
+      style={{
+        marginBottom: 22,
+        padding: 18,
+        borderRadius: 22,
+        background: 'linear-gradient(135deg, rgba(94,234,212,0.10), rgba(96,165,250,0.08))',
+        border: '1px solid rgba(255,255,255,0.14)',
+        backdropFilter: 'blur(22px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(160%)',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.10)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Domicile Wallet</div>
+          <div style={{ fontSize: 26, color: '#fff', fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
+            {sym}{Number(wallet?.balance ?? 0).toFixed(2)}
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 6, letterSpacing: '0.18em', fontVariantNumeric: 'tabular-nums' }}>
+            {wallet ? formatWalletUid(wallet.wallet_uid) : '•••• •••• •••• ••••'}
+          </div>
+        </div>
+        <div style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.10)', color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em' }}>
+          {wallet?.currency || 'ZAR'}
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <T
+          onClick={onSend}
+          style={{
+            padding: '14px 12px',
+            borderRadius: 18,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))',
+            border: '1px solid rgba(255,255,255,0.18)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
+          }}
+        >
+          <Ic n="Send" s={16} c="#5eead4" /> Send
+        </T>
+        <T
+          onClick={onDeposit}
+          style={{
+            padding: '14px 12px',
+            borderRadius: 18,
+            background: 'linear-gradient(135deg, rgba(94,234,212,0.22), rgba(96,165,250,0.10))',
+            border: '1px solid rgba(94,234,212,0.30)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
+          }}
+        >
+          <Ic n="Download" s={16} c="#5eead4" /> Deposit
+        </T>
+      </div>
     </div>
   );
 }

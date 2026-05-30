@@ -33,7 +33,7 @@ export function CardComp({ card, visible, preview, previewData, w = 320 }: {
         borderRadius: '50%', background: 'rgba(255,255,255,0.05)',
       }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.18em', opacity: 0.85 }}>HAZELPAY</div>
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.18em', opacity: 0.85 }}>LUMENS</div>
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', opacity: 0.7 }}>CARD</div>
       </div>
       <div style={{ fontSize: 19, letterSpacing: '0.12em', fontWeight: 600, fontVariantNumeric: 'tabular-nums', position: 'relative' }}>

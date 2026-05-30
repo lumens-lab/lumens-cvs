@@ -64,7 +64,7 @@
 
 :root {
   --radius: 1rem;
-  /* HazelPay deep-navy palette */
+  /* Lumens deep-navy palette */
   --background: oklch(0.18 0.06 260);
   --foreground: oklch(0.98 0.005 247);
   --card: oklch(0.22 0.06 260);

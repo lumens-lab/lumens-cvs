@@ -41,6 +41,7 @@ import { AuthScreen } from "@/components/hazel/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useChatSync } from "@/lib/hazel/chat-sync";
 import { useCalls } from "@/lib/hazel/calls";
+import { subscribeToPush } from "@/lib/hazel/push";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -128,6 +129,14 @@ function HazelApp() {
   const [chatId, setChatId] = useState<string | null>(null);
   const [catCtx, setCatCtx] = useState<{ catId: string; monthKey: string } | null>(null);
   useChatSync(user?.id ?? null);
+  // Best-effort push subscription registration. Silently no-ops without
+  // service worker support or notification permission.
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!state.settings?.notifications?.chat && !state.settings?.notifications?.transactions) return;
+    const t = setTimeout(() => { subscribeToPush(user.id); }, 1500);
+    return () => clearTimeout(t);
+  }, [user?.id, state.settings?.notifications?.chat, state.settings?.notifications?.transactions]);
   const [expenseId, setExpenseId] = useState<number | null>(null);
 
   const greeting = useMemo(() => {
