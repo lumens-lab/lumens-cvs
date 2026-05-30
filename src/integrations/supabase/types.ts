@@ -367,6 +367,36 @@ export type Database = {
         }
         Relationships: []
       }
+      domicile_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          user_id: string
+          wallet_uid: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          wallet_uid: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          wallet_uid?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           ciphertext: string
@@ -544,9 +574,28 @@ export type Database = {
         Args: { request_id: string }
         Returns: undefined
       }
+      gen_wallet_uid: { Args: never; Returns: string }
       get_or_create_conversation: {
         Args: { other_user_id: string }
         Returns: string
+      }
+      get_or_create_domicile_wallet: {
+        Args: { preferred_currency?: string }
+        Returns: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          user_id: string
+          wallet_uid: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "domicile_wallets"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       list_contact_requests: {
         Args: never
