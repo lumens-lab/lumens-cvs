@@ -846,3 +846,79 @@ function DebitOrdersBlock({ orders, sym, onAdd, onEdit }: { orders: DebitOrder[]
     </div>
   );
 }
+/* ── DOMICILE WALLET TILE (glassmorphic Send + Deposit) ── */
+function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; sym: string; onSend: () => void; onDeposit: () => void }) {
+  return (
+    <div
+      style={{
+        marginBottom: 22,
+        padding: 18,
+        borderRadius: 22,
+        background: 'linear-gradient(135deg, rgba(94,234,212,0.10), rgba(96,165,250,0.08))',
+        border: '1px solid rgba(255,255,255,0.14)',
+        backdropFilter: 'blur(22px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(160%)',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.10)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Domicile Wallet</div>
+          <div style={{ fontSize: 26, color: '#fff', fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
+            {sym}{Number(wallet?.balance ?? 0).toFixed(2)}
+          </div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 6, letterSpacing: '0.18em', fontVariantNumeric: 'tabular-nums' }}>
+            {wallet ? formatWalletUid(wallet.wallet_uid) : '•••• •••• •••• ••••'}
+          </div>
+        </div>
+        <div style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.10)', color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em' }}>
+          {wallet?.currency || 'ZAR'}
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <T
+          onClick={onSend}
+          style={{
+            padding: '14px 12px',
+            borderRadius: 18,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06))',
+            border: '1px solid rgba(255,255,255,0.18)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
+          }}
+        >
+          <Ic n="Send" s={16} c="#5eead4" /> Send
+        </T>
+        <T
+          onClick={onDeposit}
+          style={{
+            padding: '14px 12px',
+            borderRadius: 18,
+            background: 'linear-gradient(135deg, rgba(94,234,212,0.22), rgba(96,165,250,0.10))',
+            border: '1px solid rgba(94,234,212,0.30)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 13,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
+          }}
+        >
+          <Ic n="Download" s={16} c="#5eead4" /> Deposit
+        </T>
+      </div>
+    </div>
+  );
+}
