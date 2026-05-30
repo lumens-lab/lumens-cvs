@@ -41,12 +41,15 @@ export async function subscribeToPush(userId: string | null): Promise<boolean> {
 
     const json = sub.toJSON();
     const device = navigator.userAgent.slice(0, 200);
+    // Replace any previous subscription for this device, then insert.
     await supabase
       .from('push_subscriptions')
-      .upsert(
-        { user_id: userId, subscription: json as any, device },
-        { onConflict: 'user_id,device' as any },
-      );
+      .delete()
+      .eq('user_id', userId)
+      .eq('device', device);
+    await supabase
+      .from('push_subscriptions')
+      .insert({ user_id: userId, subscription: json as any, device });
     return true;
   } catch (e) {
     console.warn('[push] subscribe failed', e);
