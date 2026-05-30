@@ -7,6 +7,19 @@ import { useHazelStore } from '@/lib/hazel/store';
 import { sendChatMessage, deleteChatMessage } from '@/lib/hazel/chat-sync';
 import { useDebitOrders, deleteDebitOrder, daysUntil, isDue, type DebitOrder } from '@/lib/hazel/debit-orders';
 import { useAuth } from '@/hooks/use-auth';
+import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel/wallet';
+import lumensWordmark from '@/assets/lumens-wordmark.png';
+
+export function LumensWordmark({ height = 22 }: { height?: number }) {
+  return (
+    <img
+      src={lumensWordmark}
+      alt="Lumens"
+      height={height}
+      style={{ height, width: 'auto', display: 'block' }}
+    />
+  );
+}
 
 const { W, S, S2, AC, GN, RD, BL, PP, AM } = COLORS;
 

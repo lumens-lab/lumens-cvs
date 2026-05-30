@@ -395,16 +395,26 @@ export function EditProfileScreen({ onBack }: any) {
       {/* Cover with edit */}
       <div style={{ height: 160, background: cover ? `url(${cover}) center/cover` : 'linear-gradient(135deg,#0a2858,#143a82,#2563eb)', position: 'relative' }}>
         <T onClick={onBack} style={{ position: 'absolute', top: 14, left: 14, width: 40, height: 40, borderRadius: 14, background: 'rgba(0,0,0,0.4)', color: W, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}><Ic n="ChevronLeft" s={20} /></T>
-        <T onClick={() => cvRef.current?.click()} style={{ position: 'absolute', top: 14, right: 14, padding: '8px 12px', borderRadius: 12, background: 'rgba(0,0,0,0.4)', color: W, border: 'none', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, backdropFilter: 'blur(8px)' }}><Ic n="Camera" s={14} /> Cover</T>
+        <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', gap: 8 }}>
+          <T onClick={() => cvRef.current?.click()} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(0,0,0,0.4)', color: W, border: 'none', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, backdropFilter: 'blur(8px)' }}><Ic n="Camera" s={14} /> {cover ? 'Change' : 'Cover'}</T>
+          {cover && (
+            <T onClick={() => setCover('')} aria-label="Remove cover" style={{ width: 36, height: 36, borderRadius: 12, background: 'rgba(0,0,0,0.4)', color: '#fecaca', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}><Ic n="Trash2" s={14} /></T>
+          )}
+        </div>
         <input ref={cvRef} type="file" accept="image/*" hidden onChange={() => pickFile(cvRef, setCover)} />
       </div>
       <div style={{ padding: '0 20px' }}>
         <div style={{ marginTop: -48, display: 'flex', alignItems: 'flex-end', gap: 14 }}>
           <div style={{ position: 'relative' }}>
             <Av ini={name.split(' ').map((w) => w[0]).join('').slice(0, 2)} src={avatar} sz={96} />
-            <T onClick={() => avRef.current?.click()} style={{ position: 'absolute', bottom: 0, right: 0, width: 32, height: 32, borderRadius: 16, background: AC, color: '#001535', border: '3px solid #001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <T onClick={() => avRef.current?.click()} aria-label="Change avatar" style={{ position: 'absolute', bottom: 0, right: 0, width: 32, height: 32, borderRadius: 16, background: AC, color: '#001535', border: '3px solid #001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Ic n="Camera" s={14} />
             </T>
+            {avatar && (
+              <T onClick={() => setAvatar('')} aria-label="Remove avatar" style={{ position: 'absolute', top: 0, right: 0, width: 28, height: 28, borderRadius: 14, background: '#001535', color: '#fecaca', border: '2px solid #001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Ic n="X" s={12} />
+              </T>
+            )}
             <input ref={avRef} type="file" accept="image/*" hidden onChange={() => pickFile(avRef, setAvatar)} />
           </div>
           <div style={{ flex: 1, paddingBottom: 8 }}>
