@@ -495,6 +495,11 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
   const fileVidRef = useRef<HTMLInputElement>(null);
   const recRef = useRef<{ rec: MediaRecorder; chunks: Blob[]; start: number } | null>(null);
   const [recording, setRecording] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [actionFor, setActionFor] = useState<string | null>(null); // msg id with action popover open
+  const [replyTo, setReplyTo] = useState<{ id: string; preview: string } | null>(null);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [conv?.msgs?.length]);
   if (!ct) return null;
   const canRichSend = ct.confirmed === true;
