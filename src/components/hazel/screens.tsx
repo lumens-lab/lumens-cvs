@@ -4,13 +4,13 @@ import { CardComp } from './CardComp';
 import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
-import { sendChatMessage, deleteChatMessage } from '@/lib/hazel/chat-sync';
+import { sendChatMessage, deleteChatMessage, fetchContactProfile } from '@/lib/hazel/chat-sync';
 import { useDebitOrders, deleteDebitOrder, daysUntil, isDue, type DebitOrder } from '@/lib/hazel/debit-orders';
 import { useAuth } from '@/hooks/use-auth';
 import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel/wallet';
 import lumensWordmark from '@/assets/lumens-wordmark.png';
 
-export function LumensWordmark({ height = 22 }: { height?: number }) {
+export function LumensWordmark({ height = 100 }: { height?: number }) {
   return (
     <img
       src={lumensWordmark}
