@@ -650,25 +650,24 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
 
       <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
         {conv?.msgs?.map((m) => (
-          <div key={m.id} style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8, alignItems: 'flex-end', gap: 6 }}>
-            {m.sent && !m.pending && (
-              <T
-                aria-label="Delete message"
-                onClick={() => {
-                  if (!confirm('Delete this message?')) return;
-                  // Optimistic remove
-                  set((s) => {
-                    const cv = s.conversations.find((c) => c.cid === contactId);
-                    if (cv) cv.msgs = cv.msgs.filter((mm) => mm.id !== m.id);
-                  });
-                  deleteChatMessage(m.id).catch((e) => showToast(e?.message || 'Failed to delete'));
-                }}
-                style={{ width: 28, height: 28, borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(248,113,113,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.55 }}
-              >
-                <Ic n="Trash2" s={13} />
-              </T>
-            )}
-            <div style={{ maxWidth: '78%' }}>
+          <div
+            key={m.id}
+            onContextMenu={(e) => { e.preventDefault(); setActionFor(m.id); }}
+            onTouchStart={() => {
+              if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+              pressTimerRef.current = setTimeout(() => setActionFor(m.id), 500);
+            }}
+            onTouchEnd={() => { if (pressTimerRef.current) clearTimeout(pressTimerRef.current); }}
+            onTouchMove={() => { if (pressTimerRef.current) clearTimeout(pressTimerRef.current); }}
+            onMouseDown={() => {
+              if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+              pressTimerRef.current = setTimeout(() => setActionFor(m.id), 500);
+            }}
+            onMouseUp={() => { if (pressTimerRef.current) clearTimeout(pressTimerRef.current); }}
+            onMouseLeave={() => { if (pressTimerRef.current) clearTimeout(pressTimerRef.current); }}
+            style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8, alignItems: 'flex-end', gap: 6, position: 'relative' }}
+          >
+            <div style={{ maxWidth: '78%', position: 'relative' }}>
               {m.type === 'money' ? (
                 <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
@@ -687,19 +686,11 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
                   <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4, letterSpacing: '-0.02em' }}>{getCurrencySym(m.cur || state.settings?.currency || 'ZAR')}{(m.amt ?? 0).toFixed(2)}</div>
                 </div>
               ) : m.type === 'image' && m.media ? (
-                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ padding: 4, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', overflow: 'hidden' }}>
-                  <img src={m.media} alt="attachment" style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16, objectFit: 'cover' }} />
-                </div>
+                <MediaBubble sent={m.sent} kind="image" src={m.media} filename={`lumens-${m.id}.jpg`} />
               ) : m.type === 'video' && m.media ? (
-                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ padding: 4, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', overflow: 'hidden' }}>
-                  <video src={m.media} controls style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16 }} />
-                </div>
+                <MediaBubble sent={m.sent} kind="video" src={m.media} filename={`lumens-${m.id}.mp4`} />
               ) : m.type === 'voice' && m.media ? (
-                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', background: m.sent ? 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))' : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))', boxShadow: '0 6px 22px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
-                  <Ic n="Mic" s={16} />
-                  <audio src={m.media} controls style={{ height: 32 }} />
-                  {m.dur ? <span style={{ fontSize: 11, opacity: 0.7 }}>{m.dur}s</span> : null}
-                </div>
+                <MediaBubble sent={m.sent} kind="voice" src={m.media} dur={m.dur} filename={`lumens-${m.id}.webm`} />
               ) : (
                 <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
@@ -717,6 +708,30 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
                 }}>{m.text}</div>
               )}
               <div style={{ fontSize: 10, color: S2, marginTop: 4, textAlign: m.sent ? 'right' : 'left' }}>{m.time}</div>
+              {actionFor === m.id && (
+                <MessageActions
+                  sent={!!m.sent}
+                  canDelete={!!m.sent && !m.pending}
+                  canCopy={!!m.text}
+                  onClose={() => setActionFor(null)}
+                  onCopy={async () => {
+                    try { await navigator.clipboard.writeText(m.text || ''); showToast('Copied'); }
+                    catch { showToast('Copy failed'); }
+                  }}
+                  onReply={() => {
+                    const prev = m.text || (m.type === 'image' ? '📷 Photo' : m.type === 'video' ? '🎬 Video' : m.type === 'voice' ? '🎙️ Voice note' : '');
+                    setReplyTo({ id: m.id, preview: prev.slice(0, 80) });
+                  }}
+                  onForward={() => showToast('Forward: pick contact (coming soon)')}
+                  onDelete={() => {
+                    set((s) => {
+                      const cv = s.conversations.find((c) => c.cid === contactId);
+                      if (cv) cv.msgs = cv.msgs.filter((mm) => mm.id !== m.id);
+                    });
+                    deleteChatMessage(m.id).catch((e) => showToast(e?.message || 'Failed to delete'));
+                  }}
+                />
+              )}
             </div>
           </div>
         ))}
@@ -730,25 +745,34 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
             Both users must accept the request to share money, media and location.
           </div>
         )}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {replyTo && (
+          <div style={{ marginBottom: 8, padding: '8px 12px', borderRadius: 12, background: 'rgba(94,234,212,0.08)', border: '1px solid rgba(94,234,212,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 3, height: 28, background: AC, borderRadius: 2 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 10, color: AC, fontWeight: 700 }}>Replying to</div>
+              <div style={{ color: W, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyTo.preview}</div>
+            </div>
+            <T onClick={() => setReplyTo(null)} style={{ width: 26, height: 26, borderRadius: 13, background: 'rgba(255,255,255,0.08)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Ic n="X" s={14} />
+            </T>
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <input ref={fileImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'image')} />
           <input ref={fileVidRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'video')} />
-          <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
-            <Ic n="DollarSign" s={16} />
-          </T>
-          <T onClick={() => fileImgRef.current?.click()} disabled={!canRichSend} aria-label="Attach photo" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
-            <Ic n="ImagePlus" s={16} />
-          </T>
-          <T onClick={() => fileVidRef.current?.click()} disabled={!canRichSend} aria-label="Attach video" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
-            <Ic n="Video" s={16} />
-          </T>
           <input
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && send()}
             placeholder="Type a message..."
-            style={{ flex: 1, padding: '11px 16px', ...gl('rgba(255,255,255,0.07)', 24, { boxShadow: 'none' }), color: W, fontSize: 14, outline: 'none', minHeight: 44, minWidth: 0 }}
+            style={{ flex: 1, padding: '12px 18px', ...gl('rgba(255,255,255,0.07)', 24, { boxShadow: 'none' }), color: W, fontSize: 15, outline: 'none', minHeight: 46, minWidth: 0 }}
           />
+          <T onClick={() => fileImgRef.current?.click()} disabled={!canRichSend} aria-label="Attach photo" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
+            <Ic n="ImagePlus" s={16} />
+          </T>
+          <T onClick={() => fileVidRef.current?.click()} disabled={!canRichSend} aria-label="Attach video" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
+            <Ic n="Film" s={16} />
+          </T>
           {msg.trim() ? (
             <T onClick={send} aria-label="Send" style={{ width: 44, height: 44, borderRadius: 22, background: AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Ic n="ArrowUp" s={18} />
@@ -761,6 +785,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
         </div>
         {recording && <div style={{ marginTop: 8, fontSize: 11, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: 4, background: '#ef4444', animation: 'pulse 1s infinite' }} /> Recording…</div>}
       </div>
+      {profileOpen && <ContactProfileSheet contactId={contactId} fallback={ct} onClose={() => setProfileOpen(false)} />}
     </div>
   );
 }
