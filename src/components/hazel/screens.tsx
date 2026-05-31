@@ -989,3 +989,141 @@ function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; s
     </div>
   );
 }
+
+/* ── Message long-press action popover ── */
+function MessageActions({ sent, canDelete, canCopy, onClose, onCopy, onReply, onForward, onDelete }: {
+  sent: boolean; canDelete: boolean; canCopy: boolean;
+  onClose: () => void; onCopy: () => void; onReply: () => void; onForward: () => void; onDelete: () => void;
+}) {
+  useEffect(() => {
+    const fn = () => onClose();
+    window.addEventListener('click', fn);
+    return () => window.removeEventListener('click', fn);
+  }, [onClose]);
+  const items: { icon: string; label: string; fn: () => void; danger?: boolean; show: boolean }[] = [
+    { icon: 'Copy', label: 'Copy', fn: onCopy, show: canCopy },
+    { icon: 'Reply', label: 'Reply', fn: onReply, show: true },
+    { icon: 'Forward', label: 'Forward', fn: onForward, show: true },
+    { icon: 'Trash2', label: 'Delete', fn: onDelete, danger: true, show: canDelete },
+  ];
+  return (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        position: 'absolute',
+        bottom: 'calc(100% + 6px)',
+        [sent ? 'right' : 'left']: 0,
+        zIndex: 20,
+        minWidth: 150,
+        ...gl('rgba(8,28,68,0.96)', 14),
+        padding: 4,
+        animation: 'pulse .18s ease',
+      }}
+    >
+      {items.filter((i) => i.show).map((it) => (
+        <T key={it.label} onClick={() => { it.fn(); onClose(); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'none', border: 'none', color: it.danger ? COLORS.RD : COLORS.W, fontSize: 13, fontWeight: 600, textAlign: 'left', borderRadius: 10 }}>
+          <Ic n={it.icon} s={15} c={(it.danger ? COLORS.RD : COLORS.AC) as any} />
+          {it.label}
+        </T>
+      ))}
+    </div>
+  );
+}
+
+/* ── Media bubble with download + share controls ── */
+function MediaBubble({ sent, kind, src, dur, filename }: { sent: boolean; kind: 'image' | 'video' | 'voice'; src: string; dur?: number; filename: string }) {
+  const download = () => {
+    const a = document.createElement('a');
+    a.href = src; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  const share = async () => {
+    try {
+      if ((navigator as any).share) {
+        // Try Web Share with file when possible
+        try {
+          const r = await fetch(src);
+          const blob = await r.blob();
+          const file = new File([blob], filename, { type: blob.type });
+          if ((navigator as any).canShare?.({ files: [file] })) {
+            await (navigator as any).share({ files: [file] });
+            return;
+          }
+        } catch {}
+        await (navigator as any).share({ title: 'Lumens', url: src });
+      } else {
+        await navigator.clipboard.writeText(src);
+        showToast('Link copied');
+      }
+    } catch {}
+  };
+  const bg = sent
+    ? 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))'
+    : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))';
+  return (
+    <div className={`chat-bubble ${sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ padding: kind === 'voice' ? '10px 14px' : 4, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', overflow: 'hidden', background: kind === 'voice' ? bg : undefined, position: 'relative' }}>
+      {kind === 'image' && <img src={src} alt="attachment" style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16, objectFit: 'cover' }} />}
+      {kind === 'video' && <video src={src} controls style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16 }} />}
+      {kind === 'voice' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#fff' }}>
+          <Ic n="Mic" s={16} />
+          <audio src={src} controls style={{ height: 32 }} />
+          {dur ? <span style={{ fontSize: 11, opacity: 0.7 }}>{dur}s</span> : null}
+        </div>
+      )}
+      <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 4 }}>
+        <T onClick={download} aria-label="Download" style={{ width: 28, height: 28, borderRadius: 14, background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Ic n="Download" s={13} />
+        </T>
+        <T onClick={share} aria-label="Share" style={{ width: 28, height: 28, borderRadius: 14, background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Ic n="Share2" s={13} />
+        </T>
+      </div>
+    </div>
+  );
+}
+
+/* ── Contact profile sheet (cover, avatar, bio fields) ── */
+function ContactProfileSheet({ contactId, fallback, onClose }: { contactId: string; fallback: any; onClose: () => void }) {
+  const [p, setP] = useState<any>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetchContactProfile(contactId).then((row) => { if (!cancelled) setP(row); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [contactId]);
+  const name = p?.display_name || fallback?.name || 'Contact';
+  const username = p?.username || '';
+  const avatar = p?.avatar_url || fallback?.avatar;
+  const cover = p?.cover_url;
+  const phone = p?.phone || '';
+  const dobDate = p?.dob ? new Date(p.dob) : null;
+  const dobShown = dobDate ? dobDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : '';
+  const ini = name.split(' ').filter(Boolean).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, maxHeight: '88vh', overflowY: 'auto', background: '#001535', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 24, animation: 'pulse .22s ease' }}>
+        <div style={{ height: 160, background: cover ? `url(${cover}) center/cover` : 'linear-gradient(135deg,#0a2858,#143a82,#2563eb)' }} />
+        <div style={{ padding: '0 20px' }}>
+          <div style={{ marginTop: -48, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            <Av ini={ini} src={avatar} sz={96} />
+            <T onClick={onClose} style={{ width: 36, height: 36, borderRadius: 18, background: 'rgba(255,255,255,0.1)', border: 'none', color: COLORS.W, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <Ic n="X" s={16} />
+            </T>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <div style={{ color: COLORS.W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>{name}</div>
+            {username && <div style={{ color: COLORS.S, fontSize: 13 }}>@{username}</div>}
+          </div>
+          <div style={{ ...gl('rgba(255,255,255,0.05)', 16), padding: 14, marginTop: 18 }}>
+            {phone && <Row icon="Phone" label="Phone" value={phone} />}
+            {dobShown && <Row icon="Cake" label="Birthday" value={dobShown} last={!username} />}
+            {username && <Row icon="AtSign" label="Username" value={'@' + username} last />}
+            {!phone && !dobShown && !username && (
+              <div style={{ color: COLORS.S, fontSize: 12, textAlign: 'center', padding: 8 }}>No additional details shared.</div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
