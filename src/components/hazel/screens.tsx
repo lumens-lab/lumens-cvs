@@ -430,8 +430,8 @@ export function ChatScreen({ openSub, openChat }: any) {
   }, [q, state.contacts, state.conversations]);
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
-      <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
-        <LumensWordmark height={22} />
+      <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'flex-start', marginLeft: -8 }}>
+        <LumensWordmark height={100} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
