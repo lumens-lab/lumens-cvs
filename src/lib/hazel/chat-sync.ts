@@ -148,10 +148,63 @@ export function useChatSync(userId: string | null) {
         });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'contacts', filter: `user_id=eq.${userId}` }, () => { loadAll(); })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+        const p = payload.new as any;
+        if (!p?.id) return;
+        set((s) => {
+          const c = s.contacts.find((x) => x.id === p.id);
+          if (c) {
+            const name = p.display_name || p.username || c.name;
+            c.name = name;
+            c.ini = name.split(' ').filter(Boolean).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+            c.avatar = p.avatar_url || undefined;
+            c.ph = p.username ? '@' + p.username : c.ph;
+          }
+        });
+      })
       .subscribe();
 
-    return () => { cancelled = true; supabase.removeChannel(channel); };
+    // 5) presence: broadcast my online state and track others
+    const presence = supabase.channel('presence:lumens', {
+      config: { presence: { key: userId } },
+    });
+    const applyPresence = () => {
+      const st = presence.presenceState() as Record<string, unknown[]>;
+      const onlineIds = new Set(Object.keys(st));
+      set((s) => {
+        s.contacts.forEach((c) => { c.on = onlineIds.has(c.id); });
+      });
+    };
+    presence
+      .on('presence', { event: 'sync' }, applyPresence)
+      .on('presence', { event: 'join' }, applyPresence)
+      .on('presence', { event: 'leave' }, applyPresence)
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presence.track({ online_at: new Date().toISOString() });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+      supabase.removeChannel(presence);
+    };
   }, [userId, set]);
+}
+
+/** Fetch a single contact's public profile (display_name, username, avatar, cover, dob, phone). */
+export async function fetchContactProfile(userId: string) {
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, display_name, username, avatar_url, cover_url, dob, phone')
+    .eq('id', userId)
+    .maybeSingle();
+  return data as null | {
+    id: string; display_name: string | null; username: string | null;
+    avatar_url: string | null; cover_url: string | null;
+    dob: string | null; phone: string | null;
+  };
 }
 
 function applyIncoming(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
