@@ -4,13 +4,13 @@ import { CardComp } from './CardComp';
 import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
-import { sendChatMessage, deleteChatMessage } from '@/lib/hazel/chat-sync';
+import { sendChatMessage, deleteChatMessage, fetchContactProfile } from '@/lib/hazel/chat-sync';
 import { useDebitOrders, deleteDebitOrder, daysUntil, isDue, type DebitOrder } from '@/lib/hazel/debit-orders';
 import { useAuth } from '@/hooks/use-auth';
 import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel/wallet';
 import lumensWordmark from '@/assets/lumens-wordmark.png';
 
-export function LumensWordmark({ height = 22 }: { height?: number }) {
+export function LumensWordmark({ height = 100 }: { height?: number }) {
   return (
     <img
       src={lumensWordmark}
@@ -44,8 +44,8 @@ export function HomeScreen({
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       {/* Brand wordmark */}
-      <div style={{ marginBottom: 14, display: 'flex', justifyContent: 'flex-start' }}>
-        <LumensWordmark height={26} />
+      <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'flex-start', marginLeft: -8 }}>
+        <LumensWordmark height={100} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
@@ -430,8 +430,8 @@ export function ChatScreen({ openSub, openChat }: any) {
   }, [q, state.contacts, state.conversations]);
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
-      <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
-        <LumensWordmark height={22} />
+      <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'flex-start', marginLeft: -8 }}>
+        <LumensWordmark height={100} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
@@ -495,6 +495,11 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
   const fileVidRef = useRef<HTMLInputElement>(null);
   const recRef = useRef<{ rec: MediaRecorder; chunks: Blob[]; start: number } | null>(null);
   const [recording, setRecording] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [actionFor, setActionFor] = useState<string | null>(null); // msg id with action popover open
+  const [replyTo, setReplyTo] = useState<{ id: string; preview: string } | null>(null);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [conv?.msgs?.length]);
   if (!ct) return null;
   const canRichSend = ct.confirmed === true;
@@ -595,39 +600,74 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
 
   return (
     <div className="afi" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,21,53,0.85)', backdropFilter: 'blur(20px)' }}>
-        <T onClick={onBack} active="rgba(255,255,255,0.1)" style={{ padding: 10, background: 'none', border: 'none', color: W, borderRadius: 14, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,21,53,0.85)', backdropFilter: 'blur(20px)' }}>
+        <T onClick={onBack} active="rgba(255,255,255,0.1)" style={{ padding: 10, background: 'none', border: 'none', color: W, borderRadius: 14, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="ChevronLeft" s={20} />
         </T>
-        <Av ini={ct.ini} g={ct.g} on={ct.on} sz={40} />
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <T onClick={() => setProfileOpen(true)} aria-label="View contact profile" style={{ background: 'none', border: 'none', padding: 0, borderRadius: 22 }}>
+          <Av ini={ct.ini} g={ct.g} on={ct.on} sz={40} src={ct.avatar} />
+        </T>
+        <T onClick={() => setProfileOpen(true)} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', textAlign: 'left', padding: '4px 6px' }}>
           <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{ct.name}</div>
-          <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? 'Online' : 'Offline'}</div>
+          <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? '● Online' : 'Offline'}</div>
+        </T>
+        <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(94,234,212,0.12)', border: '1px solid rgba(94,234,212,0.25)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4 }}>
+          <Ic n="DollarSign" s={16} />
+        </T>
+        <T onClick={() => setMenuOpen((v) => !v)} aria-label="More actions" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Ic n="MoreVertical" s={18} />
+        </T>
+        {/* 3-dot dropdown */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 60,
+            right: 12,
+            zIndex: 30,
+            minWidth: 200,
+            ...gl('rgba(8,28,68,0.95)', 16),
+            padding: 6,
+            transformOrigin: 'top right',
+            transform: menuOpen ? 'translateY(0) scaleY(1)' : 'translateY(-8px) scaleY(0.85)',
+            opacity: menuOpen ? 1 : 0,
+            pointerEvents: menuOpen ? 'auto' : 'none',
+            transition: 'opacity .18s ease, transform .22s cubic-bezier(.2,.9,.3,1.2)',
+          }}
+        >
+          {[
+            { icon: 'Video', label: 'Video call', fn: () => { setMenuOpen(false); showToast('Calling…'); }, disabled: !canRichSend },
+            { icon: 'ImagePlus', label: 'Attach picture', fn: () => { setMenuOpen(false); fileImgRef.current?.click(); }, disabled: !canRichSend },
+            { icon: 'Film', label: 'Attach video', fn: () => { setMenuOpen(false); fileVidRef.current?.click(); }, disabled: !canRichSend },
+            { icon: 'UserCircle2', label: 'View profile', fn: () => { setMenuOpen(false); setProfileOpen(true); } },
+          ].map((it) => (
+            <T key={it.label} onClick={it.fn} disabled={it.disabled} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'none', border: 'none', color: W, fontSize: 13, fontWeight: 600, textAlign: 'left', borderRadius: 10, opacity: it.disabled ? 0.4 : 1 }}>
+              <Ic n={it.icon} s={16} c={AC as any} />
+              {it.label}
+            </T>
+          ))}
         </div>
-        {/* Per spec: top-right Send Money in chat header was moved to the wallet's domicile tile. */}
       </div>
 
       <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
         {conv?.msgs?.map((m) => (
-          <div key={m.id} style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8, alignItems: 'flex-end', gap: 6 }}>
-            {m.sent && !m.pending && (
-              <T
-                aria-label="Delete message"
-                onClick={() => {
-                  if (!confirm('Delete this message?')) return;
-                  // Optimistic remove
-                  set((s) => {
-                    const cv = s.conversations.find((c) => c.cid === contactId);
-                    if (cv) cv.msgs = cv.msgs.filter((mm) => mm.id !== m.id);
-                  });
-                  deleteChatMessage(m.id).catch((e) => showToast(e?.message || 'Failed to delete'));
-                }}
-                style={{ width: 28, height: 28, borderRadius: 14, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(248,113,113,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.55 }}
-              >
-                <Ic n="Trash2" s={13} />
-              </T>
-            )}
-            <div style={{ maxWidth: '78%' }}>
+          <div
+            key={m.id}
+            onContextMenu={(e) => { e.preventDefault(); setActionFor(m.id); }}
+            onTouchStart={() => {
+              if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+              pressTimerRef.current = setTimeout(() => setActionFor(m.id), 500);
+            }}
+            onTouchEnd={() => { if (pressTimerRef.current) clearTimeout(pressTimerRef.current); }}
+            onTouchMove={() => { if (pressTimerRef.current) clearTimeout(pressTimerRef.current); }}
+            onMouseDown={() => {
+              if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+              pressTimerRef.current = setTimeout(() => setActionFor(m.id), 500);
+            }}
+            onMouseUp={() => { if (pressTimerRef.current) clearTimeout(pressTimerRef.current); }}
+            onMouseLeave={() => { if (pressTimerRef.current) clearTimeout(pressTimerRef.current); }}
+            style={{ display: 'flex', justifyContent: m.sent ? 'flex-end' : 'flex-start', marginBottom: 8, alignItems: 'flex-end', gap: 6, position: 'relative' }}
+          >
+            <div style={{ maxWidth: '78%', position: 'relative' }}>
               {m.type === 'money' ? (
                 <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
@@ -646,19 +686,11 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
                   <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4, letterSpacing: '-0.02em' }}>{getCurrencySym(m.cur || state.settings?.currency || 'ZAR')}{(m.amt ?? 0).toFixed(2)}</div>
                 </div>
               ) : m.type === 'image' && m.media ? (
-                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ padding: 4, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', overflow: 'hidden' }}>
-                  <img src={m.media} alt="attachment" style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16, objectFit: 'cover' }} />
-                </div>
+                <MediaBubble sent={m.sent} kind="image" src={m.media} filename={`lumens-${m.id}.jpg`} />
               ) : m.type === 'video' && m.media ? (
-                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ padding: 4, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', overflow: 'hidden' }}>
-                  <video src={m.media} controls style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16 }} />
-                </div>
+                <MediaBubble sent={m.sent} kind="video" src={m.media} filename={`lumens-${m.id}.mp4`} />
               ) : m.type === 'voice' && m.media ? (
-                <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', background: m.sent ? 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))' : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))', boxShadow: '0 6px 22px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
-                  <Ic n="Mic" s={16} />
-                  <audio src={m.media} controls style={{ height: 32 }} />
-                  {m.dur ? <span style={{ fontSize: 11, opacity: 0.7 }}>{m.dur}s</span> : null}
-                </div>
+                <MediaBubble sent={m.sent} kind="voice" src={m.media} dur={m.dur} filename={`lumens-${m.id}.webm`} />
               ) : (
                 <div className={`chat-bubble ${m.sent ? 'bubble-sent' : 'bubble-recv'}`} style={{
                   background: m.sent
@@ -676,6 +708,30 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
                 }}>{m.text}</div>
               )}
               <div style={{ fontSize: 10, color: S2, marginTop: 4, textAlign: m.sent ? 'right' : 'left' }}>{m.time}</div>
+              {actionFor === m.id && (
+                <MessageActions
+                  sent={!!m.sent}
+                  canDelete={!!m.sent && !m.pending}
+                  canCopy={!!m.text}
+                  onClose={() => setActionFor(null)}
+                  onCopy={async () => {
+                    try { await navigator.clipboard.writeText(m.text || ''); showToast('Copied'); }
+                    catch { showToast('Copy failed'); }
+                  }}
+                  onReply={() => {
+                    const prev = m.text || (m.type === 'image' ? '📷 Photo' : m.type === 'video' ? '🎬 Video' : m.type === 'voice' ? '🎙️ Voice note' : '');
+                    setReplyTo({ id: m.id, preview: prev.slice(0, 80) });
+                  }}
+                  onForward={() => showToast('Forward: pick contact (coming soon)')}
+                  onDelete={() => {
+                    set((s) => {
+                      const cv = s.conversations.find((c) => c.cid === contactId);
+                      if (cv) cv.msgs = cv.msgs.filter((mm) => mm.id !== m.id);
+                    });
+                    deleteChatMessage(m.id).catch((e) => showToast(e?.message || 'Failed to delete'));
+                  }}
+                />
+              )}
             </div>
           </div>
         ))}
@@ -689,25 +745,34 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
             Both users must accept the request to share money, media and location.
           </div>
         )}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {replyTo && (
+          <div style={{ marginBottom: 8, padding: '8px 12px', borderRadius: 12, background: 'rgba(94,234,212,0.08)', border: '1px solid rgba(94,234,212,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 3, height: 28, background: AC, borderRadius: 2 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 10, color: AC, fontWeight: 700 }}>Replying to</div>
+              <div style={{ color: W, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyTo.preview}</div>
+            </div>
+            <T onClick={() => setReplyTo(null)} style={{ width: 26, height: 26, borderRadius: 13, background: 'rgba(255,255,255,0.08)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Ic n="X" s={14} />
+            </T>
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <input ref={fileImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'image')} />
           <input ref={fileVidRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'video')} />
-          <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
-            <Ic n="DollarSign" s={16} />
-          </T>
-          <T onClick={() => fileImgRef.current?.click()} disabled={!canRichSend} aria-label="Attach photo" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
-            <Ic n="ImagePlus" s={16} />
-          </T>
-          <T onClick={() => fileVidRef.current?.click()} disabled={!canRichSend} aria-label="Attach video" style={{ width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
-            <Ic n="Video" s={16} />
-          </T>
           <input
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && send()}
             placeholder="Type a message..."
-            style={{ flex: 1, padding: '11px 16px', ...gl('rgba(255,255,255,0.07)', 24, { boxShadow: 'none' }), color: W, fontSize: 14, outline: 'none', minHeight: 44, minWidth: 0 }}
+            style={{ flex: 1, padding: '12px 18px', ...gl('rgba(255,255,255,0.07)', 24, { boxShadow: 'none' }), color: W, fontSize: 15, outline: 'none', minHeight: 46, minWidth: 0 }}
           />
+          <T onClick={() => fileImgRef.current?.click()} disabled={!canRichSend} aria-label="Attach photo" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
+            <Ic n="ImagePlus" s={16} />
+          </T>
+          <T onClick={() => fileVidRef.current?.click()} disabled={!canRichSend} aria-label="Attach video" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
+            <Ic n="Film" s={16} />
+          </T>
           {msg.trim() ? (
             <T onClick={send} aria-label="Send" style={{ width: 44, height: 44, borderRadius: 22, background: AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Ic n="ArrowUp" s={18} />
@@ -720,6 +785,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
         </div>
         {recording && <div style={{ marginTop: 8, fontSize: 11, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: 4, background: '#ef4444', animation: 'pulse 1s infinite' }} /> Recording…</div>}
       </div>
+      {profileOpen && <ContactProfileSheet contactId={contactId} fallback={ct} onClose={() => setProfileOpen(false)} />}
     </div>
   );
 }
@@ -919,6 +985,144 @@ function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; s
         >
           <Ic n="Download" s={16} c="#5eead4" /> Deposit
         </T>
+      </div>
+    </div>
+  );
+}
+
+/* ── Message long-press action popover ── */
+function MessageActions({ sent, canDelete, canCopy, onClose, onCopy, onReply, onForward, onDelete }: {
+  sent: boolean; canDelete: boolean; canCopy: boolean;
+  onClose: () => void; onCopy: () => void; onReply: () => void; onForward: () => void; onDelete: () => void;
+}) {
+  useEffect(() => {
+    const fn = () => onClose();
+    window.addEventListener('click', fn);
+    return () => window.removeEventListener('click', fn);
+  }, [onClose]);
+  const items: { icon: string; label: string; fn: () => void; danger?: boolean; show: boolean }[] = [
+    { icon: 'Copy', label: 'Copy', fn: onCopy, show: canCopy },
+    { icon: 'Reply', label: 'Reply', fn: onReply, show: true },
+    { icon: 'Forward', label: 'Forward', fn: onForward, show: true },
+    { icon: 'Trash2', label: 'Delete', fn: onDelete, danger: true, show: canDelete },
+  ];
+  return (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        position: 'absolute',
+        bottom: 'calc(100% + 6px)',
+        [sent ? 'right' : 'left']: 0,
+        zIndex: 20,
+        minWidth: 150,
+        ...gl('rgba(8,28,68,0.96)', 14),
+        padding: 4,
+        animation: 'pulse .18s ease',
+      }}
+    >
+      {items.filter((i) => i.show).map((it) => (
+        <T key={it.label} onClick={() => { it.fn(); onClose(); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'none', border: 'none', color: it.danger ? COLORS.RD : COLORS.W, fontSize: 13, fontWeight: 600, textAlign: 'left', borderRadius: 10 }}>
+          <Ic n={it.icon} s={15} c={(it.danger ? COLORS.RD : COLORS.AC) as any} />
+          {it.label}
+        </T>
+      ))}
+    </div>
+  );
+}
+
+/* ── Media bubble with download + share controls ── */
+function MediaBubble({ sent, kind, src, dur, filename }: { sent: boolean; kind: 'image' | 'video' | 'voice'; src: string; dur?: number; filename: string }) {
+  const download = () => {
+    const a = document.createElement('a');
+    a.href = src; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  const share = async () => {
+    try {
+      if ((navigator as any).share) {
+        // Try Web Share with file when possible
+        try {
+          const r = await fetch(src);
+          const blob = await r.blob();
+          const file = new File([blob], filename, { type: blob.type });
+          if ((navigator as any).canShare?.({ files: [file] })) {
+            await (navigator as any).share({ files: [file] });
+            return;
+          }
+        } catch {}
+        await (navigator as any).share({ title: 'Lumens', url: src });
+      } else {
+        await navigator.clipboard.writeText(src);
+        showToast('Link copied');
+      }
+    } catch {}
+  };
+  const bg = sent
+    ? 'linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))'
+    : 'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))';
+  return (
+    <div className={`chat-bubble ${sent ? 'bubble-sent' : 'bubble-recv'}`} style={{ padding: kind === 'voice' ? '10px 14px' : 4, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)', overflow: 'hidden', background: kind === 'voice' ? bg : undefined, position: 'relative' }}>
+      {kind === 'image' && <img src={src} alt="attachment" style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16, objectFit: 'cover' }} />}
+      {kind === 'video' && <video src={src} controls style={{ display: 'block', maxWidth: 260, maxHeight: 320, borderRadius: 16 }} />}
+      {kind === 'voice' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#fff' }}>
+          <Ic n="Mic" s={16} />
+          <audio src={src} controls style={{ height: 32 }} />
+          {dur ? <span style={{ fontSize: 11, opacity: 0.7 }}>{dur}s</span> : null}
+        </div>
+      )}
+      <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 4 }}>
+        <T onClick={download} aria-label="Download" style={{ width: 28, height: 28, borderRadius: 14, background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Ic n="Download" s={13} />
+        </T>
+        <T onClick={share} aria-label="Share" style={{ width: 28, height: 28, borderRadius: 14, background: 'rgba(0,0,0,0.55)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Ic n="Share2" s={13} />
+        </T>
+      </div>
+    </div>
+  );
+}
+
+/* ── Contact profile sheet (cover, avatar, bio fields) ── */
+function ContactProfileSheet({ contactId, fallback, onClose }: { contactId: string; fallback: any; onClose: () => void }) {
+  const [p, setP] = useState<any>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetchContactProfile(contactId).then((row) => { if (!cancelled) setP(row); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [contactId]);
+  const name = p?.display_name || fallback?.name || 'Contact';
+  const username = p?.username || '';
+  const avatar = p?.avatar_url || fallback?.avatar;
+  const cover = p?.cover_url;
+  const phone = p?.phone || '';
+  const dobDate = p?.dob ? new Date(p.dob) : null;
+  const dobShown = dobDate ? dobDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : '';
+  const ini = name.split(' ').filter(Boolean).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, maxHeight: '88vh', overflowY: 'auto', background: '#001535', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 24, animation: 'pulse .22s ease' }}>
+        <div style={{ height: 160, background: cover ? `url(${cover}) center/cover` : 'linear-gradient(135deg,#0a2858,#143a82,#2563eb)' }} />
+        <div style={{ padding: '0 20px' }}>
+          <div style={{ marginTop: -48, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            <Av ini={ini} src={avatar} sz={96} />
+            <T onClick={onClose} style={{ width: 36, height: 36, borderRadius: 18, background: 'rgba(255,255,255,0.1)', border: 'none', color: COLORS.W, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+              <Ic n="X" s={16} />
+            </T>
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <div style={{ color: COLORS.W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>{name}</div>
+            {username && <div style={{ color: COLORS.S, fontSize: 13 }}>@{username}</div>}
+          </div>
+          <div style={{ ...gl('rgba(255,255,255,0.05)', 16), padding: 14, marginTop: 18 }}>
+            {phone && <Row icon="Phone" label="Phone" value={phone} />}
+            {dobShown && <Row icon="Cake" label="Birthday" value={dobShown} last={!username} />}
+            {username && <Row icon="AtSign" label="Username" value={'@' + username} last />}
+            {!phone && !dobShown && !username && (
+              <div style={{ color: COLORS.S, fontSize: 12, textAlign: 'center', padding: 8 }}>No additional details shared.</div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
