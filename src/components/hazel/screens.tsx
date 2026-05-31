@@ -44,8 +44,8 @@ export function HomeScreen({
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       {/* Brand wordmark */}
-      <div style={{ marginBottom: 14, display: 'flex', justifyContent: 'flex-start' }}>
-        <LumensWordmark height={26} />
+      <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'flex-start', marginLeft: -8 }}>
+        <LumensWordmark height={100} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
