@@ -600,16 +600,52 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
 
   return (
     <div className="afi" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,21,53,0.85)', backdropFilter: 'blur(20px)' }}>
-        <T onClick={onBack} active="rgba(255,255,255,0.1)" style={{ padding: 10, background: 'none', border: 'none', color: W, borderRadius: 14, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,21,53,0.85)', backdropFilter: 'blur(20px)' }}>
+        <T onClick={onBack} active="rgba(255,255,255,0.1)" style={{ padding: 10, background: 'none', border: 'none', color: W, borderRadius: 14, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="ChevronLeft" s={20} />
         </T>
-        <Av ini={ct.ini} g={ct.g} on={ct.on} sz={40} />
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <T onClick={() => setProfileOpen(true)} aria-label="View contact profile" style={{ background: 'none', border: 'none', padding: 0, borderRadius: 22 }}>
+          <Av ini={ct.ini} g={ct.g} on={ct.on} sz={40} src={ct.avatar} />
+        </T>
+        <T onClick={() => setProfileOpen(true)} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', textAlign: 'left', padding: '4px 6px' }}>
           <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{ct.name}</div>
-          <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? 'Online' : 'Offline'}</div>
+          <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? '● Online' : 'Offline'}</div>
+        </T>
+        <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(94,234,212,0.12)', border: '1px solid rgba(94,234,212,0.25)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4 }}>
+          <Ic n="DollarSign" s={16} />
+        </T>
+        <T onClick={() => setMenuOpen((v) => !v)} aria-label="More actions" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Ic n="MoreVertical" s={18} />
+        </T>
+        {/* 3-dot dropdown */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 60,
+            right: 12,
+            zIndex: 30,
+            minWidth: 200,
+            ...gl('rgba(8,28,68,0.95)', 16),
+            padding: 6,
+            transformOrigin: 'top right',
+            transform: menuOpen ? 'translateY(0) scaleY(1)' : 'translateY(-8px) scaleY(0.85)',
+            opacity: menuOpen ? 1 : 0,
+            pointerEvents: menuOpen ? 'auto' : 'none',
+            transition: 'opacity .18s ease, transform .22s cubic-bezier(.2,.9,.3,1.2)',
+          }}
+        >
+          {[
+            { icon: 'Video', label: 'Video call', fn: () => { setMenuOpen(false); showToast('Calling…'); }, disabled: !canRichSend },
+            { icon: 'ImagePlus', label: 'Attach picture', fn: () => { setMenuOpen(false); fileImgRef.current?.click(); }, disabled: !canRichSend },
+            { icon: 'Film', label: 'Attach video', fn: () => { setMenuOpen(false); fileVidRef.current?.click(); }, disabled: !canRichSend },
+            { icon: 'UserCircle2', label: 'View profile', fn: () => { setMenuOpen(false); setProfileOpen(true); } },
+          ].map((it) => (
+            <T key={it.label} onClick={it.fn} disabled={it.disabled} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'none', border: 'none', color: W, fontSize: 13, fontWeight: 600, textAlign: 'left', borderRadius: 10, opacity: it.disabled ? 0.4 : 1 }}>
+              <Ic n={it.icon} s={16} c={AC as any} />
+              {it.label}
+            </T>
+          ))}
         </div>
-        {/* Per spec: top-right Send Money in chat header was moved to the wallet's domicile tile. */}
       </div>
 
       <div className="no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
