@@ -129,6 +129,9 @@ function HazelApp() {
   const [chatId, setChatId] = useState<string | null>(null);
   const [catCtx, setCatCtx] = useState<{ catId: string; monthKey: string } | null>(null);
   useChatSync(user?.id ?? null);
+  // Hoisted call state so video calls can be started from anywhere
+  // (chat header dropdown, calls tab, incoming-call ringer).
+  const calls = useCalls(user?.id ?? null);
   // Best-effort push subscription registration. Silently no-ops without
   // service worker support or notification permission.
   useEffect(() => {
