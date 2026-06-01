@@ -612,9 +612,6 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall }: any) {
           <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{ct.name}</div>
           <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? '● Online' : 'Offline'}</div>
         </T>
-        <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4 }}>
-          <Ic n="DollarSign" s={16} />
-        </T>
         <T onClick={() => setMenuOpen((v) => !v)} aria-label="More actions" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="MoreVertical" s={18} />
         </T>
@@ -636,9 +633,7 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall }: any) {
           }}
         >
           {[
-            { icon: 'Video', label: 'Video call', fn: () => { setMenuOpen(false); showToast('Calling…'); }, disabled: !canRichSend },
-            { icon: 'ImagePlus', label: 'Attach picture', fn: () => { setMenuOpen(false); fileImgRef.current?.click(); }, disabled: !canRichSend },
-            { icon: 'Film', label: 'Attach video', fn: () => { setMenuOpen(false); fileVidRef.current?.click(); }, disabled: !canRichSend },
+            { icon: 'Video', label: 'Video call', fn: () => { setMenuOpen(false); if (onVideoCall) onVideoCall(); else showToast('Calling…'); }, disabled: !canRichSend },
             { icon: 'UserCircle2', label: 'View profile', fn: () => { setMenuOpen(false); setProfileOpen(true); } },
           ].map((it) => (
             <T key={it.label} onClick={it.fn} disabled={it.disabled} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'none', border: 'none', color: W, fontSize: 13, fontWeight: 600, textAlign: 'left', borderRadius: 10, opacity: it.disabled ? 0.4 : 1 }}>
