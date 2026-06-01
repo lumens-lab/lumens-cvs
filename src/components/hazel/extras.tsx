@@ -129,7 +129,7 @@ export function ReceiveSheet({ open, onClose }: { open: boolean; onClose: () => 
   const [sel, setSel] = useState(ADDRESSES[0].id);
   const cur = ADDRESSES.find((a) => a.id === sel)!;
 
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&bgcolor=001a44&color=5eead4&margin=8&data=${encodeURIComponent(cur.addr)}`;
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&bgcolor=001a44&color=2563eb&margin=8&data=${encodeURIComponent(cur.addr)}`;
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(cur.addr); showToast('Address copied'); }
