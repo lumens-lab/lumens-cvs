@@ -239,6 +239,7 @@ function HazelApp() {
           contactId={chatId}
           onBack={() => { setSub(null); setChatId(null); }}
           onSendMoney={() => openSheet("send", { fromChat: true, chatId })}
+          onVideoCall={() => { if (chatId) { calls.startCall(chatId, 'video'); setSub(null); setTab('call'); } }}
         />
         <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} requirePin={requirePin} />
       </Shell>
