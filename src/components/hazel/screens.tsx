@@ -753,22 +753,38 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall }: any) {
             </T>
           </div>
         )}
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', position: 'relative' }}>
           <input ref={fileImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'image')} />
           <input ref={fileVidRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'video')} />
-          <input
-            value={msg}
-            onChange={(e) => setMsg(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && send()}
-            placeholder="Type a message..."
-            style={{ flex: 1, padding: '12px 18px', ...gl('rgba(255,255,255,0.07)', 24, { boxShadow: 'none' }), color: W, fontSize: 15, outline: 'none', minHeight: 46, minWidth: 0 }}
-          />
-          <T onClick={() => fileImgRef.current?.click()} disabled={!canRichSend} aria-label="Attach photo" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
-            <Ic n="ImagePlus" s={16} />
-          </T>
-          <T onClick={() => fileVidRef.current?.click()} disabled={!canRichSend} aria-label="Attach video" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
-            <Ic n="Film" s={16} />
-          </T>
+          {/* Pill input wrapping the in-input send-money + attach buttons */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px 4px 16px', ...gl('rgba(255,255,255,0.07)', 24, { boxShadow: 'none' }), minHeight: 46, minWidth: 0 }}>
+            <input
+              value={msg}
+              onChange={(e) => setMsg(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && send()}
+              placeholder="Type a message..."
+              style={{ flex: 1, background: 'transparent', border: 'none', color: W, fontSize: 15, outline: 'none', minWidth: 0 }}
+            />
+            <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 34, height: 34, borderRadius: 17, background: 'rgba(37,99,235,0.18)', border: '1px solid rgba(37,99,235,0.35)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4 }}>
+              <Ic n="DollarSign" s={15} />
+            </T>
+            <T onClick={() => setAttachOpen((v) => !v)} disabled={!canRichSend} aria-label="Attach" style={{ width: 34, height: 34, borderRadius: 17, background: 'rgba(255,255,255,0.10)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4 }}>
+              <Ic n="Paperclip" s={15} />
+            </T>
+          </div>
+          {attachOpen && (
+            <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', bottom: 60, right: 60, zIndex: 30, minWidth: 170, ...gl('rgba(8,28,68,0.96)', 14), padding: 6 }}>
+              {[
+                { icon: 'ImagePlus', label: 'Photo', fn: () => { setAttachOpen(false); fileImgRef.current?.click(); } },
+                { icon: 'Film', label: 'Video', fn: () => { setAttachOpen(false); fileVidRef.current?.click(); } },
+              ].map((it) => (
+                <T key={it.label} onClick={it.fn} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'none', border: 'none', color: W, fontSize: 13, fontWeight: 600, textAlign: 'left', borderRadius: 10 }}>
+                  <Ic n={it.icon} s={16} c={AC as any} />
+                  {it.label}
+                </T>
+              ))}
+            </div>
+          )}
           {msg.trim() ? (
             <T onClick={send} aria-label="Send" style={{ width: 44, height: 44, borderRadius: 22, background: AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Ic n="ArrowUp" s={18} />
