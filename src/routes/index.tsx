@@ -439,9 +439,9 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
 }
 
 /** Encrypted voice-call screen — UI scaffold over confirmed contacts. */
-function CallScreen({ userId }: { userId: string | null }) {
+function CallScreen({ calls }: { calls: ReturnType<typeof useCalls> }) {
   const { state } = useHazelStore();
-  const { state: call, startCall, acceptCall, declineCall, endCall } = useCalls(userId);
+  const { state: call, startCall, acceptCall, declineCall, endCall } = calls;
   const [q, setQ] = useState("");
   const list = state.contacts.filter((c) =>
     c.confirmed && (!q || c.name.toLowerCase().includes(q.toLowerCase()))
