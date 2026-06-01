@@ -284,7 +284,7 @@ function HazelApp() {
           openChat={(id: string) => { setChatId(id); setSub("chat-view"); }}
         />
       )}
-      {tab === "call" && <CallScreen userId={user?.id ?? null} />}
+      {tab === "call" && <CallScreen calls={calls} />}
       {tab === "find" && (
         <FindPeopleScreen
           onBack={() => setTab("chat")}
