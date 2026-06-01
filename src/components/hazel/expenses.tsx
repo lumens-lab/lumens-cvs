@@ -26,12 +26,12 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: () => void; o
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Expenses</h1>
-        <T onClick={openAdd} style={{ ...gl('rgba(94,234,212,0.12)', 14, { boxShadow: 'none', border: '1px solid rgba(94,234,212,0.3)' }), padding: '8px 14px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <T onClick={openAdd} style={{ ...gl('rgba(37,99,235,0.12)', 14, { boxShadow: 'none', border: '1px solid rgba(37,99,235,0.3)' }), padding: '8px 14px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Ic n="Plus" s={16} /> Add
         </T>
       </div>
 
-      <div style={{ ...gl('rgba(94,234,212,0.06)', 20), padding: 18, marginBottom: 16, textAlign: 'center', border: '1px solid rgba(94,234,212,0.15)' }}>
+      <div style={{ ...gl('rgba(37,99,235,0.06)', 20), padding: 18, marginBottom: 16, textAlign: 'center', border: '1px solid rgba(37,99,235,0.15)' }}>
         <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Spent this month</div>
         <div style={{ fontSize: 28, color: W, fontWeight: 800, letterSpacing: '-0.02em' }}>{sym}{monthTotal.toFixed(2)}</div>
         <div style={{ fontSize: 11, color: S, marginTop: 4 }}>{expenses.length} {expenses.length === 1 ? 'expense' : 'expenses'} total</div>
@@ -216,7 +216,7 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
     <Sheet open={open} onClose={() => { reset(); onClose(); }} title="Add Expense">
       {/* Scan & Photo actions */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 4, marginBottom: 14 }}>
-        <T onClick={() => scanRef.current?.click()} style={{ ...gl('rgba(94,234,212,0.1)', 14, { border: '1px solid rgba(94,234,212,0.25)', boxShadow: 'none' }), padding: '14px 8px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <T onClick={() => scanRef.current?.click()} style={{ ...gl('rgba(37,99,235,0.1)', 14, { border: '1px solid rgba(37,99,235,0.25)', boxShadow: 'none' }), padding: '14px 8px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <Ic n="ScanLine" s={18} /> Scan receipt
         </T>
         <T onClick={() => photoRef.current?.click()} style={{ ...gl('rgba(96,165,250,0.1)', 14, { border: '1px solid rgba(96,165,250,0.25)', boxShadow: 'none' }), padding: '14px 8px', color: COLORS.BL, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -273,7 +273,7 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
         ))}
       </div>
 
-      <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 8 }}>
+      <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 8 }}>
         Save Expense
       </T>
     </Sheet>

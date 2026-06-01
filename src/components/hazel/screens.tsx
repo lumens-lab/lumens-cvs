@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel/wallet';
 import lumensWordmark from '@/assets/lumens-wordmark.png';
 
-export function LumensWordmark({ height = 100 }: { height?: number }) {
+export function LumensWordmark({ height = 70 }: { height?: number }) {
   return (
     <img
       src={lumensWordmark}
@@ -45,7 +45,7 @@ export function HomeScreen({
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       {/* Brand wordmark */}
       <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'flex-start', marginLeft: -8 }}>
-        <LumensWordmark height={100} />
+        <LumensWordmark height={70} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
@@ -77,7 +77,7 @@ export function HomeScreen({
           <div style={{ fontSize: 14, fontWeight: 700, color: W }}>My Cards</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <T onClick={() => setCardVis(!cardVis)} style={{ ...gl('rgba(255,255,255,0.07)', 10, { boxShadow: 'none' }), padding: '6px 10px', color: S, fontSize: 11, fontWeight: 600, border: 'none' }}>{cardVis ? 'Hide' : 'Show'}</T>
-            <T onClick={() => openSheet('add-card')} style={{ ...gl('rgba(94,234,212,0.08)', 10, { boxShadow: 'none', border: '1px solid rgba(94,234,212,0.2)' }), padding: '6px 10px', color: AC, fontSize: 11, fontWeight: 600 }}>+ Add</T>
+            <T onClick={() => openSheet('add-card')} style={{ ...gl('rgba(37,99,235,0.08)', 10, { boxShadow: 'none', border: '1px solid rgba(37,99,235,0.2)' }), padding: '6px 10px', color: AC, fontSize: 11, fontWeight: 600 }}>+ Add</T>
           </div>
         </div>
         <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', gap: 12, scrollSnapType: 'x mandatory', margin: '0 -20px', padding: '0 20px 4px' }}>
@@ -219,12 +219,12 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
             <div style={{ fontSize: 28, color: W, fontWeight: 800, letterSpacing: '-0.02em' }}>{sym}{fmtM(spent)}</div>
             <div style={{ fontSize: 12, color: S, marginTop: 2 }}>of {sym}{fmtM(budget)}</div>
           </div>
-          <T onClick={() => openSheet('set-budget', { current: budget, onSave: setBudget })} style={{ ...gl('rgba(94,234,212,0.08)', 10, { boxShadow: 'none', border: '1px solid rgba(94,234,212,0.2)' }), padding: '8px 12px', color: AC, fontSize: 11, fontWeight: 600 }}>
+          <T onClick={() => openSheet('set-budget', { current: budget, onSave: setBudget })} style={{ ...gl('rgba(37,99,235,0.08)', 10, { boxShadow: 'none', border: '1px solid rgba(37,99,235,0.2)' }), padding: '8px 12px', color: AC, fontSize: 11, fontWeight: 600 }}>
             Edit
           </T>
         </div>
         <div style={{ height: 10, borderRadius: 6, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div style={{ width: `${pct}%`, height: '100%', background: pct > 90 ? RD : 'linear-gradient(90deg,#5eead4,#34d399)', borderRadius: 6, transition: 'width .4s' }} />
+          <div style={{ width: `${pct}%`, height: '100%', background: pct > 90 ? RD : 'linear-gradient(90deg,#2563eb,#34d399)', borderRadius: 6, transition: 'width .4s' }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 11, color: S }}>
           <span>{pct.toFixed(0)}% spent</span>
@@ -241,7 +241,7 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
             return (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                 <div style={{ fontSize: 9, color: S2 }}>{sym}{d.a.toFixed(0)}</div>
-                <div className="bar-anim" style={{ width: '70%', height: h, borderRadius: 6, background: 'linear-gradient(180deg,rgba(94,234,212,0.7),rgba(94,234,212,0.25))' }} />
+                <div className="bar-anim" style={{ width: '70%', height: h, borderRadius: 6, background: 'linear-gradient(180deg,rgba(37,99,235,0.7),rgba(37,99,235,0.25))' }} />
                 <div style={{ fontSize: 10, color: S, fontWeight: 600 }}>{d.d}</div>
               </div>
             );
@@ -373,7 +373,7 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
               </T>
             </div>
           ))}
-          <T onClick={() => openSheet('add-card')} style={{ flex: '0 0 auto', scrollSnapAlign: 'center', width: 340, ...gl('rgba(94,234,212,0.08)', 18, { border: '1px solid rgba(94,234,212,0.2)' }), padding: 14, color: AC, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 200 }}>
+          <T onClick={() => openSheet('add-card')} style={{ flex: '0 0 auto', scrollSnapAlign: 'center', width: 340, ...gl('rgba(37,99,235,0.08)', 18, { border: '1px solid rgba(37,99,235,0.2)' }), padding: 14, color: AC, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 200 }}>
             <Ic n="Plus" s={16} /> Add New Card
           </T>
         </div>
@@ -382,7 +382,7 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
       {/* Crypto section */}
       <div>
         <div style={{ fontSize: 13, fontWeight: 700, color: W, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7 }}>Crypto Assets</div>
-        <div style={{ ...gl('rgba(94,234,212,0.06)', 18), padding: 18, marginBottom: 14, textAlign: 'center', border: '1px solid rgba(94,234,212,0.15)' }}>
+        <div style={{ ...gl('rgba(37,99,235,0.06)', 18), padding: 18, marginBottom: 14, textAlign: 'center', border: '1px solid rgba(37,99,235,0.15)' }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Total Portfolio Value</div>
           <div style={{ fontSize: 28, color: W, fontWeight: 800, letterSpacing: '-0.02em' }}>${fmtM(cryptoTotal)}</div>
         </div>
@@ -431,7 +431,7 @@ export function ChatScreen({ openSub, openChat }: any) {
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'flex-start', marginLeft: -8 }}>
-        <LumensWordmark height={100} />
+        <LumensWordmark height={70} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
@@ -451,7 +451,7 @@ export function ChatScreen({ openSub, openChat }: any) {
           if (!ct) return null;
           return (
             <T key={conv.cid} onClick={() => openChat(ct.id)} active="rgba(255,255,255,0.06)" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 4px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left' }}>
-              <Av ini={ct.ini} g={ct.g} on={ct.on} sz={46} />
+              <Av ini={ct.ini} g={ct.g} on={ct.on} sz={46} src={ct.avatar} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: W, fontSize: 14, fontWeight: 600 }}>{ct.name}</span>
@@ -468,7 +468,7 @@ export function ChatScreen({ openSub, openChat }: any) {
             <div style={{ fontSize: 11, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Contacts</div>
             {confirmedContacts.map((ct) => (
               <T key={ct.id} onClick={() => openChat(ct.id)} active="rgba(255,255,255,0.06)" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'left' }}>
-                <Av ini={ct.ini} g={ct.g} on={ct.on} sz={42} />
+                <Av ini={ct.ini} g={ct.g} on={ct.on} sz={42} src={ct.avatar} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: W, fontSize: 14, fontWeight: 600 }}>{ct.name}</div>
                   <div style={{ color: S, fontSize: 11 }}>Tap to start a chat</div>
@@ -484,7 +484,7 @@ export function ChatScreen({ openSub, openChat }: any) {
 }
 
 /* ── CHAT VIEW ── */
-export function ChatView({ contactId, onBack, onSendMoney }: any) {
+export function ChatView({ contactId, onBack, onSendMoney, onVideoCall }: any) {
   const { state, set } = useHazelStore();
   const ct = state.contacts.find((c) => c.id === contactId);
   const conv = state.conversations.find((c) => c.cid === contactId);
@@ -497,6 +497,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
   const [recording, setRecording] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
   const [actionFor, setActionFor] = useState<string | null>(null); // msg id with action popover open
   const [replyTo, setReplyTo] = useState<{ id: string; preview: string } | null>(null);
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -611,9 +612,6 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
           <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{ct.name}</div>
           <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? '● Online' : 'Offline'}</div>
         </T>
-        <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(94,234,212,0.12)', border: '1px solid rgba(94,234,212,0.25)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4 }}>
-          <Ic n="DollarSign" s={16} />
-        </T>
         <T onClick={() => setMenuOpen((v) => !v)} aria-label="More actions" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="MoreVertical" s={18} />
         </T>
@@ -635,9 +633,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
           }}
         >
           {[
-            { icon: 'Video', label: 'Video call', fn: () => { setMenuOpen(false); showToast('Calling…'); }, disabled: !canRichSend },
-            { icon: 'ImagePlus', label: 'Attach picture', fn: () => { setMenuOpen(false); fileImgRef.current?.click(); }, disabled: !canRichSend },
-            { icon: 'Film', label: 'Attach video', fn: () => { setMenuOpen(false); fileVidRef.current?.click(); }, disabled: !canRichSend },
+            { icon: 'Video', label: 'Video call', fn: () => { setMenuOpen(false); if (onVideoCall) onVideoCall(); else showToast('Calling…'); }, disabled: !canRichSend },
             { icon: 'UserCircle2', label: 'View profile', fn: () => { setMenuOpen(false); setProfileOpen(true); } },
           ].map((it) => (
             <T key={it.label} onClick={it.fn} disabled={it.disabled} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'none', border: 'none', color: W, fontSize: 13, fontWeight: 600, textAlign: 'left', borderRadius: 10, opacity: it.disabled ? 0.4 : 1 }}>
@@ -746,7 +742,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
           </div>
         )}
         {replyTo && (
-          <div style={{ marginBottom: 8, padding: '8px 12px', borderRadius: 12, background: 'rgba(94,234,212,0.08)', border: '1px solid rgba(94,234,212,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ marginBottom: 8, padding: '8px 12px', borderRadius: 12, background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 3, height: 28, background: AC, borderRadius: 2 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 10, color: AC, fontWeight: 700 }}>Replying to</div>
@@ -757,22 +753,38 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
             </T>
           </div>
         )}
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', position: 'relative' }}>
           <input ref={fileImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'image')} />
           <input ref={fileVidRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={(e) => handleFile(e, 'video')} />
-          <input
-            value={msg}
-            onChange={(e) => setMsg(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && send()}
-            placeholder="Type a message..."
-            style={{ flex: 1, padding: '12px 18px', ...gl('rgba(255,255,255,0.07)', 24, { boxShadow: 'none' }), color: W, fontSize: 15, outline: 'none', minHeight: 46, minWidth: 0 }}
-          />
-          <T onClick={() => fileImgRef.current?.click()} disabled={!canRichSend} aria-label="Attach photo" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
-            <Ic n="ImagePlus" s={16} />
-          </T>
-          <T onClick={() => fileVidRef.current?.click()} disabled={!canRichSend} aria-label="Attach video" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4, cursor: canRichSend ? 'pointer' : 'not-allowed' }}>
-            <Ic n="Film" s={16} />
-          </T>
+          {/* Pill input wrapping the in-input send-money + attach buttons */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px 4px 16px', ...gl('rgba(255,255,255,0.07)', 24, { boxShadow: 'none' }), minHeight: 46, minWidth: 0 }}>
+            <input
+              value={msg}
+              onChange={(e) => setMsg(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && send()}
+              placeholder="Type a message..."
+              style={{ flex: 1, background: 'transparent', border: 'none', color: W, fontSize: 15, outline: 'none', minWidth: 0 }}
+            />
+            <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 34, height: 34, borderRadius: 17, background: 'rgba(37,99,235,0.18)', border: '1px solid rgba(37,99,235,0.35)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4 }}>
+              <Ic n="DollarSign" s={15} />
+            </T>
+            <T onClick={() => setAttachOpen((v) => !v)} disabled={!canRichSend} aria-label="Attach" style={{ width: 34, height: 34, borderRadius: 17, background: 'rgba(255,255,255,0.10)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4 }}>
+              <Ic n="Paperclip" s={15} />
+            </T>
+          </div>
+          {attachOpen && (
+            <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', bottom: 60, right: 60, zIndex: 30, minWidth: 170, ...gl('rgba(8,28,68,0.96)', 14), padding: 6 }}>
+              {[
+                { icon: 'ImagePlus', label: 'Photo', fn: () => { setAttachOpen(false); fileImgRef.current?.click(); } },
+                { icon: 'Film', label: 'Video', fn: () => { setAttachOpen(false); fileVidRef.current?.click(); } },
+              ].map((it) => (
+                <T key={it.label} onClick={it.fn} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'none', border: 'none', color: W, fontSize: 13, fontWeight: 600, textAlign: 'left', borderRadius: 10 }}>
+                  <Ic n={it.icon} s={16} c={AC as any} />
+                  {it.label}
+                </T>
+              ))}
+            </div>
+          )}
           {msg.trim() ? (
             <T onClick={send} aria-label="Send" style={{ width: 44, height: 44, borderRadius: 22, background: AC, border: 'none', color: '#001535', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Ic n="ArrowUp" s={18} />
@@ -823,7 +835,7 @@ export function ProfileScreen({ openSub }: any) {
             <div style={{ color: W, fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>{p.name}</div>
             <div style={{ color: S, fontSize: 12 }}>{p.username}</div>
           </div>
-          <T onClick={() => openSub('edit-profile')} style={{ ...gl('rgba(94,234,212,0.1)', 12, { border: '1px solid rgba(94,234,212,0.25)', boxShadow: 'none' }), padding: '8px 12px', color: AC, fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
+          <T onClick={() => openSub('edit-profile')} style={{ ...gl('rgba(37,99,235,0.1)', 12, { border: '1px solid rgba(37,99,235,0.25)', boxShadow: 'none' }), padding: '8px 12px', color: AC, fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
             Edit
           </T>
         </div>
@@ -852,7 +864,7 @@ export function ProfileScreen({ openSub }: any) {
 function Row({ icon, label, value, last }: { icon: string; label: string; value: string; last?: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)' }}>
-      <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(94,234,212,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Ic n={icon} s={16} c={COLORS.AC} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -888,7 +900,7 @@ function DebitOrdersBlock({ orders, sym, onAdd, onEdit }: { orders: DebitOrder[]
           const d = daysUntil(o);
           const overdue = d < 0;
           const soon = d >= 0 && d <= o.remind_days_before;
-          const tint = overdue ? '#f87171' : soon ? '#fbbf24' : '#5eead4';
+          const tint = overdue ? '#f87171' : soon ? '#fbbf24' : '#2563eb';
           return (
             <T key={o.id} onClick={() => onEdit(o)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
               <div style={{ width: 40, height: 40, borderRadius: 12, background: tint + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -921,7 +933,7 @@ function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; s
         marginBottom: 22,
         padding: 18,
         borderRadius: 22,
-        background: 'linear-gradient(135deg, rgba(94,234,212,0.10), rgba(96,165,250,0.08))',
+        background: 'linear-gradient(135deg, rgba(37,99,235,0.10), rgba(96,165,250,0.08))',
         border: '1px solid rgba(255,255,255,0.14)',
         backdropFilter: 'blur(22px) saturate(160%)',
         WebkitBackdropFilter: 'blur(22px) saturate(160%)',
@@ -962,15 +974,15 @@ function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; s
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
           }}
         >
-          <Ic n="Send" s={16} c="#5eead4" /> Send
+          <Ic n="Send" s={16} c="#2563eb" /> Send
         </T>
         <T
           onClick={onDeposit}
           style={{
             padding: '14px 12px',
             borderRadius: 18,
-            background: 'linear-gradient(135deg, rgba(94,234,212,0.22), rgba(96,165,250,0.10))',
-            border: '1px solid rgba(94,234,212,0.30)',
+            background: 'linear-gradient(135deg, rgba(37,99,235,0.22), rgba(96,165,250,0.10))',
+            border: '1px solid rgba(37,99,235,0.30)',
             backdropFilter: 'blur(18px)',
             WebkitBackdropFilter: 'blur(18px)',
             color: '#fff',
@@ -983,7 +995,7 @@ function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; s
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
           }}
         >
-          <Ic n="Download" s={16} c="#5eead4" /> Deposit
+          <Ic n="Download" s={16} c="#2563eb" /> Deposit
         </T>
       </div>
     </div>

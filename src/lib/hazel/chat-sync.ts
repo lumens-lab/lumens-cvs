@@ -155,10 +155,14 @@ export function useChatSync(userId: string | null) {
           const c = s.contacts.find((x) => x.id === p.id);
           if (c) {
             const name = p.display_name || p.username || c.name;
+            const changed = c.name !== name || c.avatar !== (p.avatar_url || undefined);
             c.name = name;
             c.ini = name.split(' ').filter(Boolean).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
             c.avatar = p.avatar_url || undefined;
             c.ph = p.username ? '@' + p.username : c.ph;
+            if (changed && typeof window !== 'undefined') {
+              import('@/components/hazel/ui').then(({ showToast }) => showToast(`${name} updated their profile`)).catch(() => {});
+            }
           }
         });
       })

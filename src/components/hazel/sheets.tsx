@@ -49,11 +49,11 @@ export function AddCardSheet({ open, onClose }: any) {
         <div style={{ fontSize: 12, color: S, marginBottom: 8 }}>Theme</div>
         <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }} className="no-scrollbar">
           {CARD_THEMES.map((t, i) => (
-            <T key={i} onClick={() => setTheme(i)} style={{ minWidth: 70, height: 50, borderRadius: 12, background: t.bg, border: theme === i ? '2px solid #5eead4' : '2px solid transparent', flexShrink: 0 }} aria-label={t.label} />
+            <T key={i} onClick={() => setTheme(i)} style={{ minWidth: 70, height: 50, borderRadius: 12, background: t.bg, border: theme === i ? '2px solid #2563eb' : '2px solid transparent', flexShrink: 0 }} aria-label={t.label} />
           ))}
         </div>
       </div>
-      <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 18, marginBottom: 8 }}>Add Card</T>
+      <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 18, marginBottom: 8 }}>Add Card</T>
     </Sheet>
   );
 }
@@ -68,13 +68,13 @@ export function SetBudgetSheet({ open, onClose, current, onSave }: any) {
         <div style={{ fontSize: 12, color: S, marginBottom: 8 }}>Period</div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           {(['month', 'week', 'custom'] as const).map((p) => (
-            <T key={p} onClick={() => setPeriod(p)} style={{ flex: 1, padding: '10px 0', borderRadius: 12, background: period === p ? 'rgba(94,234,212,0.15)' : 'rgba(255,255,255,0.05)', border: period === p ? '1px solid rgba(94,234,212,0.3)' : '1px solid transparent', color: period === p ? AC : S, fontSize: 12, fontWeight: 600, textTransform: 'capitalize' }}>{p}</T>
+            <T key={p} onClick={() => setPeriod(p)} style={{ flex: 1, padding: '10px 0', borderRadius: 12, background: period === p ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.05)', border: period === p ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent', color: period === p ? AC : S, fontSize: 12, fontWeight: 600, textTransform: 'capitalize' }}>{p}</T>
           ))}
         </div>
         <Field label="Budget amount">
           <input inputMode="decimal" value={val} onChange={(e) => setVal(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" style={inp} />
         </Field>
-        <T onClick={() => { const n = parseFloat(val); if (!n || n <= 0) return showToast('Enter a valid amount'); onSave(n); onClose(); showToast('Budget updated'); }} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 14 }}>Save Budget</T>
+        <T onClick={() => { const n = parseFloat(val); if (!n || n <= 0) return showToast('Enter a valid amount'); onSave(n); onClose(); showToast('Budget updated'); }} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 14 }}>Save Budget</T>
       </div>
     </Sheet>
   );
@@ -94,10 +94,10 @@ export function MonthPickerSheet({ open, onClose, monthKey, onPick }: any) {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 16 }}>
         {MONTHS.map((mn, i) => (
-          <T key={mn} onClick={() => setMo(i)} style={{ padding: '12px 0', borderRadius: 12, background: mo === i ? 'rgba(94,234,212,0.15)' : 'rgba(255,255,255,0.04)', border: mo === i ? '1px solid rgba(94,234,212,0.3)' : '1px solid transparent', color: mo === i ? AC : W, fontSize: 12, fontWeight: 600 }}>{mn.slice(0, 3)}</T>
+          <T key={mn} onClick={() => setMo(i)} style={{ padding: '12px 0', borderRadius: 12, background: mo === i ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.04)', border: mo === i ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent', color: mo === i ? AC : W, fontSize: 12, fontWeight: 600 }}>{mn.slice(0, 3)}</T>
         ))}
       </div>
-      <T onClick={() => { onPick(`${yr}-${String(mo + 1).padStart(2, '0')}`); onClose(); }} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800 }}>Apply</T>
+      <T onClick={() => { onPick(`${yr}-${String(mo + 1).padStart(2, '0')}`); onClose(); }} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800 }}>Apply</T>
     </Sheet>
   );
 }
@@ -107,7 +107,7 @@ export function AddCatSheet({ open, onClose, kind = 'expense' }: { open: boolean
   const { set } = useHazelStore();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('Tag');
-  const [color, setColor] = useState('#5eead4');
+  const [color, setColor] = useState('#2563eb');
   const [budget, setBudget] = useState('');
   const colors = ICON_COLORS;
   const icons = ICON_LIBRARY;
@@ -139,7 +139,7 @@ export function AddCatSheet({ open, onClose, kind = 'expense' }: { open: boolean
           ))}
         </div>
       </div>
-      <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 18 }}>Save</T>
+      <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 18 }}>Save</T>
     </Sheet>
   );
 }
@@ -211,7 +211,7 @@ export function SendSheet({ open, onClose, fromChat, recip, onSent, requirePin }
                 <input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" style={{ ...inp, fontSize: 22, fontWeight: 700 }} />
               </Field>
               <Field label="Note (optional)"><input value={note} onChange={(e) => setNote(e.target.value)} placeholder="What's it for?" style={inp} /></Field>
-              <T onClick={confirm} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 14 }}>Send {method.sym}{amt || '0'}</T>
+              <T onClick={confirm} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 14 }}>Send {method.sym}{amt || '0'}</T>
             </>
           )}
         </div>
@@ -330,7 +330,7 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
                   <div style={{ color: W, fontSize: 13, fontWeight: 600 }}>{name}</div>
                   <div style={{ color: S, fontSize: 11 }}>{u.username ? '@' + u.username : ''}</div>
                 </div>
-                <T onClick={() => sendReq(u)} disabled={busy === u.id} style={{ padding: '6px 12px', borderRadius: 10, background: 'rgba(94,234,212,0.15)', color: AC, fontSize: 11, fontWeight: 700, border: '1px solid rgba(94,234,212,0.3)' }}>{busy === u.id ? '…' : 'Connect'}</T>
+                <T onClick={() => sendReq(u)} disabled={busy === u.id} style={{ padding: '6px 12px', borderRadius: 10, background: 'rgba(37,99,235,0.15)', color: AC, fontSize: 11, fontWeight: 700, border: '1px solid rgba(37,99,235,0.3)' }}>{busy === u.id ? '…' : 'Connect'}</T>
               </div>
             );
           })}
@@ -427,7 +427,7 @@ export function EditProfileScreen({ onBack }: any) {
           <Field label="Email"><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={inp} /></Field>
           <Field label="Phone"><input value={phone} onChange={(e) => setPhone(e.target.value)} style={inp} /></Field>
           <Field label="Date of Birth (year is private)"><input type="date" value={dob} onChange={(e) => setDob(e.target.value)} style={inp} /></Field>
-          <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 14 }}>Save Changes</T>
+          <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 14 }}>Save Changes</T>
         </div>
       </div>
     </div>
@@ -524,7 +524,7 @@ export function AddDebitOrderSheet({ open, onClose, order }: { open: boolean; on
         <Field label="Period">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6 }}>
             {periods.map((p) => (
-              <T key={p} onClick={() => setPeriod(p)} style={{ padding: '10px 0', borderRadius: 12, background: period === p ? 'rgba(94,234,212,0.15)' : 'rgba(255,255,255,0.05)', border: period === p ? '1px solid rgba(94,234,212,0.3)' : '1px solid transparent', color: period === p ? AC : S, fontSize: 11, fontWeight: 700, textTransform: 'capitalize' }}>{p}</T>
+              <T key={p} onClick={() => setPeriod(p)} style={{ padding: '10px 0', borderRadius: 12, background: period === p ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.05)', border: period === p ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent', color: period === p ? AC : S, fontSize: 11, fontWeight: 700, textTransform: 'capitalize' }}>{p}</T>
             ))}
           </div>
         </Field>
@@ -557,7 +557,7 @@ export function AddDebitOrderSheet({ open, onClose, order }: { open: boolean; on
               <Ic n="Trash2" s={16} />
             </T>
           )}
-          <T disabled={busy} onClick={save} style={{ flex: 1, padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800 }}>
+          <T disabled={busy} onClick={save} style={{ flex: 1, padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800 }}>
             {busy ? 'Saving…' : editing ? 'Save changes' : 'Add Debit Order'}
           </T>
         </div>

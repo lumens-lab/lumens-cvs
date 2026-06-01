@@ -43,7 +43,7 @@ export function SettingsRoot({ go, onBack }: { go: (s: SettingsScreen) => void; 
       <PageHeader title="Settings" onBack={onBack} />
       {items.map((it) => (
         <T key={it.id} onClick={() => go(it.id)} active="rgba(255,255,255,0.08)" style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, color: W }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(94,234,212,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(37,99,235,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Ic n={it.icon} s={18} c={AC} />
           </div>
           <div style={{ flex: 1 }}>
@@ -70,7 +70,7 @@ export function CurrencyScreen({ onBack }: { onBack: () => void }) {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search currency..." style={{ width: '100%', padding: '12px 16px 12px 40px', ...gl(), color: W, fontSize: 13, outline: 'none', minHeight: 48 }} />
       </div>
       {filtered.map((c) => (
-        <T key={c.code} onClick={() => { set((s) => { s.settings.currency = c.code; }); showToast(`Currency set to ${c.code}`); }} style={{ width: '100%', textAlign: 'left', padding: '14px 16px', borderRadius: 14, background: cur === c.code ? 'rgba(94,234,212,0.1)' : 'rgba(255,255,255,0.04)', border: cur === c.code ? '1px solid rgba(94,234,212,0.3)' : '1px solid transparent', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12, color: W }}>
+        <T key={c.code} onClick={() => { set((s) => { s.settings.currency = c.code; }); showToast(`Currency set to ${c.code}`); }} style={{ width: '100%', textAlign: 'left', padding: '14px 16px', borderRadius: 14, background: cur === c.code ? 'rgba(37,99,235,0.1)' : 'rgba(255,255,255,0.04)', border: cur === c.code ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12, color: W }}>
           <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: cur === c.code ? AC : W }}>{c.symbol}</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 700 }}>{c.code}</div>
@@ -90,7 +90,7 @@ export function LanguageScreen({ onBack }: { onBack: () => void }) {
     <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Language" onBack={onBack} />
       {LANGUAGES.map((l) => (
-        <T key={l.code} onClick={() => { set((s) => { s.settings.language = l.code; }); showToast(`Language set to ${l.name}`); }} style={{ width: '100%', textAlign: 'left', padding: '14px 16px', borderRadius: 14, background: cur === l.code ? 'rgba(94,234,212,0.1)' : 'rgba(255,255,255,0.04)', border: cur === l.code ? '1px solid rgba(94,234,212,0.3)' : '1px solid transparent', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12, color: W }}>
+        <T key={l.code} onClick={() => { set((s) => { s.settings.language = l.code; }); showToast(`Language set to ${l.name}`); }} style={{ width: '100%', textAlign: 'left', padding: '14px 16px', borderRadius: 14, background: cur === l.code ? 'rgba(37,99,235,0.1)' : 'rgba(255,255,255,0.04)', border: cur === l.code ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12, color: W }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 700 }}>{l.name}</div>
             <div style={{ fontSize: 11, color: S }}>{l.native}</div>
@@ -192,7 +192,7 @@ export function AccountsScreen({ onBack }: { onBack: () => void }) {
   return (
     <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Account Settings" onBack={onBack} right={
-        <T onClick={() => setAdding(!adding)} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(94,234,212,0.15)', border: '1px solid rgba(94,234,212,0.3)', color: AC, fontSize: 12, fontWeight: 700 }}>{adding ? 'Cancel' : '+ Add'}</T>
+        <T onClick={() => setAdding(!adding)} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', color: AC, fontSize: 12, fontWeight: 700 }}>{adding ? 'Cancel' : '+ Add'}</T>
       } />
       {adding && (
         <div style={{ ...gl('rgba(255,255,255,0.05)', 16), padding: 14, marginBottom: 12 }}>
@@ -227,10 +227,10 @@ export function CategoriesScreen({ kind, onBack }: { kind: 'income'|'expense'; o
   const list: Cat[] = kind === 'income' ? state.incomeCats : state.expenseCats;
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
-  const [color, setColor] = useState('#5eead4');
+  const [color, setColor] = useState('#2563eb');
   const [icon, setIcon] = useState('Tag');
   const [budget, setBudget] = useState('');
-  const colors = ['#5eead4', '#34d399', '#60a5fa', '#c084fc', '#f87171', '#fb923c', '#fbbf24', '#f472b6'];
+  const colors = ['#2563eb', '#34d399', '#60a5fa', '#c084fc', '#f87171', '#fb923c', '#fbbf24', '#f472b6'];
   const icons = ['Tag', 'ShoppingBag', 'Coffee', 'Car', 'Music', 'Receipt', 'Home', 'Heart', 'Gift', 'Plane', 'Book', 'Briefcase'];
 
   const add = () => {
@@ -244,7 +244,7 @@ export function CategoriesScreen({ kind, onBack }: { kind: 'income'|'expense'; o
   return (
     <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title={kind === 'income' ? 'Income Categories' : 'Expense Categories'} onBack={onBack} right={
-        <T onClick={() => setAdding(!adding)} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(94,234,212,0.15)', border: '1px solid rgba(94,234,212,0.3)', color: AC, fontSize: 12, fontWeight: 700 }}>{adding ? 'Cancel' : '+ Add'}</T>
+        <T onClick={() => setAdding(!adding)} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', color: AC, fontSize: 12, fontWeight: 700 }}>{adding ? 'Cancel' : '+ Add'}</T>
       } />
       {adding && (
         <div style={{ ...gl('rgba(255,255,255,0.05)', 16), padding: 14, marginBottom: 12 }}>
