@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel/wallet';
 import lumensWordmark from '@/assets/lumens-wordmark.png';
 
-export function LumensWordmark({ height = 100 }: { height?: number }) {
+export function LumensWordmark({ height = 70 }: { height?: number }) {
   return (
     <img
       src={lumensWordmark}
@@ -45,7 +45,7 @@ export function HomeScreen({
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       {/* Brand wordmark */}
       <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'flex-start', marginLeft: -8 }}>
-        <LumensWordmark height={100} />
+        <LumensWordmark height={70} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
@@ -431,7 +431,7 @@ export function ChatScreen({ openSub, openChat }: any) {
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'flex-start', marginLeft: -8 }}>
-        <LumensWordmark height={100} />
+        <LumensWordmark height={70} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
