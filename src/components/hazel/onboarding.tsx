@@ -22,7 +22,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
 
   const slides = [
     { ic: 'Wallet', title: 'One wallet,\nzero friction', body: 'Hold fiat and crypto side by side. Send, receive and swap in a tap.', color: '#2563eb' },
-    { ic: 'PieChart', title: 'Budget that\nactually works', body: 'Set monthly limits per category. We track spending automatically.', color: '#5eead4' },
+    { ic: 'PieChart', title: 'Budget that\nactually works', body: 'Set monthly limits per category. We track spending automatically.', color: '#2563eb' },
     { ic: 'ScanLine', title: 'Scan to pay,\nscan to track', body: 'Scan a QR to pay anyone. Snap a receipt and log the expense instantly.', color: '#60a5fa' },
     { ic: 'MessageCircle', title: 'Chat &\nsend money', body: 'Pay friends straight from chat. Encrypted, fast, and friendly.', color: '#c084fc' },
   ];

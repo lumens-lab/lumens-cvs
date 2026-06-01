@@ -6,7 +6,7 @@ export const COLORS = {
   W: '#fff',
   S: 'rgba(255,255,255,0.5)',
   S2: 'rgba(255,255,255,0.3)',
-  AC: '#5eead4',
+  AC: '#2563eb',
   GN: '#34d399',
   RD: '#f87171',
   BL: '#60a5fa',

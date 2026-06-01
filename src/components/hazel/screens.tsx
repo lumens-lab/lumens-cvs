@@ -77,7 +77,7 @@ export function HomeScreen({
           <div style={{ fontSize: 14, fontWeight: 700, color: W }}>My Cards</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <T onClick={() => setCardVis(!cardVis)} style={{ ...gl('rgba(255,255,255,0.07)', 10, { boxShadow: 'none' }), padding: '6px 10px', color: S, fontSize: 11, fontWeight: 600, border: 'none' }}>{cardVis ? 'Hide' : 'Show'}</T>
-            <T onClick={() => openSheet('add-card')} style={{ ...gl('rgba(94,234,212,0.08)', 10, { boxShadow: 'none', border: '1px solid rgba(94,234,212,0.2)' }), padding: '6px 10px', color: AC, fontSize: 11, fontWeight: 600 }}>+ Add</T>
+            <T onClick={() => openSheet('add-card')} style={{ ...gl('rgba(37,99,235,0.08)', 10, { boxShadow: 'none', border: '1px solid rgba(37,99,235,0.2)' }), padding: '6px 10px', color: AC, fontSize: 11, fontWeight: 600 }}>+ Add</T>
           </div>
         </div>
         <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', gap: 12, scrollSnapType: 'x mandatory', margin: '0 -20px', padding: '0 20px 4px' }}>
@@ -219,12 +219,12 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
             <div style={{ fontSize: 28, color: W, fontWeight: 800, letterSpacing: '-0.02em' }}>{sym}{fmtM(spent)}</div>
             <div style={{ fontSize: 12, color: S, marginTop: 2 }}>of {sym}{fmtM(budget)}</div>
           </div>
-          <T onClick={() => openSheet('set-budget', { current: budget, onSave: setBudget })} style={{ ...gl('rgba(94,234,212,0.08)', 10, { boxShadow: 'none', border: '1px solid rgba(94,234,212,0.2)' }), padding: '8px 12px', color: AC, fontSize: 11, fontWeight: 600 }}>
+          <T onClick={() => openSheet('set-budget', { current: budget, onSave: setBudget })} style={{ ...gl('rgba(37,99,235,0.08)', 10, { boxShadow: 'none', border: '1px solid rgba(37,99,235,0.2)' }), padding: '8px 12px', color: AC, fontSize: 11, fontWeight: 600 }}>
             Edit
           </T>
         </div>
         <div style={{ height: 10, borderRadius: 6, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div style={{ width: `${pct}%`, height: '100%', background: pct > 90 ? RD : 'linear-gradient(90deg,#5eead4,#34d399)', borderRadius: 6, transition: 'width .4s' }} />
+          <div style={{ width: `${pct}%`, height: '100%', background: pct > 90 ? RD : 'linear-gradient(90deg,#2563eb,#34d399)', borderRadius: 6, transition: 'width .4s' }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 11, color: S }}>
           <span>{pct.toFixed(0)}% spent</span>
@@ -241,7 +241,7 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
             return (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                 <div style={{ fontSize: 9, color: S2 }}>{sym}{d.a.toFixed(0)}</div>
-                <div className="bar-anim" style={{ width: '70%', height: h, borderRadius: 6, background: 'linear-gradient(180deg,rgba(94,234,212,0.7),rgba(94,234,212,0.25))' }} />
+                <div className="bar-anim" style={{ width: '70%', height: h, borderRadius: 6, background: 'linear-gradient(180deg,rgba(37,99,235,0.7),rgba(37,99,235,0.25))' }} />
                 <div style={{ fontSize: 10, color: S, fontWeight: 600 }}>{d.d}</div>
               </div>
             );
@@ -373,7 +373,7 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
               </T>
             </div>
           ))}
-          <T onClick={() => openSheet('add-card')} style={{ flex: '0 0 auto', scrollSnapAlign: 'center', width: 340, ...gl('rgba(94,234,212,0.08)', 18, { border: '1px solid rgba(94,234,212,0.2)' }), padding: 14, color: AC, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 200 }}>
+          <T onClick={() => openSheet('add-card')} style={{ flex: '0 0 auto', scrollSnapAlign: 'center', width: 340, ...gl('rgba(37,99,235,0.08)', 18, { border: '1px solid rgba(37,99,235,0.2)' }), padding: 14, color: AC, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 200 }}>
             <Ic n="Plus" s={16} /> Add New Card
           </T>
         </div>
@@ -382,7 +382,7 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
       {/* Crypto section */}
       <div>
         <div style={{ fontSize: 13, fontWeight: 700, color: W, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7 }}>Crypto Assets</div>
-        <div style={{ ...gl('rgba(94,234,212,0.06)', 18), padding: 18, marginBottom: 14, textAlign: 'center', border: '1px solid rgba(94,234,212,0.15)' }}>
+        <div style={{ ...gl('rgba(37,99,235,0.06)', 18), padding: 18, marginBottom: 14, textAlign: 'center', border: '1px solid rgba(37,99,235,0.15)' }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Total Portfolio Value</div>
           <div style={{ fontSize: 28, color: W, fontWeight: 800, letterSpacing: '-0.02em' }}>${fmtM(cryptoTotal)}</div>
         </div>
@@ -611,7 +611,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
           <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{ct.name}</div>
           <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? '● Online' : 'Offline'}</div>
         </T>
-        <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(94,234,212,0.12)', border: '1px solid rgba(94,234,212,0.25)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4 }}>
+        <T onClick={onSendMoney} disabled={!canRichSend} aria-label="Send money" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canRichSend ? 1 : 0.4 }}>
           <Ic n="DollarSign" s={16} />
         </T>
         <T onClick={() => setMenuOpen((v) => !v)} aria-label="More actions" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -746,7 +746,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
           </div>
         )}
         {replyTo && (
-          <div style={{ marginBottom: 8, padding: '8px 12px', borderRadius: 12, background: 'rgba(94,234,212,0.08)', border: '1px solid rgba(94,234,212,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ marginBottom: 8, padding: '8px 12px', borderRadius: 12, background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 3, height: 28, background: AC, borderRadius: 2 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 10, color: AC, fontWeight: 700 }}>Replying to</div>
@@ -823,7 +823,7 @@ export function ProfileScreen({ openSub }: any) {
             <div style={{ color: W, fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>{p.name}</div>
             <div style={{ color: S, fontSize: 12 }}>{p.username}</div>
           </div>
-          <T onClick={() => openSub('edit-profile')} style={{ ...gl('rgba(94,234,212,0.1)', 12, { border: '1px solid rgba(94,234,212,0.25)', boxShadow: 'none' }), padding: '8px 12px', color: AC, fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
+          <T onClick={() => openSub('edit-profile')} style={{ ...gl('rgba(37,99,235,0.1)', 12, { border: '1px solid rgba(37,99,235,0.25)', boxShadow: 'none' }), padding: '8px 12px', color: AC, fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
             Edit
           </T>
         </div>
@@ -852,7 +852,7 @@ export function ProfileScreen({ openSub }: any) {
 function Row({ icon, label, value, last }: { icon: string; label: string; value: string; last?: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)' }}>
-      <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(94,234,212,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Ic n={icon} s={16} c={COLORS.AC} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -888,7 +888,7 @@ function DebitOrdersBlock({ orders, sym, onAdd, onEdit }: { orders: DebitOrder[]
           const d = daysUntil(o);
           const overdue = d < 0;
           const soon = d >= 0 && d <= o.remind_days_before;
-          const tint = overdue ? '#f87171' : soon ? '#fbbf24' : '#5eead4';
+          const tint = overdue ? '#f87171' : soon ? '#fbbf24' : '#2563eb';
           return (
             <T key={o.id} onClick={() => onEdit(o)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
               <div style={{ width: 40, height: 40, borderRadius: 12, background: tint + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -921,7 +921,7 @@ function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; s
         marginBottom: 22,
         padding: 18,
         borderRadius: 22,
-        background: 'linear-gradient(135deg, rgba(94,234,212,0.10), rgba(96,165,250,0.08))',
+        background: 'linear-gradient(135deg, rgba(37,99,235,0.10), rgba(96,165,250,0.08))',
         border: '1px solid rgba(255,255,255,0.14)',
         backdropFilter: 'blur(22px) saturate(160%)',
         WebkitBackdropFilter: 'blur(22px) saturate(160%)',
@@ -962,15 +962,15 @@ function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; s
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
           }}
         >
-          <Ic n="Send" s={16} c="#5eead4" /> Send
+          <Ic n="Send" s={16} c="#2563eb" /> Send
         </T>
         <T
           onClick={onDeposit}
           style={{
             padding: '14px 12px',
             borderRadius: 18,
-            background: 'linear-gradient(135deg, rgba(94,234,212,0.22), rgba(96,165,250,0.10))',
-            border: '1px solid rgba(94,234,212,0.30)',
+            background: 'linear-gradient(135deg, rgba(37,99,235,0.22), rgba(96,165,250,0.10))',
+            border: '1px solid rgba(37,99,235,0.30)',
             backdropFilter: 'blur(18px)',
             WebkitBackdropFilter: 'blur(18px)',
             color: '#fff',
@@ -983,7 +983,7 @@ function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; s
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
           }}
         >
-          <Ic n="Download" s={16} c="#5eead4" /> Deposit
+          <Ic n="Download" s={16} c="#2563eb" /> Deposit
         </T>
       </div>
     </div>

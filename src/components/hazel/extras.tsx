@@ -11,7 +11,7 @@ const { W, S, S2, AC, GN } = COLORS;
 export function SwapSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { state } = useHazelStore();
   const fiat = state.settings.currency;
-  const FIAT = { sym: fiat, name: fiat, price: 1, bal: 25430, clr: '#5eead4' };
+  const FIAT = { sym: fiat, name: fiat, price: 1, bal: 25430, clr: '#2563eb' };
   const assets = [FIAT, ...CRYPTO] as any[];
   const [fromId, setFromId] = useState<string>(CRYPTO[0].sym);
   const [toId, setToId] = useState<string>(fiat);
@@ -79,13 +79,13 @@ export function SwapSheet({ open, onClose }: { open: boolean; onClose: () => voi
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'center', margin: '-6px 0' }}>
-        <T onClick={flip} style={{ width: 36, height: 36, borderRadius: 18, background: '#001535', border: '2px solid rgba(94,234,212,0.4)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+        <T onClick={flip} style={{ width: 36, height: 36, borderRadius: 18, background: '#001535', border: '2px solid rgba(37,99,235,0.4)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
           <Ic n="ArrowDownUp" s={16} />
         </T>
       </div>
 
       {/* TO */}
-      <div style={{ ...gl('rgba(94,234,212,0.06)', 18, { border: '1px solid rgba(94,234,212,0.15)' }), padding: 16, marginBottom: 12 }}>
+      <div style={{ ...gl('rgba(37,99,235,0.06)', 18, { border: '1px solid rgba(37,99,235,0.15)' }), padding: 16, marginBottom: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
           <span style={{ color: S, fontSize: 11 }}>You receive</span>
           <span style={{ color: S, fontSize: 11 }}>~ estimate</span>
@@ -105,7 +105,7 @@ export function SwapSheet({ open, onClose }: { open: boolean; onClose: () => voi
         <span style={{ color: W, fontWeight: 600 }}>1 {from.sym ?? from.name} ≈ {rate.toFixed(4)} {to.sym ?? to.name}</span>
       </div>
 
-      <T onClick={swap} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800 }}>
+      <T onClick={swap} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800 }}>
         Confirm Swap
       </T>
     </Sheet>
@@ -140,7 +140,7 @@ export function ReceiveSheet({ open, onClose }: { open: boolean; onClose: () => 
     <Sheet open={open} onClose={onClose} title="Receive">
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 14 }} className="no-scrollbar">
         {ADDRESSES.map((a) => (
-          <T key={a.id} onClick={() => setSel(a.id)} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 12, background: sel === a.id ? 'rgba(94,234,212,0.15)' : 'rgba(255,255,255,0.05)', border: sel === a.id ? '1px solid rgba(94,234,212,0.3)' : '1px solid transparent', color: sel === a.id ? AC : W, fontSize: 12, fontWeight: 700 }}>
+          <T key={a.id} onClick={() => setSel(a.id)} style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 12, background: sel === a.id ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.05)', border: sel === a.id ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent', color: sel === a.id ? AC : W, fontSize: 12, fontWeight: 700 }}>
             {a.sym} {a.id}
           </T>
         ))}
@@ -168,7 +168,7 @@ export function ReceiveSheet({ open, onClose }: { open: boolean; onClose: () => 
             try { await (navigator as any).share({ title: cur.name, text: cur.addr }); }
             catch { /* user cancelled */ }
           } else { copy(); }
-        }} style={{ padding: 14, borderRadius: 14, background: 'linear-gradient(135deg,#5eead4,#34d399)', border: 'none', color: '#001535', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+        }} style={{ padding: 14, borderRadius: 14, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <Ic n="Share2" s={16} /> Share
         </T>
       </div>

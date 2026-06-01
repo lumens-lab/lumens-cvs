@@ -301,7 +301,7 @@ function Shell({ children, hideNav }: { children: React.ReactNode; hideNav?: boo
       {children}
       <div id="hazel-toast" />
       <style>{`
-        #hazel-toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 999; padding: 10px 20px; border-radius: 14px; font-size: 13px; font-weight: 600; color: #001535; pointer-events: none; white-space: nowrap; backdrop-filter: blur(16px); background: rgba(94,234,212,0.9); border: 1px solid rgba(94,234,212,0.4); box-shadow: 0 4px 20px rgba(0,0,0,0.3); opacity: 0; transition: opacity .2s, transform .2s; }
+        #hazel-toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 999; padding: 10px 20px; border-radius: 14px; font-size: 13px; font-weight: 600; color: #001535; pointer-events: none; white-space: nowrap; backdrop-filter: blur(16px); background: rgba(37,99,235,0.9); border: 1px solid rgba(37,99,235,0.4); box-shadow: 0 4px 20px rgba(0,0,0,0.3); opacity: 0; transition: opacity .2s, transform .2s; }
         #hazel-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         #hazel-toast.hide { opacity: 0; transform: translateX(-50%) translateY(-10px); }
       `}</style>
@@ -448,7 +448,7 @@ function CallScreen({ userId }: { userId: string | null }) {
     const label = call.status === "outgoing" ? "Calling…" : call.status === "incoming" ? "Incoming call" : call.status === "connecting" ? "Connecting…" : "In call";
     return (
       <div className="afi" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, gap: 18, background: "linear-gradient(180deg,#001535,#001a48)" }}>
-        <div style={{ width: 120, height: 120, borderRadius: 60, background: "linear-gradient(135deg,#5eead4,#2563eb)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 36, fontWeight: 800, boxShadow: "0 18px 60px rgba(37,99,235,0.45)" }}>
+        <div style={{ width: 120, height: 120, borderRadius: 60, background: "linear-gradient(135deg,#2563eb,#2563eb)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 36, fontWeight: 800, boxShadow: "0 18px 60px rgba(37,99,235,0.45)" }}>
           {peer?.ini || "?"}
         </div>
         <div style={{ color: W, fontSize: 22, fontWeight: 800 }}>{peer?.name || "Contact"}</div>
@@ -475,7 +475,7 @@ function CallScreen({ userId }: { userId: string | null }) {
     <div className="afi" style={{ padding: "14px 20px 140px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em" }}>Calls</h1>
-        <div style={{ ...{ padding: "6px 10px", borderRadius: 999, background: "rgba(94,234,212,0.12)", color: AC as any, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em" } }}>
+        <div style={{ ...{ padding: "6px 10px", borderRadius: 999, background: "rgba(37,99,235,0.12)", color: AC as any, fontSize: 10, fontWeight: 700, letterSpacing: "0.08em" } }}>
           END-TO-END
         </div>
       </div>
@@ -490,7 +490,7 @@ function CallScreen({ userId }: { userId: string | null }) {
       </div>
       {list.length === 0 ? (
         <div className="frost" style={{ padding: 28, borderRadius: 20, textAlign: "center" }}>
-          <div style={{ width: 56, height: 56, borderRadius: 28, background: "rgba(94,234,212,0.12)", margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 56, height: 56, borderRadius: 28, background: "rgba(37,99,235,0.12)", margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Ic n="PhoneOff" s={22} c={AC as any} />
           </div>
           <div style={{ color: W, fontSize: 15, fontWeight: 700 }}>No contacts yet</div>
@@ -499,12 +499,12 @@ function CallScreen({ userId }: { userId: string | null }) {
       ) : (
         list.map((c) => (
           <div key={c.id} className="frost" style={{ padding: 12, borderRadius: 16, marginBottom: 8, display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 42, height: 42, borderRadius: 21, background: "linear-gradient(135deg,#5eead4,#2563eb)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>{c.ini}</div>
+            <div style={{ width: 42, height: 42, borderRadius: 21, background: "linear-gradient(135deg,#2563eb,#2563eb)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800 }}>{c.ini}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{c.name}</div>
               <div style={{ color: S, fontSize: 11 }}>{c.on ? "Online" : "Offline"}</div>
             </div>
-            <T onClick={() => startCall(c.id, "audio")} style={{ width: 40, height: 40, borderRadius: 20, background: "rgba(94,234,212,0.18)", border: "1px solid rgba(94,234,212,0.35)", color: AC as any, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <T onClick={() => startCall(c.id, "audio")} style={{ width: 40, height: 40, borderRadius: 20, background: "rgba(37,99,235,0.18)", border: "1px solid rgba(37,99,235,0.35)", color: AC as any, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Ic n="Phone" s={18} />
             </T>
           </div>
