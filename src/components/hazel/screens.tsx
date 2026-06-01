@@ -484,7 +484,7 @@ export function ChatScreen({ openSub, openChat }: any) {
 }
 
 /* ── CHAT VIEW ── */
-export function ChatView({ contactId, onBack, onSendMoney }: any) {
+export function ChatView({ contactId, onBack, onSendMoney, onVideoCall }: any) {
   const { state, set } = useHazelStore();
   const ct = state.contacts.find((c) => c.id === contactId);
   const conv = state.conversations.find((c) => c.cid === contactId);
@@ -497,6 +497,7 @@ export function ChatView({ contactId, onBack, onSendMoney }: any) {
   const [recording, setRecording] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
   const [actionFor, setActionFor] = useState<string | null>(null); // msg id with action popover open
   const [replyTo, setReplyTo] = useState<{ id: string; preview: string } | null>(null);
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
