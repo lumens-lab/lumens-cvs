@@ -451,7 +451,7 @@ export function ChatScreen({ openSub, openChat }: any) {
           if (!ct) return null;
           return (
             <T key={conv.cid} onClick={() => openChat(ct.id)} active="rgba(255,255,255,0.06)" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 4px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left' }}>
-              <Av ini={ct.ini} g={ct.g} on={ct.on} sz={46} />
+              <Av ini={ct.ini} g={ct.g} on={ct.on} sz={46} src={ct.avatar} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: W, fontSize: 14, fontWeight: 600 }}>{ct.name}</span>
@@ -468,7 +468,7 @@ export function ChatScreen({ openSub, openChat }: any) {
             <div style={{ fontSize: 11, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Contacts</div>
             {confirmedContacts.map((ct) => (
               <T key={ct.id} onClick={() => openChat(ct.id)} active="rgba(255,255,255,0.06)" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'left' }}>
-                <Av ini={ct.ini} g={ct.g} on={ct.on} sz={42} />
+                <Av ini={ct.ini} g={ct.g} on={ct.on} sz={42} src={ct.avatar} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: W, fontSize: 14, fontWeight: 600 }}>{ct.name}</div>
                   <div style={{ color: S, fontSize: 11 }}>Tap to start a chat</div>
