@@ -50,7 +50,7 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: () => void; o
         <div style={{ ...gl(), padding: 24, textAlign: 'center', color: S }}>No expenses yet. Tap “+ Add” to record one.</div>
       ) : (
         expenses.map((t) => (
-          <T key={t.id} onClick={() => openDetail(t.id!)} active="rgba(255,255,255,0.06)" style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
+          <T key={t.id} onClick={() => openDetail(t.id!)} active="rgba(255,255,255,0.06)" style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 42, height: 42, borderRadius: 12, background: t.ibg, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
               <Ic n={t.icon} s={18} c={t.ic} />
               {t.receipt && <div style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: 8, background: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="Paperclip" s={9} c="#001535" /></div>}
@@ -216,11 +216,13 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
     <Sheet open={open} onClose={() => { reset(); onClose(); }} title="Add Expense">
       {/* Scan & Photo actions */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 4, marginBottom: 14 }}>
-        <T onClick={() => scanRef.current?.click()} style={{ ...gl('rgba(37,99,235,0.1)', 14, { border: '1px solid rgba(37,99,235,0.25)', boxShadow: 'none' }), padding: '14px 8px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <Ic n="ScanLine" s={18} /> Scan receipt
+        <T onClick={() => scanRef.current?.click()} style={{ ...gl('rgba(37,99,235,0.1)', 14, { border: '1px solid rgba(37,99,235,0.25)', boxShadow: 'none' }), padding: '14px 8px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic n="ScanLine" s={18} /> Scan &amp; autofill</div>
+          <div style={{ fontSize: 10, fontWeight: 500, color: S, opacity: 0.85 }}>Detect fields from receipt</div>
         </T>
-        <T onClick={() => photoRef.current?.click()} style={{ ...gl('rgba(96,165,250,0.1)', 14, { border: '1px solid rgba(96,165,250,0.25)', boxShadow: 'none' }), padding: '14px 8px', color: COLORS.BL, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <Ic n="Camera" s={18} /> Photo only
+        <T onClick={() => photoRef.current?.click()} style={{ ...gl('rgba(96,165,250,0.1)', 14, { border: '1px solid rgba(96,165,250,0.25)', boxShadow: 'none' }), padding: '14px 8px', color: COLORS.BL, fontSize: 13, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic n="Paperclip" s={18} /> Attach for records</div>
+          <div style={{ fontSize: 10, fontWeight: 500, color: S, opacity: 0.85 }}>Save receipt only</div>
         </T>
         <input ref={scanRef} type="file" accept="image/*" capture="environment" onChange={onScan} style={{ display: 'none' }} />
         <input ref={photoRef} type="file" accept="image/*" capture="environment" onChange={onPhoto} style={{ display: 'none' }} />
