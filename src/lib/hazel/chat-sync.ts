@@ -267,6 +267,20 @@ export async function sendChatMessage(otherUserId: string, payload: { text?: str
   });
   if (me) throw me;
   await supabase.from('conversations').update({ last_preview: preview.slice(0, 200), last_at: new Date().toISOString() }).eq('id', convId as string);
+  // Fire-and-forget server-side Web Push so the recipient gets notified even
+  // when their tab is closed. Errors are swallowed — chat send must not fail.
+  try {
+    const { data: prof } = await supabase
+      .from('profiles').select('display_name, username').eq('id', user.id).maybeSingle();
+    const name = (prof?.display_name || prof?.username || 'New message') as string;
+    void sendPushToUser({ data: {
+      recipientUserId: otherUserId,
+      title: name,
+      body: preview.slice(0, 140) || 'New message',
+      url: '/',
+      tag: `msg:${convId}`,
+    }}).catch(() => {});
+  } catch {}
   return convId as string;
 }
 
