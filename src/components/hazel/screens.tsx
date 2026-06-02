@@ -8,12 +8,13 @@ import { sendChatMessage, deleteChatMessage, fetchContactProfile } from '@/lib/h
 import { useDebitOrders, deleteDebitOrder, daysUntil, isDue, type DebitOrder } from '@/lib/hazel/debit-orders';
 import { useAuth } from '@/hooks/use-auth';
 import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel/wallet';
-import lumensWordmark from '@/assets/lumens-wordmark.png';
+import lumensLogo from '@/assets/lumens-logo.png';
 
-export function LumensWordmark({ height = 70 }: { height?: number }) {
+/** Compact app logo shown on Wallet/Chat headers (matches the onboarding splash logo). */
+export function LumensWordmark({ height = 50 }: { height?: number }) {
   return (
     <img
-      src={lumensWordmark}
+      src={lumensLogo}
       alt="Lumens"
       height={height}
       style={{ height, width: 'auto', display: 'block' }}
@@ -43,9 +44,9 @@ export function HomeScreen({
 
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
-      {/* Brand wordmark */}
-      <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'flex-start', marginLeft: -8 }}>
-        <LumensWordmark height={70} />
+      {/* Brand mark */}
+      <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
+        <LumensWordmark height={50} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
@@ -266,7 +267,7 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
         {byCat.map((c) => {
           const bpct = c.budget ? Math.min(100, (c.spent / c.budget) * 100) : 0;
           return (
-            <T key={c.id} onClick={() => openCatDetail(c.id, monthKey)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
+            <T key={c.id} onClick={() => openCatDetail(c.id, monthKey)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 40, height: 40, borderRadius: 12, background: c.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Ic n={c.icon} s={18} c={c.color} />
               </div>
@@ -430,8 +431,8 @@ export function ChatScreen({ openSub, openChat }: any) {
   }, [q, state.contacts, state.conversations]);
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
-      <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'flex-start', marginLeft: -8 }}>
-        <LumensWordmark height={70} />
+      <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
+        <LumensWordmark height={50} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
@@ -484,7 +485,7 @@ export function ChatScreen({ openSub, openChat }: any) {
 }
 
 /* ── CHAT VIEW ── */
-export function ChatView({ contactId, onBack, onSendMoney, onVideoCall }: any) {
+export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceCall }: any) {
   const { state, set } = useHazelStore();
   const ct = state.contacts.find((c) => c.id === contactId);
   const conv = state.conversations.find((c) => c.cid === contactId);
@@ -633,6 +634,7 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall }: any) {
           }}
         >
           {[
+            { icon: 'Phone', label: 'Voice call', fn: () => { setMenuOpen(false); if (onVoiceCall) onVoiceCall(); else showToast('Calling…'); }, disabled: !canRichSend },
             { icon: 'Video', label: 'Video call', fn: () => { setMenuOpen(false); if (onVideoCall) onVideoCall(); else showToast('Calling…'); }, disabled: !canRichSend },
             { icon: 'UserCircle2', label: 'View profile', fn: () => { setMenuOpen(false); setProfileOpen(true); } },
           ].map((it) => (
@@ -902,7 +904,7 @@ function DebitOrdersBlock({ orders, sym, onAdd, onEdit }: { orders: DebitOrder[]
           const soon = d >= 0 && d <= o.remind_days_before;
           const tint = overdue ? '#f87171' : soon ? '#fbbf24' : '#2563eb';
           return (
-            <T key={o.id} onClick={() => onEdit(o)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
+            <T key={o.id} onClick={() => onEdit(o)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 40, height: 40, borderRadius: 12, background: tint + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Ic n="CalendarClock" s={18} c={tint} />
               </div>
