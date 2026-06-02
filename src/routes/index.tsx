@@ -35,6 +35,7 @@ import { PaySheet } from "@/components/hazel/paysheet";
 import { WelcomeFlow, PinLock } from "@/components/hazel/onboarding";
 import { SecurityScreen, HelpScreen } from "@/components/hazel/security";
 import { NotificationsScreen, AppearanceScreen } from "@/components/hazel/prefs";
+import { CallHistoryScreen } from "@/components/hazel/call-history";
 import { useHazelStore } from "@/lib/hazel/store";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthScreen } from "@/components/hazel/auth";
@@ -74,6 +75,7 @@ type Sub =
   | null
   | "edit-profile"
   | "chat-view"
+  | "call-history"
   | "cat-detail"
   | "expense-detail"
   | "security"
@@ -217,6 +219,12 @@ function HazelApp() {
   if (sub === "set-appearance") return withNav(<AppearanceScreen onBack={() => setSub(null)} />);
   if (sub === "security") return withNav(<SecurityScreen onBack={() => setSub(null)} onChangePin={() => { /* future */ }} />);
   if (sub === "help") return withNav(<HelpScreen onBack={() => setSub(null)} />);
+  if (sub === "call-history") return withNav(
+    <CallHistoryScreen
+      onBack={() => setSub(null)}
+      onCall={(id, mode) => { calls.startCall(id, mode); setSub(null); setTab('call'); }}
+    />
+  );
   if (sub === "expense-detail" && expenseId != null) return withNav(<ExpenseDetailScreen id={expenseId} onBack={() => { setSub(null); setExpenseId(null); }} />);
   if (sub === "cat-detail" && catCtx)
     return (
