@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useHazelStore, type Contact, type Conv } from './store';
 import { GRAD_MAP } from './data';
+import { sendPushToUser } from './push-notify.functions';
 
 const GRADS = Object.keys(GRAD_MAP);
 const pickG = (seed: string) => GRADS[Math.abs(seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % GRADS.length];
