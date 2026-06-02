@@ -72,7 +72,7 @@ export function CallHistoryScreen({ onBack, onCall }: { onBack: () => void; onCa
         <div style={{ ...gl(), padding: 6 }}>
           {rows.map((r) => {
             const otherId = r.caller_id === me ? r.callee_id : r.caller_id;
-            const ct = state.contacts.find((c) => c.contact_user_id === otherId || c.id === otherId);
+            const ct = state.contacts.find((c) => c.id === otherId);
             const outgoing = r.caller_id === me;
             const missed = r.status === 'declined' || (r.status === 'ended' && (r.duration_seconds || 0) === 0 && !outgoing);
             const color = missed ? '#ef4444' : (outgoing ? AC : '#22c55e');
