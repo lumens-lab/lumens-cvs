@@ -508,6 +508,14 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
   const [replyTo, setReplyTo] = useState<{ id: string; preview: string } | null>(null);
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [conv?.msgs?.length]);
+  // Keyboard-aware: when the soft keyboard opens, keep the latest message visible.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const onResize = () => endRef.current?.scrollIntoView({ block: 'end' });
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
+  }, []);
   if (!ct) return null;
   const canRichSend = ct.confirmed === true;
 

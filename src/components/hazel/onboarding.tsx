@@ -201,7 +201,7 @@ function Keypad({ onTap }: { onTap: (d: string) => void }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, width: '100%', maxWidth: 280 }}>
       {keys.map((k, i) => k === '' ? <div key={i} /> : (
-        <T key={i} onClick={() => onTap(k)} style={{
+        <T key={i} onClick={() => { try { (navigator as any).vibrate?.(8); } catch {} ; onTap(k); }} style={{
           height: 60, borderRadius: 20,
           background: 'rgba(255,255,255,0.06)',
           border: '1px solid rgba(255,255,255,0.08)',
