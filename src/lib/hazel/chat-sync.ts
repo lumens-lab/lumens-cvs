@@ -66,7 +66,7 @@ export function useChatSync(userId: string | null) {
         .eq('confirmed', true);
       const contactIds = (cRows ?? []).map((r) => r.contact_user_id).filter(Boolean) as string[];
       const { data: profs } = contactIds.length
-        ? await supabase.from('profiles').select('id, display_name, username, avatar_url').in('id', contactIds)
+        ? await supabase.from('profiles_public').select('id, display_name, username, avatar_url').in('id', contactIds)
         : { data: [] as ProfileRow[] };
       const profMap = new Map<string, ProfileRow>();
       (profs ?? []).forEach((p) => profMap.set(p.id, p as ProfileRow));
