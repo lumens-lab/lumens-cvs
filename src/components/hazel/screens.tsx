@@ -542,6 +542,24 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
   const [replyTo, setReplyTo] = useState<{ id: string; preview: string } | null>(null);
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [conv?.msgs?.length]);
+  // Swipe-to-go-back (right swipe from left edge)
+  const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const [swipeDx, setSwipeDx] = useState(0);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (t.clientX > 40) { swipeRef.current = null; return; }
+    swipeRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    const s = swipeRef.current; if (!s) return;
+    const t = e.touches[0];
+    const dx = t.clientX - s.x; const dy = Math.abs(t.clientY - s.y);
+    if (dx > 0 && dx > dy) setSwipeDx(Math.min(dx, 160));
+  };
+  const onTouchEnd = () => {
+    const s = swipeRef.current; swipeRef.current = null;
+    if (swipeDx > 80) { setSwipeDx(0); onBack?.(); } else setSwipeDx(0);
+  };
   // Keyboard-aware: when the soft keyboard opens, keep the latest message visible.
   useEffect(() => {
     if (typeof window === 'undefined' || !window.visualViewport) return;
@@ -648,7 +666,13 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
   };
 
   return (
-    <div className="afi" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div
+      className="afi safe-top"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      style={{ display: 'flex', flexDirection: 'column', height: '100vh', transform: swipeDx ? `translateX(${swipeDx}px)` : undefined, transition: swipeDx ? 'none' : 'transform .2s' }}
+    >
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,21,53,0.85)', backdropFilter: 'blur(20px)' }}>
         <T onClick={onBack} active="rgba(255,255,255,0.1)" style={{ padding: 10, background: 'none', border: 'none', color: W, borderRadius: 14, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="ChevronLeft" s={20} />
