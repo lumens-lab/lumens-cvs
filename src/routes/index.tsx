@@ -310,7 +310,7 @@ function HazelApp() {
 
 function Shell({ children, hideNav }: { children: React.ReactNode; hideNav?: boolean }) {
   return (
-    <div style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", position: "relative", paddingBottom: hideNav ? 0 : 0 }}>
+    <div className="safe-top" style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", position: "relative", paddingBottom: hideNav ? 0 : 0 }}>
       {children}
       <div id="hazel-toast" />
       <style>{`
