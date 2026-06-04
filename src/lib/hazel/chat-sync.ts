@@ -123,6 +123,10 @@ export function useChatSync(userId: string | null) {
 
     loadAll();
 
+    // Pull-to-refresh hook
+    const onRefresh = () => { loadAll(); };
+    if (typeof window !== 'undefined') window.addEventListener('lumens:refresh-chats', onRefresh);
+
     // 4) realtime: messages for me (either side)
     const channel = supabase
       .channel(`chat:${userId}`)
@@ -194,6 +198,7 @@ export function useChatSync(userId: string | null) {
       cancelled = true;
       supabase.removeChannel(channel);
       supabase.removeChannel(presence);
+      if (typeof window !== 'undefined') window.removeEventListener('lumens:refresh-chats', onRefresh);
     };
   }, [userId, set]);
 }
