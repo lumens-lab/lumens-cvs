@@ -417,6 +417,29 @@ export function ChatScreen({ openSub, openChat }: any) {
   const { state } = useHazelStore();
   const [q, setQ] = useState('');
   const sym = getCurrencySym(state.settings.currency);
+  // Pull-to-refresh
+  const [ptrY, setPtrY] = useState(0);
+  const [ptrLoading, setPtrLoading] = useState(false);
+  const ptrStartRef = useRef<number | null>(null);
+  const onPtrStart = (e: React.TouchEvent) => {
+    if ((e.currentTarget as HTMLElement).scrollTop > 0) return;
+    ptrStartRef.current = e.touches[0].clientY;
+  };
+  const onPtrMove = (e: React.TouchEvent) => {
+    if (ptrStartRef.current == null) return;
+    const dy = e.touches[0].clientY - ptrStartRef.current;
+    if (dy > 0) setPtrY(Math.min(80, dy * 0.5));
+  };
+  const onPtrEnd = () => {
+    if (ptrY > 50) {
+      setPtrLoading(true);
+      try { window.dispatchEvent(new CustomEvent('lumens:refresh-chats')); } catch {}
+      setTimeout(() => { setPtrLoading(false); setPtrY(0); }, 800);
+    } else {
+      setPtrY(0);
+    }
+    ptrStartRef.current = null;
+  };
   const filtered = useMemo(() => {
     const f = q.toLowerCase();
     return state.conversations.filter((c) => {
@@ -430,7 +453,18 @@ export function ChatScreen({ openSub, openChat }: any) {
     return state.contacts.filter((c) => c.confirmed && !convIds.has(c.id) && c.name.toLowerCase().includes(f));
   }, [q, state.contacts, state.conversations]);
   return (
-    <div className="afu" style={{ padding: '14px 20px 140px' }}>
+    <div
+      className="afu"
+      onTouchStart={onPtrStart}
+      onTouchMove={onPtrMove}
+      onTouchEnd={onPtrEnd}
+      style={{ padding: '14px 20px 140px', transform: ptrY ? `translateY(${ptrY}px)` : undefined, transition: ptrY ? 'none' : 'transform .2s' }}
+    >
+      {(ptrY > 0 || ptrLoading) && (
+        <div style={{ textAlign: 'center', fontSize: 11, color: S, padding: '4px 0 6px' }}>
+          {ptrLoading ? 'Refreshing…' : ptrY > 50 ? 'Release to refresh' : 'Pull to refresh'}
+        </div>
+      )}
       <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
         <LumensWordmark height={50} />
       </div>
@@ -508,6 +542,24 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
   const [replyTo, setReplyTo] = useState<{ id: string; preview: string } | null>(null);
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [conv?.msgs?.length]);
+  // Swipe-to-go-back (right swipe from left edge)
+  const swipeRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const [swipeDx, setSwipeDx] = useState(0);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (t.clientX > 40) { swipeRef.current = null; return; }
+    swipeRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    const s = swipeRef.current; if (!s) return;
+    const t = e.touches[0];
+    const dx = t.clientX - s.x; const dy = Math.abs(t.clientY - s.y);
+    if (dx > 0 && dx > dy) setSwipeDx(Math.min(dx, 160));
+  };
+  const onTouchEnd = () => {
+    const s = swipeRef.current; swipeRef.current = null;
+    if (swipeDx > 80) { setSwipeDx(0); onBack?.(); } else setSwipeDx(0);
+  };
   // Keyboard-aware: when the soft keyboard opens, keep the latest message visible.
   useEffect(() => {
     if (typeof window === 'undefined' || !window.visualViewport) return;
@@ -614,7 +666,13 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
   };
 
   return (
-    <div className="afi" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+    <div
+      className="afi"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      style={{ display: 'flex', flexDirection: 'column', height: '100vh', transform: swipeDx ? `translateX(${swipeDx}px)` : undefined, transition: swipeDx ? 'none' : 'transform .2s' }}
+    >
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,21,53,0.85)', backdropFilter: 'blur(20px)' }}>
         <T onClick={onBack} active="rgba(255,255,255,0.1)" style={{ padding: 10, background: 'none', border: 'none', color: W, borderRadius: 14, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="ChevronLeft" s={20} />
