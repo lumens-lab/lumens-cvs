@@ -454,7 +454,7 @@ export function ChatScreen({ openSub, openChat }: any) {
   }, [q, state.contacts, state.conversations]);
   return (
     <div
-      className="afu safe-top"
+      className="afu"
       onTouchStart={onPtrStart}
       onTouchMove={onPtrMove}
       onTouchEnd={onPtrEnd}
@@ -667,7 +667,7 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
 
   return (
     <div
-      className="afi safe-top"
+      className="afi"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
