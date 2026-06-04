@@ -397,35 +397,100 @@ export type Database = {
         }
         Relationships: []
       }
+      group_members: {
+        Row: {
+          group_id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          last_at: string
+          last_preview: string | null
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          last_at?: string
+          last_preview?: string | null
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          last_at?: string
+          last_preview?: string | null
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           ciphertext: string
-          conversation_id: string
+          conversation_id: string | null
           created_at: string
+          group_id: string | null
           id: string
           kind: string
           nonce: string
-          recipient_id: string
+          recipient_id: string | null
           sender_id: string
         }
         Insert: {
           ciphertext: string
-          conversation_id: string
+          conversation_id?: string | null
           created_at?: string
+          group_id?: string | null
           id?: string
           kind?: string
           nonce: string
-          recipient_id: string
+          recipient_id?: string | null
           sender_id: string
         }
         Update: {
           ciphertext?: string
-          conversation_id?: string
+          conversation_id?: string | null
           created_at?: string
+          group_id?: string | null
           id?: string
           kind?: string
           nonce?: string
-          recipient_id?: string
+          recipient_id?: string | null
           sender_id?: string
         }
         Relationships: [
@@ -434,6 +499,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
             referencedColumns: ["id"]
           },
         ]
@@ -593,6 +665,14 @@ export type Database = {
         Args: { request_id: string }
         Returns: undefined
       }
+      add_group_member: {
+        Args: { p_group_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      create_group: {
+        Args: { p_member_ids: string[]; p_name: string }
+        Returns: string
+      }
       decline_contact_request: {
         Args: { request_id: string }
         Returns: undefined
@@ -620,6 +700,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      is_group_admin: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_group_member: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
       list_contact_requests: {
         Args: never
         Returns: {
@@ -633,6 +721,22 @@ export type Database = {
           to_user: string
           username: string
         }[]
+      }
+      list_my_groups: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          id: string
+          last_at: string
+          last_preview: string
+          member_count: number
+          name: string
+          owner_id: string
+        }[]
+      }
+      remove_group_member: {
+        Args: { p_group_id: string; p_user_id: string }
+        Returns: undefined
       }
       search_profiles: {
         Args: { q: string }
