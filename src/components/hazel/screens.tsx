@@ -417,6 +417,29 @@ export function ChatScreen({ openSub, openChat }: any) {
   const { state } = useHazelStore();
   const [q, setQ] = useState('');
   const sym = getCurrencySym(state.settings.currency);
+  // Pull-to-refresh
+  const [ptrY, setPtrY] = useState(0);
+  const [ptrLoading, setPtrLoading] = useState(false);
+  const ptrStartRef = useRef<number | null>(null);
+  const onPtrStart = (e: React.TouchEvent) => {
+    if ((e.currentTarget as HTMLElement).scrollTop > 0) return;
+    ptrStartRef.current = e.touches[0].clientY;
+  };
+  const onPtrMove = (e: React.TouchEvent) => {
+    if (ptrStartRef.current == null) return;
+    const dy = e.touches[0].clientY - ptrStartRef.current;
+    if (dy > 0) setPtrY(Math.min(80, dy * 0.5));
+  };
+  const onPtrEnd = () => {
+    if (ptrY > 50) {
+      setPtrLoading(true);
+      try { window.dispatchEvent(new CustomEvent('lumens:refresh-chats')); } catch {}
+      setTimeout(() => { setPtrLoading(false); setPtrY(0); }, 800);
+    } else {
+      setPtrY(0);
+    }
+    ptrStartRef.current = null;
+  };
   const filtered = useMemo(() => {
     const f = q.toLowerCase();
     return state.conversations.filter((c) => {
@@ -430,7 +453,18 @@ export function ChatScreen({ openSub, openChat }: any) {
     return state.contacts.filter((c) => c.confirmed && !convIds.has(c.id) && c.name.toLowerCase().includes(f));
   }, [q, state.contacts, state.conversations]);
   return (
-    <div className="afu" style={{ padding: '14px 20px 140px' }}>
+    <div
+      className="afu safe-top"
+      onTouchStart={onPtrStart}
+      onTouchMove={onPtrMove}
+      onTouchEnd={onPtrEnd}
+      style={{ padding: '14px 20px 140px', transform: ptrY ? `translateY(${ptrY}px)` : undefined, transition: ptrY ? 'none' : 'transform .2s' }}
+    >
+      {(ptrY > 0 || ptrLoading) && (
+        <div style={{ textAlign: 'center', fontSize: 11, color: S, padding: '4px 0 6px' }}>
+          {ptrLoading ? 'Refreshing…' : ptrY > 50 ? 'Release to refresh' : 'Pull to refresh'}
+        </div>
+      )}
       <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
         <LumensWordmark height={50} />
       </div>
