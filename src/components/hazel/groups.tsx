@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ic, T, Av, gl, COLORS, showToast } from './ui';
 import { useHazelStore } from '@/lib/hazel/store';
 import { sendGroupMessage, createGroup } from '@/lib/hazel/chat-sync';
-import { haptic } from '@/lib/hazel/haptics';
+import { hapticTap, hapticSuccess } from '@/lib/hazel/haptics';
 
 const { W, S, S2, AC } = COLORS;
 
@@ -27,7 +27,7 @@ export function CreateGroupScreen({ onBack, onCreated }: { onBack: () => void; o
     setBusy(true);
     try {
       const id = await createGroup(trimmed, Array.from(selected));
-      haptic('success');
+      hapticSuccess();
       showToast('Group created');
       onCreated(id);
     } catch (e: any) {
@@ -128,7 +128,7 @@ export function GroupChatView({ groupId, onBack }: { groupId: string; onBack: ()
     if (!t || sending) return;
     setSending(true);
     setMsg('');
-    haptic('light');
+    hapticTap();
     try {
       await sendGroupMessage(groupId, { text: t });
     } catch (e: any) {
