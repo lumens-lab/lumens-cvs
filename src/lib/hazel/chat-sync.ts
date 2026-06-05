@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useHazelStore, type Contact, type Conv } from './store';
+import { useHazelStore, type Contact, type Conv, type Group, type GroupMember } from './store';
 import { GRAD_MAP } from './data';
 import { sendPushToUser } from './push-notify.functions';
 
@@ -118,7 +118,70 @@ export function useChatSync(userId: string | null) {
       }
 
       if (cancelled) return;
-      set((s) => { s.contacts = contacts; s.conversations = convs; });
+
+      // 5) groups
+      const { data: grpRows } = await supabase.rpc('list_my_groups');
+      const groupList = (grpRows ?? []) as Array<{ id: string; name: string; avatar_url: string | null; owner_id: string; last_preview: string | null; last_at: string; member_count: number }>;
+      const groupIds = groupList.map((g) => g.id);
+      const groups: Group[] = groupList.map((g) => ({
+        id: g.id,
+        name: g.name,
+        avatar: g.avatar_url || undefined,
+        ownerId: g.owner_id,
+        memberCount: Number(g.member_count) || 0,
+        last: g.last_preview || '',
+        time: fmtRel(g.last_at),
+        unread: 0,
+        msgs: [],
+      }));
+
+      // group messages
+      if (groupIds.length) {
+        const { data: gmsgs } = await supabase
+          .from('messages')
+          .select('id, group_id, sender_id, ciphertext, kind, created_at')
+          .in('group_id', groupIds)
+          .order('created_at', { ascending: true })
+          .limit(1000);
+        const byGroup = new Map(groups.map((g) => [g.id, g]));
+        (gmsgs ?? []).forEach((m) => {
+          const g = byGroup.get(m.group_id as string);
+          if (!g) return;
+          const payload = decodePayload(m.ciphertext as string) || {};
+          g.msgs.push({
+            id: m.id as string,
+            text: payload.text,
+            type: payload.type,
+            amt: payload.amt,
+            cur: payload.cur,
+            media: payload.media,
+            dur: payload.dur,
+            sent: m.sender_id === userId,
+            time: fmtTime(m.created_at as string),
+          });
+        });
+
+        // members
+        const { data: gmRows } = await supabase
+          .from('group_members')
+          .select('group_id, user_id, role')
+          .in('group_id', groupIds);
+        const memMap = new Map<string, GroupMember[]>();
+        (gmRows ?? []).forEach((r) => {
+          const arr = memMap.get(r.group_id as string) || [];
+          arr.push({ user_id: r.user_id as string, role: (r.role as any) || 'member' });
+          memMap.set(r.group_id as string, arr);
+        });
+        groups.forEach((g) => { g.members = memMap.get(g.id) || []; });
+      }
+
+      set((s) => {
+        s.contacts = contacts;
+        s.conversations = convs;
+        // preserve unread counts from previous state where possible
+        const prevUnread = new Map(s.groups.map((g) => [g.id, g.unread]));
+        s.groups = groups.map((g) => ({ ...g, unread: prevUnread.get(g.id) ?? 0 }));
+      });
     };
 
     loadAll();
@@ -153,6 +216,13 @@ export function useChatSync(userId: string | null) {
         });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'contacts', filter: `user_id=eq.${userId}` }, () => { loadAll(); })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        const row: any = payload.new || {};
+        if (!row.group_id) return;
+        applyIncomingGroup(row, userId, set);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `user_id=eq.${userId}` }, () => { loadAll(); })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'groups' }, () => { loadAll(); })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
         const p = payload.new as any;
         if (!p?.id) return;
@@ -293,4 +363,75 @@ export async function sendChatMessage(otherUserId: string, payload: { text?: str
 export async function deleteChatMessage(messageId: string): Promise<void> {
   const { error } = await supabase.from('messages').delete().eq('id', messageId);
   if (error) throw error;
+}
+
+function applyIncomingGroup(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
+  const isSent = row.sender_id === userId;
+  const payload = decodePayload(row.ciphertext) || {};
+  const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
+  set((s) => {
+    const g = s.groups.find((x) => x.id === row.group_id);
+    if (!g) return;
+    g.last = preview;
+    g.time = 'Just now';
+    if (!isSent) g.unread = (g.unread || 0) + 1;
+    if (!g.msgs.find((m) => m.id === row.id)) {
+      const pendIdx = g.msgs.findIndex((m) => m.pending && m.sent === isSent && (m.text === payload.text || m.media === payload.media));
+      if (pendIdx >= 0) g.msgs.splice(pendIdx, 1);
+      g.msgs.push({
+        id: row.id,
+        text: payload.text,
+        type: payload.type,
+        amt: payload.amt,
+        cur: payload.cur,
+        media: payload.media,
+        dur: payload.dur,
+        sent: isSent,
+        time: fmtTime(row.created_at),
+      });
+    }
+    // bump to top
+    s.groups = [g, ...s.groups.filter((x) => x !== g)];
+  });
+}
+
+/** Send a message to a group. */
+export async function sendGroupMessage(groupId: string, payload: { text?: string; type?: 'image' | 'video' | 'voice' | 'money'; amt?: number; cur?: string; media?: string; dur?: number }) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('not authenticated');
+  const { ciphertext, nonce } = encodePayload(payload);
+  const kind = payload.type ?? 'text';
+  const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
+  const { error } = await supabase.from('messages').insert({
+    group_id: groupId,
+    sender_id: user.id,
+    ciphertext, nonce, kind,
+  });
+  if (error) throw error;
+  await supabase.from('groups').update({ last_preview: preview.slice(0, 200), last_at: new Date().toISOString() }).eq('id', groupId);
+  // Push to all other group members
+  try {
+    const { data: members } = await supabase.from('group_members').select('user_id').eq('group_id', groupId);
+    const { data: prof } = await supabase.from('profiles').select('display_name, username').eq('id', user.id).maybeSingle();
+    const { data: grp } = await supabase.from('groups').select('name').eq('id', groupId).maybeSingle();
+    const senderName = (prof?.display_name || prof?.username || 'New message') as string;
+    const groupName = (grp?.name || 'Group') as string;
+    (members ?? []).forEach((m: any) => {
+      if (m.user_id === user.id) return;
+      void sendPushToUser({ data: {
+        recipientUserId: m.user_id,
+        title: groupName,
+        body: `${senderName}: ${preview.slice(0, 120) || 'New message'}`,
+        url: '/',
+        tag: `grp:${groupId}`,
+      }}).catch(() => {});
+    });
+  } catch {}
+}
+
+/** Create a group. memberIds = confirmed contact user ids. Returns the group id. */
+export async function createGroup(name: string, memberIds: string[]): Promise<string> {
+  const { data, error } = await supabase.rpc('create_group', { p_name: name, p_member_ids: memberIds });
+  if (error) throw error;
+  return data as string;
 }
