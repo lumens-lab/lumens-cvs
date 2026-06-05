@@ -441,12 +441,3 @@ export async function createGroup(name: string, memberIds: string[]): Promise<st
   if (error) throw error;
   return data as string;
 }
-
-/** Mark a group as read (clears unread counter locally). */
-export function markGroupRead(groupId: string) {
-  const { set } = useHazelStore();
-  set((s) => {
-    const g = s.groups.find((x) => x.id === groupId);
-    if (g) g.unread = 0;
-  });
-}
