@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useHazelStore, type Contact, type Conv } from './store';
+import { useHazelStore, type Contact, type Conv, type Group, type GroupMember } from './store';
 import { GRAD_MAP } from './data';
 import { sendPushToUser } from './push-notify.functions';
 
@@ -118,7 +118,76 @@ export function useChatSync(userId: string | null) {
       }
 
       if (cancelled) return;
-      set((s) => { s.contacts = contacts; s.conversations = convs; });
+
+      // 5) groups
+      const { data: grpRows } = await supabase.rpc('list_my_groups');
+      const groupList = (grpRows ?? []) as Array<{ id: string; name: string; avatar_url: string | null; owner_id: string; last_preview: string | null; last_at: string; member_count: number }>;
+      const groupIds = groupList.map((g) => g.id);
+      const existingGroups = new Map<string, Group>();
+      // preserve existing msgs to avoid scroll flicker
+      try {
+        const cur = (set as any) as never;
+        void cur;
+      } catch {}
+      const groups: Group[] = groupList.map((g) => ({
+        id: g.id,
+        name: g.name,
+        avatar: g.avatar_url || undefined,
+        ownerId: g.owner_id,
+        memberCount: Number(g.member_count) || 0,
+        last: g.last_preview || '',
+        time: fmtRel(g.last_at),
+        unread: 0,
+        msgs: [],
+      }));
+
+      // group messages
+      if (groupIds.length) {
+        const { data: gmsgs } = await supabase
+          .from('messages')
+          .select('id, group_id, sender_id, ciphertext, kind, created_at')
+          .in('group_id', groupIds)
+          .order('created_at', { ascending: true })
+          .limit(1000);
+        const byGroup = new Map(groups.map((g) => [g.id, g]));
+        (gmsgs ?? []).forEach((m) => {
+          const g = byGroup.get(m.group_id as string);
+          if (!g) return;
+          const payload = decodePayload(m.ciphertext as string) || {};
+          g.msgs.push({
+            id: m.id as string,
+            text: payload.text,
+            type: payload.type,
+            amt: payload.amt,
+            cur: payload.cur,
+            media: payload.media,
+            dur: payload.dur,
+            sent: m.sender_id === userId,
+            time: fmtTime(m.created_at as string),
+          });
+        });
+
+        // members
+        const { data: gmRows } = await supabase
+          .from('group_members')
+          .select('group_id, user_id, role')
+          .in('group_id', groupIds);
+        const memMap = new Map<string, GroupMember[]>();
+        (gmRows ?? []).forEach((r) => {
+          const arr = memMap.get(r.group_id as string) || [];
+          arr.push({ user_id: r.user_id as string, role: (r.role as any) || 'member' });
+          memMap.set(r.group_id as string, arr);
+        });
+        groups.forEach((g) => { g.members = memMap.get(g.id) || []; });
+      }
+
+      set((s) => {
+        s.contacts = contacts;
+        s.conversations = convs;
+        // preserve unread counts from previous state where possible
+        const prevUnread = new Map(s.groups.map((g) => [g.id, g.unread]));
+        s.groups = groups.map((g) => ({ ...g, unread: prevUnread.get(g.id) ?? 0 }));
+      });
     };
 
     loadAll();
@@ -153,6 +222,13 @@ export function useChatSync(userId: string | null) {
         });
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'contacts', filter: `user_id=eq.${userId}` }, () => { loadAll(); })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        const row: any = payload.new || {};
+        if (!row.group_id) return;
+        applyIncomingGroup(row, userId, set);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `user_id=eq.${userId}` }, () => { loadAll(); })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'groups' }, () => { loadAll(); })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
         const p = payload.new as any;
         if (!p?.id) return;
