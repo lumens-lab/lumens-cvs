@@ -10,6 +10,7 @@ import {
   ChatView,
   ProfileScreen,
 } from "@/components/hazel/screens";
+import { CreateGroupScreen, GroupChatView } from "@/components/hazel/groups";
 import {
   AddCardSheet,
   SendSheet,
@@ -75,6 +76,8 @@ type Sub =
   | null
   | "edit-profile"
   | "chat-view"
+  | "group-view"
+  | "new-group"
   | "call-history"
   | "cat-detail"
   | "expense-detail"
@@ -129,6 +132,7 @@ function HazelApp() {
   const [cardVis, setCardVis] = useState(false);
   const [txFilter, setTxFilter] = useState("");
   const [chatId, setChatId] = useState<string | null>(null);
+  const [groupId, setGroupId] = useState<string | null>(null);
   const [catCtx, setCatCtx] = useState<{ catId: string; monthKey: string } | null>(null);
   useChatSync(user?.id ?? null);
   // Hoisted call state so video calls can be started from anywhere
@@ -255,6 +259,23 @@ function HazelApp() {
     );
   }
 
+  if (sub === "group-view" && groupId != null) {
+    return (
+      <Shell hideNav>
+        <GroupChatView groupId={groupId} onBack={() => { setSub(null); setGroupId(null); }} />
+      </Shell>
+    );
+  }
+
+  if (sub === "new-group") {
+    return withNav(
+      <CreateGroupScreen
+        onBack={() => setSub(null)}
+        onCreated={(id) => { setGroupId(id); setSub("group-view"); }}
+      />
+    );
+  }
+
   return (
     <Shell>
       {tab === "wallet" && (
@@ -291,6 +312,8 @@ function HazelApp() {
         <ChatScreen
           openSub={openSub}
           openChat={(id: string) => { setChatId(id); setSub("chat-view"); }}
+          openGroup={(id: string) => { setGroupId(id); setSub("group-view"); }}
+          openNewGroup={() => setSub("new-group")}
         />
       )}
       {tab === "call" && <CallScreen calls={calls} />}
