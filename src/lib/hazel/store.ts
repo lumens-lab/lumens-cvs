@@ -45,6 +45,20 @@ export type ChatMsg = {
 export type Conv = { cid: string; convId?: string; last: string; time: string; unread: number; msgs: ChatMsg[] };
 export type PendingReq = { id: string; name: string; ini: string; dir: 'sent'|'received'; g: string };
 
+export type GroupMember = { user_id: string; role: 'owner' | 'admin' | 'member' };
+export type Group = {
+  id: string;
+  name: string;
+  avatar?: string;
+  ownerId: string;
+  memberCount: number;
+  members?: GroupMember[];
+  last: string;
+  time: string;
+  unread: number;
+  msgs: ChatMsg[];
+};
+
 export type HazelState = {
   profile: Profile;
   cards: Card[];
@@ -52,6 +66,7 @@ export type HazelState = {
   txs: Tx[];
   contacts: Contact[];
   conversations: Conv[];
+  groups: Group[];
   pendingReqs: PendingReq[];
   incomeCats: Cat[];
   expenseCats: Cat[];
@@ -85,6 +100,7 @@ const initial: HazelState = {
   txs: [],
   contacts: [],
   conversations: [],
+  groups: [],
   pendingReqs: [],
   incomeCats: DEFAULT_INCOME_CATS,
   expenseCats: DEFAULT_EXPENSE_CATS,
