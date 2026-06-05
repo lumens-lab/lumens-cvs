@@ -123,12 +123,6 @@ export function useChatSync(userId: string | null) {
       const { data: grpRows } = await supabase.rpc('list_my_groups');
       const groupList = (grpRows ?? []) as Array<{ id: string; name: string; avatar_url: string | null; owner_id: string; last_preview: string | null; last_at: string; member_count: number }>;
       const groupIds = groupList.map((g) => g.id);
-      const existingGroups = new Map<string, Group>();
-      // preserve existing msgs to avoid scroll flicker
-      try {
-        const cur = (set as any) as never;
-        void cur;
-      } catch {}
       const groups: Group[] = groupList.map((g) => ({
         id: g.id,
         name: g.name,
