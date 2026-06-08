@@ -32,19 +32,25 @@ export const Route = createFileRoute('/api/public/push-on-message')({
         let payload: any = {};
         try { payload = JSON.parse(raw); } catch { return new Response('Bad JSON', { status: 400 }); }
         const recipient = String(payload.recipient_user_id || '');
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!UUID_RE.test(recipient)) {
+          return new Response('Invalid recipient_user_id', { status: 400 });
+        }
         const preview = String(payload.preview || 'New message').slice(0, 140);
         const sender = String(payload.sender_name || 'New message').slice(0, 80);
         const convId = payload.conversation_id ? String(payload.conversation_id) : '';
-        if (!recipient) return new Response('Missing recipient', { status: 400 });
 
-        const { sendPushToUser } = await import('@/lib/hazel/push-notify.functions');
-        const res = await sendPushToUser({ data: {
+        // HMAC-verified webhook — call the trusted internal sender directly
+        // (the user-facing serverFn enforces a relationship check that
+        // doesn't apply to system-originated push from pg_net).
+        const { deliverPush } = await import('@/lib/hazel/push-deliver.server');
+        const res = await deliverPush({
           recipientUserId: recipient,
           title: sender,
           body: preview,
           url: '/',
           tag: convId ? `msg:${convId}` : 'lumens',
-        } as any });
+        });
         return Response.json({ ok: true, sent: (res as any)?.sent ?? 0 });
       },
     },

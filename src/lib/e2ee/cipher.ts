@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getSignalStore } from './store';
 import { b64ToAb } from './codec';
 import { ensureE2EEIdentity } from './identity';
+import { auditMessage } from './audit';
 
 /**
  * Single-device model for now — every user is one logical "device 1".
@@ -83,7 +84,9 @@ export async function encryptDmPayload(
   const result = await cipher.encrypt(buf);
   if (!result.body) throw new Error('encrypt produced empty body');
   const env: SignalEnvelope = { e: 'signal', v: 1, t: result.type, b: binStrToB64(result.body) };
-  return JSON.stringify(env);
+  const wire = JSON.stringify(env);
+  auditMessage({ event: 'encrypt', scope: 'dm', envelope: 'signal', peerId: peerUserId, ctLen: wire.length, success: true });
+  return wire;
 }
 
 /**
@@ -115,9 +118,12 @@ export async function decryptDmCiphertext(
       pt = await cipher.decryptWhisperMessage(binBody, 'binary');
     }
     const json = new TextDecoder().decode(pt);
-    return JSON.parse(json);
+    const out = JSON.parse(json);
+    auditMessage({ event: 'decrypt', scope: 'dm', envelope: 'signal', peerId: peerUserId, ctLen: ciphertext.length, success: true });
+    return out;
   } catch (err) {
     console.warn('[e2ee] failed to decrypt message', err);
+    auditMessage({ event: 'decrypt', scope: 'dm', envelope: 'signal', peerId: peerUserId, ctLen: ciphertext.length, success: false });
     return null;
   }
 }

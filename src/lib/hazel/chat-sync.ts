@@ -325,17 +325,17 @@ export function useChatSync(userId: string | null) {
   }, [userId, set]);
 }
 
-/** Fetch a single contact's public profile (display_name, username, avatar, cover, dob, phone). */
+/** Fetch a single contact's public profile via the safe view. Never returns
+ *  phone/dob — those are owner-only and must not leak between users. */
 export async function fetchContactProfile(userId: string) {
   const { data } = await supabase
-    .from('profiles')
-    .select('id, display_name, username, avatar_url, cover_url, dob, phone')
+    .from('profiles_public')
+    .select('id, display_name, username, avatar_url, cover_url')
     .eq('id', userId)
     .maybeSingle();
   return data as null | {
     id: string; display_name: string | null; username: string | null;
     avatar_url: string | null; cover_url: string | null;
-    dob: string | null; phone: string | null;
   };
 }
 
@@ -394,7 +394,14 @@ export async function sendChatMessage(otherUserId: string, payload: { text?: str
   }
   const nonce = Math.random().toString(36).slice(2, 14);
   const kind = payload.type ?? 'text';
-  const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
+  // Server-stored preview must NOT leak message contents — chat is E2EE.
+  // Use neutral kind labels only; the real preview is rendered client-side
+  // from the decrypted payload.
+  const preview = payload.type === 'image' ? '📷 Photo'
+    : payload.type === 'video' ? '🎬 Video'
+    : payload.type === 'voice' ? '🎙️ Voice note'
+    : payload.type === 'money' ? '💸 Payment'
+    : '💬 Message';
   const { data: inserted, error: me } = await supabase.from('messages').insert({
     conversation_id: convId as string,
     sender_id: user.id,
@@ -405,7 +412,10 @@ export async function sendChatMessage(otherUserId: string, payload: { text?: str
   // Cache our own plaintext locally so we can re-render on reload — we
   // cannot decrypt a Signal envelope we encrypted to a peer.
   if (inserted?.id) cacheOwnPayload(inserted.id as string, payload);
-  await supabase.from('conversations').update({ last_preview: preview.slice(0, 200), last_at: new Date().toISOString() }).eq('id', convId as string);
+  await supabase.rpc('touch_conversation_preview', {
+    p_conversation_id: convId as string,
+    p_preview: preview.slice(0, 200),
+  });
   // Fire-and-forget server-side Web Push so the recipient gets notified even
   // when their tab is closed. Errors are swallowed — chat send must not fail.
   try {
@@ -474,7 +484,13 @@ export async function sendGroupMessage(groupId: string, payload: { text?: string
     ciphertext = enc.ciphertext; nonce = enc.nonce;
   }
   const kind = payload.type ?? 'text';
-  const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
+  // Neutral preview only — group rows are visible to all members, so the
+  // server-stored preview must not carry plaintext message content.
+  const preview = payload.type === 'image' ? '📷 Photo'
+    : payload.type === 'video' ? '🎬 Video'
+    : payload.type === 'voice' ? '🎙️ Voice note'
+    : payload.type === 'money' ? '💸 Payment'
+    : '💬 Message';
   const { data: inserted, error } = await supabase.from('messages').insert({
     group_id: groupId,
     sender_id: user.id,
@@ -482,7 +498,10 @@ export async function sendGroupMessage(groupId: string, payload: { text?: string
   }).select('id').single();
   if (error) throw error;
   if (inserted?.id) cacheOwnPayload(inserted.id as string, payload);
-  await supabase.from('groups').update({ last_preview: preview.slice(0, 200), last_at: new Date().toISOString() }).eq('id', groupId);
+  await supabase.rpc('touch_group_preview', {
+    p_group_id: groupId,
+    p_preview: preview.slice(0, 200),
+  });
   // Push to all other group members
   try {
     const { data: members } = await supabase.from('group_members').select('user_id').eq('group_id', groupId);

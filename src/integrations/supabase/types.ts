@@ -50,6 +50,36 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_events: {
+        Row: {
+          actor_id: string | null
+          hash: string
+          id: number
+          kind: string
+          meta: Json
+          prev_hash: string
+          ts: string
+        }
+        Insert: {
+          actor_id?: string | null
+          hash: string
+          id?: number
+          kind: string
+          meta?: Json
+          prev_hash: string
+          ts?: string
+        }
+        Update: {
+          actor_id?: string | null
+          hash?: string
+          id?: number
+          kind?: string
+          meta?: Json
+          prev_hash?: string
+          ts?: string
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           created_at: string
@@ -738,6 +768,27 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
       }
+      audit_log: { Args: { p_kind: string; p_meta: Json }; Returns: undefined }
+      audit_log_message: {
+        Args: {
+          p_ct_len: number
+          p_envelope: string
+          p_event: string
+          p_group_id: string
+          p_message_id: string
+          p_peer_id: string
+          p_scope: string
+          p_success: boolean
+        }
+        Returns: undefined
+      }
+      audit_verify_chain: {
+        Args: { p_limit?: number }
+        Returns: {
+          broken_at: number
+          checked: number
+        }[]
+      }
       create_group: {
         Args: { p_member_ids: string[]; p_name: string }
         Returns: string
@@ -846,6 +897,14 @@ export type Database = {
         }[]
       }
       send_contact_request: { Args: { to_user_id: string }; Returns: string }
+      touch_conversation_preview: {
+        Args: { p_conversation_id: string; p_preview: string }
+        Returns: undefined
+      }
+      touch_group_preview: {
+        Args: { p_group_id: string; p_preview: string }
+        Returns: undefined
+      }
       wallet_deposit: {
         Args: { p_amount: number }
         Returns: {
