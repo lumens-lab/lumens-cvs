@@ -187,17 +187,21 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
   // Last 7 days
   const week = useMemo(() => {
     const today = new Date();
-    const arr: { d: string; a: number }[] = [];
+    const arr: { d: string; spent: number; income: number; net: number }[] = [];
+    let running = 0;
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
       const key = d.toISOString().slice(0, 10);
-      const total = state.txs.filter((t) => t.date === key && t.amt < 0).reduce((s, t) => s + Math.abs(t.amt), 0);
-      arr.push({ d: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()], a: total });
+      const spent = state.txs.filter((t) => t.date === key && t.amt < 0).reduce((s, t) => s + Math.abs(t.amt), 0);
+      const income = state.txs.filter((t) => t.date === key && t.amt > 0).reduce((s, t) => s + t.amt, 0);
+      running += income - spent;
+      arr.push({ d: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()], spent, income, net: running });
     }
     return arr;
   }, [state.txs]);
-  const maxA = Math.max(1, ...week.map((w) => w.a));
+  const maxA = Math.max(1, ...week.map((w) => w.spent));
+  const maxNet = Math.max(1, ...week.map((w) => Math.abs(w.net)));
 
   const setBudget = (n: number) => set((s) => {
     s.budgets = { ...s.budgets, [monthKey]: { ...(s.budgets[monthKey] ?? { period: 'month' as const }), total: n } };
@@ -233,22 +237,50 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
         </div>
       </div>
 
-      {/* Week chart */}
-      <div style={{ ...gl('rgba(255,255,255,0.05)', 18), padding: 18, marginBottom: 18 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: W, marginBottom: 14 }}>Last 7 Days</div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, gap: 8 }}>
-          {week.map((d, i) => {
-            const h = Math.max(6, (d.a / maxA) * 90);
-            return (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <div style={{ fontSize: 9, color: S2 }}>{sym}{d.a.toFixed(0)}</div>
-                <div className="bar-anim" style={{ width: '70%', height: h, borderRadius: 6, background: 'linear-gradient(180deg,rgba(37,99,235,0.7),rgba(37,99,235,0.25))' }} />
-                <div style={{ fontSize: 10, color: S, fontWeight: 600 }}>{d.d}</div>
-              </div>
-            );
-          })}
+      {/* Week chart slider — Expenses + Income (net liquidity) */}
+      <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', gap: 12, marginBottom: 6 }}>
+        <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(255,255,255,0.05)', 18), padding: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: W }}>Last 7 Days · Expenses</div>
+            <div style={{ fontSize: 10, color: RD as any, fontWeight: 700 }}>{sym}{week.reduce((s, w) => s + w.spent, 0).toFixed(0)} total</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, gap: 8 }}>
+            {week.map((d, i) => {
+              const h = Math.max(6, (d.spent / maxA) * 90);
+              return (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                  <div style={{ fontSize: 9, color: S2 }}>{sym}{d.spent.toFixed(0)}</div>
+                  <div className="bar-anim" style={{ width: '70%', height: h, borderRadius: 6, background: 'linear-gradient(180deg,rgba(248,113,113,0.7),rgba(248,113,113,0.25))' }} />
+                  <div style={{ fontSize: 10, color: S, fontWeight: 600 }}>{d.d}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(52,211,153,0.06)', 18), padding: 18, border: '1px solid rgba(52,211,153,0.18)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: W }}>Last 7 Days · Income (net)</div>
+            <div style={{ fontSize: 10, color: (week[week.length-1]?.net ?? 0) >= 0 ? GN : RD, fontWeight: 700 }}>
+              {sym}{(week[week.length-1]?.net ?? 0).toFixed(0)} today
+            </div>
+          </div>
+          <div style={{ fontSize: 10, color: S, marginBottom: 10 }}>Running balance — income earned minus expenses spent per day.</div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, gap: 8 }}>
+            {week.map((d, i) => {
+              const h = Math.max(6, (Math.abs(d.net) / maxNet) * 90);
+              const pos = d.net >= 0;
+              return (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                  <div style={{ fontSize: 9, color: S2 }}>{sym}{d.net.toFixed(0)}</div>
+                  <div className="bar-anim" style={{ width: '70%', height: h, borderRadius: 6, background: pos ? 'linear-gradient(180deg,rgba(52,211,153,0.85),rgba(52,211,153,0.25))' : 'linear-gradient(180deg,rgba(248,113,113,0.85),rgba(248,113,113,0.25))' }} />
+                  <div style={{ fontSize: 10, color: S, fontWeight: 600 }}>{d.d}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
+      <div style={{ textAlign: 'center', fontSize: 10, color: S, marginBottom: 18, letterSpacing: '0.06em' }}>← swipe to compare ←</div>
 
       {/* Debit Orders */}
       <DebitOrdersBlock
