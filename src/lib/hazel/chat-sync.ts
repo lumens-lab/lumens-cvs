@@ -4,6 +4,7 @@ import { useHazelStore, type Contact, type Conv, type Group, type GroupMember } 
 import { GRAD_MAP } from './data';
 import { sendPushToUser } from './push-notify.functions';
 import { encryptDmPayload, decryptDmCiphertext, isSignalEnvelope } from '@/lib/e2ee/cipher';
+import { encryptGroupPayload, decryptGroupCiphertext, isGroupFanEnvelope } from '@/lib/e2ee/group-cipher';
 
 const GRADS = Object.keys(GRAD_MAP);
 const pickG = (seed: string) => GRADS[Math.abs(seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % GRADS.length];
@@ -55,6 +56,23 @@ async function decodeDmRow(row: any, myUserId: string): Promise<Record<string, a
     }
     const peer = row.sender_id as string;
     const pt = await decryptDmCiphertext(myUserId, peer, ct);
+    return pt ?? { text: '[unable to decrypt]' };
+  }
+  return decodePayload(ct) ?? {};
+}
+
+/**
+ * Decode a group message row, transparently handling both the group
+ * fan-out envelope and legacy base64-JSON rows.
+ */
+async function decodeGroupRow(row: any, myUserId: string): Promise<Record<string, any>> {
+  const ct = row.ciphertext as string;
+  const isMine = row.sender_id === myUserId;
+  if (isGroupFanEnvelope(ct)) {
+    if (isMine) {
+      return readOwnPayload(row.id) ?? { text: '[encrypted — sent from another device]' };
+    }
+    const pt = await decryptGroupCiphertext(myUserId, row.sender_id as string, ct);
     return pt ?? { text: '[unable to decrypt]' };
   }
   return decodePayload(ct) ?? {};
