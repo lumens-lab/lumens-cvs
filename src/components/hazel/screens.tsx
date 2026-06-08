@@ -11,7 +11,7 @@ import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel
 import lumensLogo from '@/assets/lumens-logo.png';
 
 /** Compact app logo shown on Wallet/Chat headers (matches the onboarding splash logo). */
-export function LumensWordmark({ height = 50 }: { height?: number }) {
+export function LumensWordmark({ height = 75 }: { height?: number }) {
   return (
     <img
       src={lumensLogo}
@@ -46,7 +46,7 @@ export function HomeScreen({
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       {/* Brand mark */}
       <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
-        <LumensWordmark height={50} />
+        <LumensWordmark height={75} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
