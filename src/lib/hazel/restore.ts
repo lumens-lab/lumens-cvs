@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import type { Tx } from "./store";
-import { importState } from "./store";
+import { importState, getStateSnapshot } from "./store";
 
 /** ─── Backup formats ─────────────────────────────────────────────── */
 
@@ -236,10 +236,6 @@ export async function restoreFromFile(file: File): Promise<RestoreResult> {
 
 function importTxs(txs: Tx[]) {
   if (!txs.length) return;
-  // Use the store's mutator without re-importing the file (we already parsed).
-  // Late-bound to avoid a circular import at module evaluation time.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { getStateSnapshot } = require("./store") as typeof import("./store");
   const snap = getStateSnapshot();
   const merged = [...txs, ...snap.txs];
   // Re-serialise through importState so all values go through the sanitiser.
