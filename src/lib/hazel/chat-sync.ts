@@ -429,9 +429,9 @@ export async function deleteChatMessage(messageId: string): Promise<void> {
   if (error) throw error;
 }
 
-function applyIncomingGroup(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
+async function applyIncomingGroup(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
   const isSent = row.sender_id === userId;
-  const payload = decodePayload(row.ciphertext) || {};
+  const payload = await decodeGroupRow(row, userId);
   const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
   set((s) => {
     const g = s.groups.find((x) => x.id === row.group_id);
