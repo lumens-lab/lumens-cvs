@@ -4,6 +4,7 @@ import { Field, inp } from './sheets';
 import { CURRENCIES, LANGUAGES } from '@/lib/hazel/data';
 import { useHazelStore, exportState, importState, resetState } from '@/lib/hazel/store';
 import type { Cat } from '@/lib/hazel/store';
+import { encodeMmbak, restoreFromFile } from '@/lib/hazel/restore';
 
 const { W, S, S2, AC, GN, RD, BL } = COLORS;
 
@@ -105,6 +106,7 @@ export function LanguageScreen({ onBack }: { onBack: () => void }) {
 export function BackupScreen({ onBack }: { onBack: () => void }) {
   const { state } = useHazelStore();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
 
   const download = (filename: string, content: string, mime: string) => {
     const blob = new Blob([content], { type: mime });
@@ -115,6 +117,7 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
   };
 
   const exportJSON = () => { download(`lumens-money-backup-${Date.now()}.json`, exportState(), 'application/json'); showToast('Backup downloaded'); };
+  const exportMmbak = () => { download(`lumens-money-backup-${Date.now()}.mmbak`, encodeMmbak(exportState()), 'application/octet-stream'); showToast('Backup (.mmbak) downloaded'); };
   const exportCSV = () => {
     const headers = ['Date', 'Name', 'Category', 'Amount'];
     const rows = state.txs.map((t) => [t.date, `"${t.name.replace(/"/g, '""')}"`, t.cat, t.amt.toFixed(2)]);
@@ -139,15 +142,23 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
     showToast('Opening print view...');
   };
 
-  const onImport = () => {
+  const onImport = async () => {
     const f = fileRef.current?.files?.[0];
     if (!f) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const ok = importState(reader.result as string);
-      showToast(ok ? 'Backup restored' : 'Invalid backup file');
-    };
-    reader.readAsText(f);
+    setBusy(true);
+    try {
+      const r = await restoreFromFile(f);
+      if (r.kind === 'full') {
+        showToast(r.ok ? 'Backup restored' : 'Invalid backup file');
+      } else {
+        showToast(r.count ? `Imported ${r.count} transaction${r.count === 1 ? '' : 's'}` : 'No transactions found in file');
+      }
+    } catch (e: any) {
+      showToast(e?.message ?? 'Import failed');
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
   };
 
   const Btn = ({ icon, label, desc, onClick, color = AC, danger }: any) => (
@@ -163,9 +174,10 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
     <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Backup & Export" onBack={onBack} />
       <div style={{ fontSize: 11, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Backup</div>
-      <Btn icon="Download" label="Download backup" desc="Save your data to a file (JSON)" onClick={exportJSON} />
-      <Btn icon="Upload" label="Restore from backup" desc="Import a backup from another device" onClick={() => fileRef.current?.click()} color={BL} />
-      <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={onImport} />
+      <Btn icon="ShieldCheck" label="Download backup (.mmbak)" desc="Lumens encrypted-style backup file" onClick={exportMmbak} />
+      <Btn icon="Download" label="Download backup (.json)" desc="Plain-text portable backup" onClick={exportJSON} color={BL} />
+      <Btn icon="Upload" label={busy ? 'Restoring…' : 'Restore from backup'} desc="Accepts .mmbak, .json, .csv, .xls, .xlsx, .pdf" onClick={() => !busy && fileRef.current?.click()} color={GN} />
+      <input ref={fileRef} type="file" accept=".mmbak,.json,.csv,.xls,.xlsx,.pdf,application/json,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf" hidden onChange={onImport} />
 
       <div style={{ fontSize: 11, color: S, margin: '18px 0 8px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Export Expenses</div>
       <Btn icon="FileText" label="Export as PDF" desc="Print-ready document" onClick={exportPDF} color={RD} />
