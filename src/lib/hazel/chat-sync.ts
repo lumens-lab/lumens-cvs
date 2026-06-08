@@ -132,11 +132,11 @@ export function useChatSync(userId: string | null) {
           .in('conversation_id', convIds)
           .order('created_at', { ascending: true })
           .limit(500);
-        (msgs ?? []).forEach((m) => {
+        const decoded = await Promise.all((msgs ?? []).map(async (m) => ({ m, payload: await decodeDmRow(m, userId) })));
+        decoded.forEach(({ m, payload }) => {
           const other = m.sender_id === userId ? m.recipient_id : m.sender_id;
           const c = convByOther.get(other as string);
           if (!c) return;
-          const payload = decodePayload(m.ciphertext as string) || {};
           c.msgs.push({
             id: m.id as string,
             text: payload.text,
