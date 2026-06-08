@@ -196,10 +196,10 @@ export function useChatSync(userId: string | null) {
           .order('created_at', { ascending: true })
           .limit(1000);
         const byGroup = new Map(groups.map((g) => [g.id, g]));
-        (gmsgs ?? []).forEach((m) => {
+        for (const m of (gmsgs ?? [])) {
           const g = byGroup.get(m.group_id as string);
-          if (!g) return;
-          const payload = decodePayload(m.ciphertext as string) || {};
+          if (!g) continue;
+          const payload = await decodeGroupRow(m, userId);
           g.msgs.push({
             id: m.id as string,
             text: payload.text,
@@ -211,7 +211,7 @@ export function useChatSync(userId: string | null) {
             sent: m.sender_id === userId,
             time: fmtTime(m.created_at as string),
           });
-        });
+        }
 
         // members
         const { data: gmRows } = await supabase
