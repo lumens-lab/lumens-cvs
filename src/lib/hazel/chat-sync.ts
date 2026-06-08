@@ -271,7 +271,7 @@ export function useChatSync(userId: string | null) {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const row: any = payload.new || {};
         if (!row.group_id) return;
-        applyIncomingGroup(row, userId, set);
+        void applyIncomingGroup(row, userId, set);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `user_id=eq.${userId}` }, () => { loadAll(); })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'groups' }, () => { loadAll(); })
