@@ -463,15 +463,25 @@ async function applyIncomingGroup(row: any, userId: string, set: ReturnType<type
 export async function sendGroupMessage(groupId: string, payload: { text?: string; type?: 'image' | 'video' | 'voice' | 'money'; amt?: number; cur?: string; media?: string; dur?: number }) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('not authenticated');
-  const { ciphertext, nonce } = encodePayload(payload);
+  let ciphertext: string;
+  let nonce: string;
+  try {
+    ciphertext = await encryptGroupPayload(user.id, groupId, payload);
+    nonce = Math.random().toString(36).slice(2, 14);
+  } catch (err) {
+    console.warn('[e2ee] group encrypt failed, falling back to legacy', err);
+    const enc = encodePayload(payload);
+    ciphertext = enc.ciphertext; nonce = enc.nonce;
+  }
   const kind = payload.type ?? 'text';
   const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
-  const { error } = await supabase.from('messages').insert({
+  const { data: inserted, error } = await supabase.from('messages').insert({
     group_id: groupId,
     sender_id: user.id,
     ciphertext, nonce, kind,
-  });
+  }).select('id').single();
   if (error) throw error;
+  if (inserted?.id) cacheOwnPayload(inserted.id as string, payload);
   await supabase.from('groups').update({ last_preview: preview.slice(0, 200), last_at: new Date().toISOString() }).eq('id', groupId);
   // Push to all other group members
   try {
