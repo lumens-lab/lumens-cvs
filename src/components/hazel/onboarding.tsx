@@ -60,7 +60,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
   if (stage === 'splash') {
     return (
       <Cover>
-        <HaloLogo size={260} />
+        <HaloLogo size={390} animate />
       </Cover>
     );
   }
@@ -73,7 +73,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
       <Cover>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px 36px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <img src={logo} alt="Lumens" style={{ height: 56 }} />
+            <img src={logo} alt="Lumens" style={{ height: 84 }} />
             <T onClick={() => setStage('allset')} style={{ color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', fontSize: 13, fontWeight: 600 }}>Skip</T>
           </div>
           <div key={slide} className="afu" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 24 }}>
@@ -110,7 +110,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px max(36px, env(safe-area-inset-bottom))' }}>
           <div />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
-            <HaloLogo size={170} />
+            <HaloLogo size={255} />
             <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em', textAlign: 'center' }}>You're all set,<br/>welcome to lumens.</h1>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignSelf: 'stretch', paddingLeft: 8 }}>
               {checks.map((c) => (
@@ -179,7 +179,7 @@ export function PinLock({ onUnlock, onCancel, title, subtitle }: { onUnlock: () 
             <Ic n="ChevronLeft" s={20} />
           </T>
         )}
-        <img src={logo} alt="Lumens" style={{ height: 56, opacity: 0.95 }} />
+        <img src={logo} alt="Lumens" style={{ height: 84, opacity: 0.95 }} />
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{title ?? 'Enter your PIN'}</h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 6 }}>{subtitle ?? 'Unlock to view your wallet'}</p>
