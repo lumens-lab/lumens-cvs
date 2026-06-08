@@ -265,3 +265,25 @@ function Keypad({ onTap }: { onTap: (d: string) => void }) {
     </div>
   );
 }
+
+const splashCss = `
+  .logo-reveal { animation: logoReveal 2.2s cubic-bezier(0.34,1.56,0.64,1) 0.4s both; }
+  .logo-pulse  { animation: logoReveal 2.2s cubic-bezier(0.34,1.56,0.64,1) 0.4s both,
+                            logoPulse 4s ease-in-out 2.8s infinite; }
+  @keyframes logoReveal {
+    from { opacity: 0; transform: scale(0.5) translateY(18px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes logoPulse {
+    0%,100% {
+      filter: drop-shadow(0 0 12px rgba(255,255,255,0.5))
+              drop-shadow(0 0 28px rgba(80,150,255,0.55))
+              drop-shadow(0 0 55px rgba(0,80,255,0.3));
+    }
+    50% {
+      filter: drop-shadow(0 0 22px rgba(255,255,255,0.95))
+              drop-shadow(0 0 50px rgba(100,180,255,0.9))
+              drop-shadow(0 0 90px rgba(0,100,255,0.6));
+    }
+  }
+`;
