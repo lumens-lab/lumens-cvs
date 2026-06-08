@@ -224,6 +224,43 @@ function PinDots({ value }: { value: string }) {
   );
 }
 
+/** White logo with a soft pulsing blue halo (from the design spec). */
+function HaloLogo({ size = 220 }: { size?: number }) {
+  const halo = size * 1.6;
+  return (
+    <div style={{ position: 'relative', width: halo, height: halo, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%, rgba(80,150,255,0.55) 0%, rgba(0,80,255,0.25) 35%, transparent 70%)', filter: 'blur(20px)' }} />
+      <img
+        src={logo}
+        alt="Lumens"
+        className="halo-pulse"
+        style={{
+          width: size,
+          height: 'auto',
+          position: 'relative',
+          zIndex: 1,
+          filter: 'drop-shadow(0 0 18px rgba(255,255,255,0.85)) drop-shadow(0 0 40px rgba(100,180,255,0.8))',
+        }}
+      />
+    </div>
+  );
+}
+
+function _PinDotsUnused({ value }: { value: string }) {
+  return (
+    <div style={{ display: 'flex', gap: 16 }}>
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} style={{
+          width: 16, height: 16, borderRadius: 8,
+          background: i < value.length ? '#2563eb' : 'transparent',
+          border: `2px solid ${i < value.length ? '#2563eb' : 'rgba(255,255,255,0.3)'}`,
+          transition: 'background .15s',
+        }} />
+      ))}
+    </div>
+  );
+}
+
 function Keypad({ onTap }: { onTap: (d: string) => void }) {
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'];
   return (
