@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useHazelStore, type Contact, type Conv, type Group, type GroupMember } from './store';
 import { GRAD_MAP } from './data';
 import { sendPushToUser } from './push-notify.functions';
+import { encryptDmPayload, decryptDmCiphertext, isSignalEnvelope } from '@/lib/e2ee/cipher';
 
 const GRADS = Object.keys(GRAD_MAP);
 const pickG = (seed: string) => GRADS[Math.abs(seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % GRADS.length];
@@ -24,6 +25,39 @@ export function decodePayload(ciphertext: string): Record<string, any> | null {
     const json = typeof window !== 'undefined' ? decodeURIComponent(escape(atob(ciphertext))) : Buffer.from(ciphertext, 'base64').toString('utf8');
     return JSON.parse(json);
   } catch { return null; }
+}
+
+/**
+ * Local cache of plaintext payloads we sent ourselves, keyed by message id.
+ * Needed because Signal ciphertext is encrypted to the peer's session — we
+ * cannot decrypt our own outbound rows on reload from another tab/device.
+ */
+const MSG_CACHE_PREFIX = 'lumens-msg-cache:';
+function cacheOwnPayload(id: string, payload: Record<string, unknown>) {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(MSG_CACHE_PREFIX + id, JSON.stringify(payload)); } catch {}
+}
+function readOwnPayload(id: string): Record<string, any> | null {
+  if (typeof window === 'undefined') return null;
+  try { const v = localStorage.getItem(MSG_CACHE_PREFIX + id); return v ? JSON.parse(v) : null; } catch { return null; }
+}
+
+/**
+ * Decode a 1-1 message row to its payload, transparently handling both
+ * Signal-encrypted envelopes (preferred) and legacy base64-JSON rows.
+ */
+async function decodeDmRow(row: any, myUserId: string): Promise<Record<string, any>> {
+  const ct = row.ciphertext as string;
+  const isMine = row.sender_id === myUserId;
+  if (isSignalEnvelope(ct)) {
+    if (isMine) {
+      return readOwnPayload(row.id) ?? { text: '[encrypted — sent from another device]' };
+    }
+    const peer = row.sender_id as string;
+    const pt = await decryptDmCiphertext(myUserId, peer, ct);
+    return pt ?? { text: '[unable to decrypt]' };
+  }
+  return decodePayload(ct) ?? {};
 }
 
 function fmtTime(iso: string) {
