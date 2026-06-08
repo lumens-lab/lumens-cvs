@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useHazelStore, type Contact, type Conv, type Group, type GroupMember } from './store';
 import { GRAD_MAP } from './data';
 import { sendPushToUser } from './push-notify.functions';
+import { encryptDmPayload, decryptDmCiphertext, isSignalEnvelope } from '@/lib/e2ee/cipher';
 
 const GRADS = Object.keys(GRAD_MAP);
 const pickG = (seed: string) => GRADS[Math.abs(seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % GRADS.length];
@@ -24,6 +25,39 @@ export function decodePayload(ciphertext: string): Record<string, any> | null {
     const json = typeof window !== 'undefined' ? decodeURIComponent(escape(atob(ciphertext))) : Buffer.from(ciphertext, 'base64').toString('utf8');
     return JSON.parse(json);
   } catch { return null; }
+}
+
+/**
+ * Local cache of plaintext payloads we sent ourselves, keyed by message id.
+ * Needed because Signal ciphertext is encrypted to the peer's session — we
+ * cannot decrypt our own outbound rows on reload from another tab/device.
+ */
+const MSG_CACHE_PREFIX = 'lumens-msg-cache:';
+function cacheOwnPayload(id: string, payload: Record<string, unknown>) {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(MSG_CACHE_PREFIX + id, JSON.stringify(payload)); } catch {}
+}
+function readOwnPayload(id: string): Record<string, any> | null {
+  if (typeof window === 'undefined') return null;
+  try { const v = localStorage.getItem(MSG_CACHE_PREFIX + id); return v ? JSON.parse(v) : null; } catch { return null; }
+}
+
+/**
+ * Decode a 1-1 message row to its payload, transparently handling both
+ * Signal-encrypted envelopes (preferred) and legacy base64-JSON rows.
+ */
+async function decodeDmRow(row: any, myUserId: string): Promise<Record<string, any>> {
+  const ct = row.ciphertext as string;
+  const isMine = row.sender_id === myUserId;
+  if (isSignalEnvelope(ct)) {
+    if (isMine) {
+      return readOwnPayload(row.id) ?? { text: '[encrypted — sent from another device]' };
+    }
+    const peer = row.sender_id as string;
+    const pt = await decryptDmCiphertext(myUserId, peer, ct);
+    return pt ?? { text: '[unable to decrypt]' };
+  }
+  return decodePayload(ct) ?? {};
 }
 
 function fmtTime(iso: string) {
@@ -98,11 +132,11 @@ export function useChatSync(userId: string | null) {
           .in('conversation_id', convIds)
           .order('created_at', { ascending: true })
           .limit(500);
-        (msgs ?? []).forEach((m) => {
+        const decoded = await Promise.all((msgs ?? []).map(async (m) => ({ m, payload: await decodeDmRow(m, userId) })));
+        decoded.forEach(({ m, payload }) => {
           const other = m.sender_id === userId ? m.recipient_id : m.sender_id;
           const c = convByOther.get(other as string);
           if (!c) return;
-          const payload = decodePayload(m.ciphertext as string) || {};
           c.msgs.push({
             id: m.id as string,
             text: payload.text,
@@ -194,10 +228,10 @@ export function useChatSync(userId: string | null) {
     const channel = supabase
       .channel(`chat:${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${userId}` }, (payload) => {
-        applyIncoming(payload.new as any, userId, set);
+        void applyIncoming(payload.new as any, userId, set);
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, (payload) => {
-        applyIncoming(payload.new as any, userId, set);
+        void applyIncoming(payload.new as any, userId, set);
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload) => {
         const old: any = payload.old || {};
@@ -287,10 +321,10 @@ export async function fetchContactProfile(userId: string) {
   };
 }
 
-function applyIncoming(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
+async function applyIncoming(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
   const other: string = row.sender_id === userId ? row.recipient_id : row.sender_id;
   const isSent = row.sender_id === userId;
-  const payload = decodePayload(row.ciphertext) || {};
+  const payload = await decodeDmRow(row, userId);
   const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
   set((s) => {
     let cv = s.conversations.find((c) => c.convId === row.conversation_id || c.cid === other);
@@ -331,16 +365,28 @@ export async function sendChatMessage(otherUserId: string, payload: { text?: str
   if (ce || !convId) throw ce || new Error('no conversation');
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('not authenticated');
-  const { ciphertext, nonce } = encodePayload(payload);
+  // E2EE: encrypt with Signal (X3DH on first message, Double Ratchet after).
+  // Fall back to base64-JSON only if encryption fails (peer has no bundle yet).
+  let ciphertext: string;
+  try {
+    ciphertext = await encryptDmPayload(user.id, otherUserId, payload);
+  } catch (e) {
+    console.warn('[e2ee] encryption failed, falling back to legacy encoding', e);
+    ciphertext = encodePayload(payload).ciphertext;
+  }
+  const nonce = Math.random().toString(36).slice(2, 14);
   const kind = payload.type ?? 'text';
   const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
-  const { error: me } = await supabase.from('messages').insert({
+  const { data: inserted, error: me } = await supabase.from('messages').insert({
     conversation_id: convId as string,
     sender_id: user.id,
     recipient_id: otherUserId,
     ciphertext, nonce, kind,
-  });
+  }).select('id').single();
   if (me) throw me;
+  // Cache our own plaintext locally so we can re-render on reload — we
+  // cannot decrypt a Signal envelope we encrypted to a peer.
+  if (inserted?.id) cacheOwnPayload(inserted.id as string, payload);
   await supabase.from('conversations').update({ last_preview: preview.slice(0, 200), last_at: new Date().toISOString() }).eq('id', convId as string);
   // Fire-and-forget server-side Web Push so the recipient gets notified even
   // when their tab is closed. Errors are swallowed — chat send must not fail.
