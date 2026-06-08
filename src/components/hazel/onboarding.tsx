@@ -246,21 +246,6 @@ function HaloLogo({ size = 220 }: { size?: number }) {
   );
 }
 
-function _PinDotsUnused({ value }: { value: string }) {
-  return (
-    <div style={{ display: 'flex', gap: 16 }}>
-      {[0, 1, 2, 3].map((i) => (
-        <div key={i} style={{
-          width: 16, height: 16, borderRadius: 8,
-          background: i < value.length ? '#2563eb' : 'transparent',
-          border: `2px solid ${i < value.length ? '#2563eb' : 'rgba(255,255,255,0.3)'}`,
-          transition: 'background .15s',
-        }} />
-      ))}
-    </div>
-  );
-}
-
 function Keypad({ onTap }: { onTap: (d: string) => void }) {
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'];
   return (
