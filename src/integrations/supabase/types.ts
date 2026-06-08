@@ -738,6 +738,10 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
       }
+      rename_group: {
+        Args: { p_group_id: string; p_name: string }
+        Returns: undefined
+      }
       search_profiles: {
         Args: { q: string }
         Returns: {
