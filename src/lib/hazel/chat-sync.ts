@@ -365,16 +365,28 @@ export async function sendChatMessage(otherUserId: string, payload: { text?: str
   if (ce || !convId) throw ce || new Error('no conversation');
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('not authenticated');
-  const { ciphertext, nonce } = encodePayload(payload);
+  // E2EE: encrypt with Signal (X3DH on first message, Double Ratchet after).
+  // Fall back to base64-JSON only if encryption fails (peer has no bundle yet).
+  let ciphertext: string;
+  try {
+    ciphertext = await encryptDmPayload(user.id, otherUserId, payload);
+  } catch (e) {
+    console.warn('[e2ee] encryption failed, falling back to legacy encoding', e);
+    ciphertext = encodePayload(payload).ciphertext;
+  }
+  const nonce = Math.random().toString(36).slice(2, 14);
   const kind = payload.type ?? 'text';
   const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
-  const { error: me } = await supabase.from('messages').insert({
+  const { data: inserted, error: me } = await supabase.from('messages').insert({
     conversation_id: convId as string,
     sender_id: user.id,
     recipient_id: otherUserId,
     ciphertext, nonce, kind,
-  });
+  }).select('id').single();
   if (me) throw me;
+  // Cache our own plaintext locally so we can re-render on reload — we
+  // cannot decrypt a Signal envelope we encrypted to a peer.
+  if (inserted?.id) cacheOwnPayload(inserted.id as string, payload);
   await supabase.from('conversations').update({ last_preview: preview.slice(0, 200), last_at: new Date().toISOString() }).eq('id', convId as string);
   // Fire-and-forget server-side Web Push so the recipient gets notified even
   // when their tab is closed. Errors are swallowed — chat send must not fail.
