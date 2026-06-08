@@ -321,10 +321,10 @@ export async function fetchContactProfile(userId: string) {
   };
 }
 
-function applyIncoming(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
+async function applyIncoming(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
   const other: string = row.sender_id === userId ? row.recipient_id : row.sender_id;
   const isSent = row.sender_id === userId;
-  const payload = decodePayload(row.ciphertext) || {};
+  const payload = await decodeDmRow(row, userId);
   const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
   set((s) => {
     let cv = s.conversations.find((c) => c.convId === row.conversation_id || c.cid === other);
