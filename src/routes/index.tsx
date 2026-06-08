@@ -30,7 +30,7 @@ import {
   CategoriesScreen,
   type SettingsScreen,
 } from "@/components/hazel/settings";
-import { ExpensesScreen, ExpenseDetailScreen, AddExpenseSheet } from "@/components/hazel/expenses";
+import { ExpensesScreen, ExpenseDetailScreen, AddExpenseSheet, AddIncomeSheet } from "@/components/hazel/expenses";
 import { SwapSheet, ReceiveSheet } from "@/components/hazel/extras";
 import { PaySheet } from "@/components/hazel/paysheet";
 import { WelcomeFlow, PinLock } from "@/components/hazel/onboarding";
@@ -303,7 +303,7 @@ function HazelApp() {
       )}
       {tab === "expenses" && (
         <ExpensesScreen
-          openAdd={() => openSheet("add-expense")}
+          openAdd={(kind?: "expense" | "income") => openSheet(kind === "income" ? "add-income" : "add-expense")}
           openDetail={(id) => { setExpenseId(id); setSub("expense-detail"); }}
         />
       )}
@@ -577,6 +577,7 @@ function Sheets({ sheet, sheetData, closeSheet, chatId, requirePin }: any) {
       />
       <AddCatSheet open={sheet === "add-expense-cat"} onClose={closeSheet} kind="expense" />
       <AddExpenseSheet open={sheet === "add-expense"} onClose={closeSheet} />
+      <AddIncomeSheet open={sheet === "add-income"} onClose={closeSheet} />
       <SwapSheet open={sheet === "swap"} onClose={closeSheet} />
       <ReceiveSheet open={sheet === "receive"} onClose={closeSheet} />
       <PaySheet open={sheet === "pay"} onClose={closeSheet} />

@@ -3,190 +3,341 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import logo from "@/assets/lumens-logo.png";
 
+type Step = "signin" | "s1" | "s2" | "forgot" | "success";
+
+/**
+ * Multi-step signup + sign-in flow rebuilt to match the dark-navy design
+ * from the lumens reference HTML. Renders after PIN is created.
+ */
 export function AuthScreen() {
-  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
+  const [step, setStep] = useState<Step>("signin");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [terms, setTerms] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true); setMsg(null);
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const pwScore = (p: string) =>
+    [p.length >= 8, /[A-Z]/.test(p), /\d/.test(p), /[^A-Za-z0-9]/.test(p)].filter(Boolean).length;
+
+  const oauth = async (provider: "google" | "apple") => {
+    setBusy(true); setErr(null);
+    const r = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
+    if (r.error) { setErr(r.error.message ?? `${provider} sign-in failed`); setBusy(false); }
+  };
+
+  const nextFromS1 = () => {
+    setErr(null);
+    if (name.trim().length < 2) return setErr("Please enter your full name");
+    if (!emailRe.test(email.trim())) return setErr("Please enter a valid email");
+    setStep("s2");
+  };
+
+  const completeSignup = async () => {
+    setErr(null);
+    if (password.length < 8) return setErr("Password must be at least 8 characters");
+    if (password !== confirm) return setErr("Passwords don't match");
+    if (!terms) return setErr("Please accept the Terms of Service");
+    setBusy(true);
     try {
-      if (mode === "forgot") {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-        if (error) throw error;
-        setMsg("Check your email for a password reset link.");
-      } else if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email, password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { full_name: name },
-          },
-        });
-        if (error) throw error;
-        setMsg("Check your email to confirm your account.");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      }
-    } catch (err: any) {
-      setMsg(err.message ?? "Something went wrong");
+      const { error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { emailRedirectTo: window.location.origin, data: { full_name: name.trim() } },
+      });
+      if (error) throw error;
+      setStep("success");
+    } catch (e: any) {
+      setErr(e.message ?? "Sign up failed");
     } finally { setBusy(false); }
   };
 
-  const google = async () => {
-    setBusy(true); setMsg(null);
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) { setMsg(result.error.message ?? "Google sign-in failed"); setBusy(false); }
+  const signin = async () => {
+    setErr(null);
+    if (!emailRe.test(email.trim())) return setErr("Please enter a valid email");
+    if (!password) return setErr("Enter your password");
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) throw error;
+    } catch (e: any) {
+      setErr(e.message ?? "Sign in failed");
+    } finally { setBusy(false); }
   };
 
-  const apple = async () => {
-    setBusy(true); setMsg(null);
-    const result = await lovable.auth.signInWithOAuth("apple", { redirect_uri: window.location.origin });
-    if (result.error) { setMsg(result.error.message ?? "Apple sign-in failed"); setBusy(false); }
+  const forgot = async () => {
+    setErr(null);
+    if (!emailRe.test(email.trim())) return setErr("Enter your email first");
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      setErr("Check your email for a reset link.");
+    } catch (e: any) { setErr(e.message ?? "Reset failed"); }
+    finally { setBusy(false); }
   };
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "linear-gradient(160deg, #ffffff 0%, #dbeafe 50%, #1e40af 100%)",
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      padding: 24, fontFamily: "Montserrat, sans-serif",
-    }}>
-      <div style={{
-        width: "100%", maxWidth: 380,
-        background: "rgba(255,255,255,0.55)",
-        backdropFilter: "blur(22px) saturate(160%)",
-        WebkitBackdropFilter: "blur(22px) saturate(160%)",
-        border: "1px solid rgba(255,255,255,0.5)",
-        borderRadius: 28,
-        padding: 28,
-        boxShadow: "0 30px 60px rgba(30,64,175,0.25)",
-      }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-          <img src={logo} alt="Lumens" style={{ height: 156, objectFit: "contain" }} />
-        </div>
-        <h1 style={{ fontSize: 22, fontWeight: 800, textAlign: "center", color: "#0f1b3d", margin: "0 0 4px" }}>
-          {mode === "signup" ? "Create your account" : mode === "forgot" ? "Reset your password" : "Welcome back"}
-        </h1>
-        <p style={{ fontSize: 13, textAlign: "center", color: "#475569", margin: "0 0 20px" }}>
-          {mode === "signup" ? "Join Lumens in seconds." : mode === "forgot" ? "We'll email you a reset link." : "Sign in to continue."}
-        </p>
-
-        {mode !== "forgot" && <button
-          type="button"
-          onClick={google}
-          disabled={busy}
-          style={{
-            width: "100%", height: 46, borderRadius: 14,
-            background: "#ffffff", color: "#1e293b",
-            border: "1px solid #e2e8f0", fontWeight: 600, fontSize: 14,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-            cursor: "pointer", marginBottom: 14,
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34.3 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.3l-6.3-5.3C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4 5.7l6.3 5.3C41.5 35.7 44 30.3 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
-          Continue with Google
-        </button>}
-
-        {mode !== "forgot" && <button
-          type="button"
-          onClick={apple}
-          disabled={busy}
-          style={{
-            width: "100%", height: 46, borderRadius: 14,
-            background: "#000000", color: "#ffffff",
-            border: "1px solid #000000", fontWeight: 600, fontSize: 14,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-            cursor: "pointer", marginBottom: 14,
-          }}
-        >
-          <svg width="16" height="18" viewBox="0 0 384 512" fill="#ffffff" xmlns="http://www.w3.org/2000/svg"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zM256.6 84.5c30.1-35.7 27.4-68.2 26.5-79.9-26.6 1.5-57.4 18.1-74.9 38.5-19.3 21.9-30.6 49-28.2 78.6 28.8 2.2 55-12.6 76.6-37.2z"/></svg>
-          Continue with Apple
-        </button>}
-
-        {mode !== "forgot" && <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0", color: "#94a3b8", fontSize: 11 }}>
-          <div style={{ flex: 1, height: 1, background: "#cbd5e1" }} /> OR <div style={{ flex: 1, height: 1, background: "#cbd5e1" }} />
-        </div>}
-
-        <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {mode === "signup" && (
-            <input
-              placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)}
-              style={inputStyle}
-            />
-          )}
-          <input
-            type="email" required placeholder="Email" value={email}
-            onChange={(e) => setEmail(e.target.value)} style={inputStyle}
-          />
-          {mode !== "forgot" && (
-            <input
-              type="password" required placeholder="Password" minLength={6}
-              value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle}
-            />
-          )}
-          {mode === "signin" && (
-            <button
-              type="button"
-              onClick={() => { setMode("forgot"); setMsg(null); }}
-              style={{ alignSelf: "flex-end", background: "none", border: "none", color: "#1e40af", fontWeight: 600, fontSize: 12, cursor: "pointer", padding: 0 }}
-            >
-              Forgot password?
-            </button>
-          )}
-          <button
-            type="submit" disabled={busy}
-            style={{
-              height: 46, borderRadius: 14, border: "none", cursor: "pointer",
-              background: "linear-gradient(135deg, #1e40af, #3b82f6)",
-              color: "#fff", fontWeight: 700, fontSize: 14, marginTop: 6,
-              boxShadow: "0 10px 24px rgba(30,64,175,0.35)",
-            }}
-          >
-            {busy ? "Please wait…" : mode === "signup" ? "Create account" : mode === "forgot" ? "Send reset link" : "Sign in"}
-          </button>
-        </form>
-
-        {msg && (
-          <p style={{ fontSize: 12, color: "#0f1b3d", textAlign: "center", marginTop: 14 }}>{msg}</p>
+    <div style={shellStyle}>
+      <style>{css}</style>
+      <div style={{ width: "100%", maxWidth: 440, position: "relative", padding: "max(56px, env(safe-area-inset-top)) 24px max(36px, env(safe-area-inset-bottom))", minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+        {step === "signin" && (
+          <Section eyebrow="Welcome back" title="Sign in to\nlumens" subtitle="Good to see you again.">
+            <Field label="Email address">
+              <input style={inp} placeholder="you@example.com" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </Field>
+            <Field label="Password" right={<a onClick={forgot} style={linkA}>Forgot?</a>}>
+              <PwInput value={password} onChange={setPassword} show={showPw} toggle={() => setShowPw((s) => !s)} placeholder="Your password" autoComplete="current-password" />
+            </Field>
+            <Divider text="or continue with" />
+            <SocialRow onGoogle={() => oauth("google")} onApple={() => oauth("apple")} busy={busy} />
+            <Cta onClick={signin} busy={busy}>Sign in →</Cta>
+            {err && <Err>{err}</Err>}
+            <Sub>New to lumens? <a onClick={() => { setStep("s1"); setErr(null); }} style={linkA}>Create account</a></Sub>
+          </Section>
         )}
 
-        {mode === "forgot" ? (
-          <p style={{ fontSize: 12, textAlign: "center", color: "#475569", marginTop: 18 }}>
-            <button
-              type="button"
-              onClick={() => { setMode("signin"); setMsg(null); }}
-              style={{ background: "none", border: "none", color: "#1e40af", fontWeight: 700, cursor: "pointer" }}
-            >
-              Back to sign in
-            </button>
-          </p>
-        ) : (
-        <p style={{ fontSize: 12, textAlign: "center", color: "#475569", marginTop: 18 }}>
-          {mode === "signup" ? "Already have an account?" : "New to Lumens?"}{" "}
-          <button
-            type="button"
-            onClick={() => { setMode(mode === "signup" ? "signin" : "signup"); setMsg(null); }}
-            style={{ background: "none", border: "none", color: "#1e40af", fontWeight: 700, cursor: "pointer" }}
-          >
-            {mode === "signup" ? "Sign in" : "Create account"}
-          </button>
-        </p>
+        {step === "s1" && (
+          <Section eyebrow="Create account" title="Join lumens" subtitle="Private by default. Yours forever." progress={33} step="STEP 1/2" onBack={() => setStep("signin")}>
+            <Field label="Full name">
+              <input style={inp} placeholder="Your full name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
+            </Field>
+            <Field label="Email address">
+              <input style={inp} placeholder="you@example.com" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </Field>
+            <Divider text="or sign up with" />
+            <SocialRow onGoogle={() => oauth("google")} onApple={() => oauth("apple")} busy={busy} />
+            <Cta onClick={nextFromS1} busy={busy}>Continue →</Cta>
+            {err && <Err>{err}</Err>}
+            <Sub>Already have an account? <a onClick={() => { setStep("signin"); setErr(null); }} style={linkA}>Sign in</a></Sub>
+          </Section>
+        )}
+
+        {step === "s2" && (
+          <Section eyebrow="Security" title="Create a\nstrong password" subtitle="Use a mix of letters, numbers, and symbols." progress={100} step="STEP 2/2" onBack={() => setStep("s1")}>
+            <Field label="Password">
+              <PwInput value={password} onChange={setPassword} show={showPw} toggle={() => setShowPw((s) => !s)} placeholder="Enter password" autoComplete="new-password" />
+            </Field>
+            <PwStrength score={pwScore(password)} />
+            <Field label="Confirm password">
+              <PwInput value={confirm} onChange={setConfirm} show={showPw} toggle={() => setShowPw((s) => !s)} placeholder="Confirm password" autoComplete="new-password" />
+            </Field>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "rgba(160,200,255,0.7)", marginTop: 14, cursor: "pointer" }}>
+              <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} style={{ width: 18, height: 18, accentColor: "#0055ff" }} />
+              I agree to the <a style={linkA}>Terms</a> and <a style={linkA}>Privacy Policy</a>
+            </label>
+            <Cta onClick={completeSignup} busy={busy}>Create account →</Cta>
+            {err && <Err>{err}</Err>}
+          </Section>
+        )}
+
+        {step === "success" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 18 }}>
+            <img src={logo} alt="Lumens" style={{ width: 300, height: "auto", filter: "drop-shadow(0 0 20px rgba(80,150,255,0.6))" }} />
+            <h1 style={{ color: "#fff", fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em" }}>You're in! 🎉</h1>
+            <p style={{ color: "rgba(160,200,255,0.7)", fontSize: 14, maxWidth: 320, lineHeight: 1.6 }}>
+              Welcome to lumens. Check your email to confirm your account, then sign in to continue.
+            </p>
+            <button onClick={() => setStep("signin")} style={ctaStyle}>Open lumens →</button>
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  height: 44, borderRadius: 12, border: "1px solid #cbd5e1",
-  padding: "0 14px", fontSize: 14, background: "rgba(255,255,255,0.7)",
-  color: "#0f1b3d", outline: "none", fontFamily: "Montserrat, sans-serif",
+/* ── building blocks ──────────────────────────────────────────────── */
+
+function Section({ eyebrow, title, subtitle, progress, step, onBack, children }: any) {
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      {onBack && (
+        <button onClick={onBack} style={backBtn} aria-label="Back">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(160,200,255,0.8)" strokeWidth={2} strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
+        </button>
+      )}
+      {progress != null && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 48, marginRight: 8, marginBottom: 24 }}>
+          <div style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(100,160,255,0.15)", overflow: "hidden" }}>
+            <div style={{ width: `${progress}%`, height: "100%", background: "linear-gradient(90deg, #0055ff, #2a9fff)", transition: "width .4s" }} />
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(160,200,255,0.55)", letterSpacing: "1px" }}>{step}</div>
+        </div>
+      )}
+      <div style={{ marginTop: progress != null ? 0 : 20 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#2a9fff", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 10 }}>{eyebrow}</div>
+        <h1 style={{ color: "#fff", fontSize: 30, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15, whiteSpace: "pre-line" }}>{String(title).replace(/\\n/g, "\n")}</h1>
+        <p style={{ color: "rgba(160,200,255,0.65)", fontSize: 14, lineHeight: 1.6, marginTop: 8 }}>{subtitle}</p>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 28, flex: 1 }}>{children}</div>
+    </div>
+  );
+}
+
+function Field({ label, right, children }: any) {
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(160,200,255,0.7)", letterSpacing: "0.3px" }}>{label}</span>
+        {right}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function PwInput({ value, onChange, show, toggle, placeholder, autoComplete }: any) {
+  return (
+    <div style={{ position: "relative" }}>
+      <input style={{ ...inp, paddingRight: 44 }} type={show ? "text" : "password"} placeholder={placeholder} autoComplete={autoComplete} value={value} onChange={(e) => onChange(e.target.value)} />
+      <button type="button" onClick={toggle} aria-label="Toggle password" style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(160,200,255,0.6)", cursor: "pointer", padding: 6 }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+      </button>
+    </div>
+  );
+}
+
+function PwStrength({ score }: { score: number }) {
+  const labels = ["Too weak", "Weak", "Okay", "Strong", "Excellent"];
+  const colors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981"];
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: -4 }}>
+      <div style={{ display: "flex", gap: 4, flex: 1 }}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < score ? colors[score] : "rgba(100,160,255,0.15)" }} />
+        ))}
+      </div>
+      <span style={{ fontSize: 11, color: colors[score], fontWeight: 700 }}>{labels[score]}</span>
+    </div>
+  );
+}
+
+function Divider({ text }: { text: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, color: "rgba(160,200,255,0.4)", fontSize: 11, fontWeight: 600, letterSpacing: "0.3px", margin: "4px 0" }}>
+      <div style={{ flex: 1, height: 1, background: "rgba(100,160,255,0.15)" }} />
+      {text}
+      <div style={{ flex: 1, height: 1, background: "rgba(100,160,255,0.15)" }} />
+    </div>
+  );
+}
+
+function SocialRow({ onGoogle, onApple, busy }: any) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      <button disabled={busy} onClick={onGoogle} style={socialBtn}>
+        <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
+        Google
+      </button>
+      <button disabled={busy} onClick={onApple} style={socialBtn}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(180,215,255,0.95)"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.52-1.31 3.02-2.54 4zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" /></svg>
+        Apple
+      </button>
+    </div>
+  );
+}
+
+function Cta({ onClick, busy, children }: any) {
+  return (
+    <button onClick={onClick} disabled={busy} style={ctaStyle}>
+      {busy ? "Please wait…" : children}
+    </button>
+  );
+}
+
+function Sub({ children }: any) {
+  return <div style={{ textAlign: "center", color: "rgba(160,200,255,0.55)", fontSize: 13, marginTop: 14 }}>{children}</div>;
+}
+
+function Err({ children }: any) {
+  return <div style={{ color: "#fca5a5", fontSize: 12, textAlign: "center", marginTop: 8 }}>{children}</div>;
+}
+
+/* ── styles ───────────────────────────────────────────────────────── */
+
+const shellStyle: React.CSSProperties = {
+  minHeight: "100vh",
+  background: "radial-gradient(ellipse at 50% 30%, #05165a 0%, #030a2e 60%)",
+  display: "flex",
+  justifyContent: "center",
+  fontFamily: "Montserrat, sans-serif",
 };
+
+const inp: React.CSSProperties = {
+  width: "100%",
+  height: 48,
+  borderRadius: 14,
+  border: "1px solid rgba(100,160,255,0.18)",
+  background: "rgba(255,255,255,0.04)",
+  color: "#fff",
+  fontSize: 14,
+  padding: "0 14px",
+  outline: "none",
+  fontFamily: "inherit",
+  WebkitAppearance: "none",
+};
+
+const ctaStyle: React.CSSProperties = {
+  width: "100%",
+  height: 52,
+  borderRadius: 16,
+  border: "none",
+  background: "linear-gradient(135deg, #0055ff, #0033cc)",
+  color: "#fff",
+  fontSize: 15,
+  fontWeight: 800,
+  cursor: "pointer",
+  boxShadow: "0 8px 28px rgba(0,80,255,0.45)",
+  marginTop: 18,
+  fontFamily: "inherit",
+};
+
+const socialBtn: React.CSSProperties = {
+  height: 48,
+  borderRadius: 14,
+  border: "1px solid rgba(100,160,255,0.18)",
+  background: "rgba(255,255,255,0.04)",
+  color: "rgba(220,235,255,0.9)",
+  fontSize: 13,
+  fontWeight: 700,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+
+const backBtn: React.CSSProperties = {
+  position: "absolute",
+  top: 14,
+  left: 0,
+  width: 38,
+  height: 38,
+  borderRadius: 12,
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(100,160,255,0.15)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+};
+
+const linkA: React.CSSProperties = {
+  color: "#2a9fff",
+  fontWeight: 700,
+  cursor: "pointer",
+  fontSize: 12,
+  textDecoration: "none",
+};
+
+const css = `
+  input::placeholder { color: rgba(160,200,255,0.4); }
+  input:focus { border-color: #0055ff !important; background: rgba(0,80,255,0.06) !important; }
+`;

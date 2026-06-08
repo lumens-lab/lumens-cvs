@@ -2,14 +2,17 @@ import { useMemo, useRef, useState } from 'react';
 import { Ic, T, gl, COLORS, Sheet, showToast } from './ui';
 import { useHazelStore, type Tx } from '@/lib/hazel/store';
 import { getCurrencySym } from './screens';
+import { useServerFn } from '@tanstack/react-start';
+import { scanReceipt } from '@/lib/hazel/ocr.functions';
 
 const { W, S, S2, AC, GN, RD } = COLORS;
 
 /* ── EXPENSES LIST ── */
-export function ExpensesScreen({ openAdd, openDetail }: { openAdd: () => void; openDetail: (id: number) => void }) {
+export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expense' | 'income') => void; openDetail: (id: number) => void }) {
   const { state } = useHazelStore();
   const sym = getCurrencySym(state.settings.currency);
   const [q, setQ] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
   const expenses = useMemo(
     () =>
       state.txs
@@ -21,21 +24,40 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: () => void; o
   const monthTotal = expenses
     .filter((t) => t.date.startsWith(today))
     .reduce((s, t) => s + Math.abs(t.amt), 0);
+  const monthIncome = useMemo(
+    () =>
+      state.txs
+        .filter((t) => t.amt > 0 && t.date.startsWith(today))
+        .reduce((s, t) => s + t.amt, 0),
+    [state.txs, today],
+  );
+  const incomeCount = useMemo(
+    () => state.txs.filter((t) => t.amt > 0).length,
+    [state.txs],
+  );
 
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Expenses</h1>
-        <T onClick={openAdd} style={{ ...gl('rgba(37,99,235,0.12)', 14, { boxShadow: 'none', border: '1px solid rgba(37,99,235,0.3)' }), padding: '8px 14px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <T onClick={() => setPickerOpen(true)} style={{ ...gl('rgba(37,99,235,0.12)', 14, { boxShadow: 'none', border: '1px solid rgba(37,99,235,0.3)' }), padding: '8px 14px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Ic n="Plus" s={16} /> Add
         </T>
       </div>
 
-      <div style={{ ...gl('rgba(37,99,235,0.06)', 20), padding: 18, marginBottom: 16, textAlign: 'center', border: '1px solid rgba(37,99,235,0.15)' }}>
-        <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Spent this month</div>
-        <div style={{ fontSize: 28, color: W, fontWeight: 800, letterSpacing: '-0.02em' }}>{sym}{monthTotal.toFixed(2)}</div>
-        <div style={{ fontSize: 11, color: S, marginTop: 4 }}>{expenses.length} {expenses.length === 1 ? 'expense' : 'expenses'} total</div>
+      <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', gap: 12, marginBottom: 16, paddingBottom: 4 }}>
+        <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(248,113,113,0.06)', 20), padding: 18, textAlign: 'center', border: '1px solid rgba(248,113,113,0.18)' }}>
+          <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Spent this month</div>
+          <div style={{ fontSize: 28, color: RD, fontWeight: 800, letterSpacing: '-0.02em' }}>{sym}{monthTotal.toFixed(2)}</div>
+          <div style={{ fontSize: 11, color: S, marginTop: 4 }}>{expenses.length} {expenses.length === 1 ? 'expense' : 'expenses'} total</div>
+        </div>
+        <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(52,211,153,0.06)', 20), padding: 18, textAlign: 'center', border: '1px solid rgba(52,211,153,0.18)' }}>
+          <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Earned this month</div>
+          <div style={{ fontSize: 28, color: GN, fontWeight: 800, letterSpacing: '-0.02em' }}>{sym}{monthIncome.toFixed(2)}</div>
+          <div style={{ fontSize: 11, color: S, marginTop: 4 }}>{incomeCount} income {incomeCount === 1 ? 'entry' : 'entries'} total</div>
+        </div>
       </div>
+      <div style={{ textAlign: 'center', fontSize: 10, color: S, marginBottom: 14, letterSpacing: '0.06em' }}>← swipe to see income →</div>
 
       <div style={{ position: 'relative', marginBottom: 14 }}>
         <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: S2 }}>
@@ -66,6 +88,17 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: () => void; o
           </T>
         ))
       )}
+
+      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="What are you adding?">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 4 }}>
+          <T onClick={() => { setPickerOpen(false); openAdd('expense'); }} style={{ ...gl('rgba(248,113,113,0.1)', 16, { border: '1px solid rgba(248,113,113,0.25)', boxShadow: 'none' }), padding: 18, color: RD, fontSize: 14, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <Ic n="TrendingDown" s={28} /> Expense
+          </T>
+          <T onClick={() => { setPickerOpen(false); openAdd('income'); }} style={{ ...gl('rgba(52,211,153,0.1)', 16, { border: '1px solid rgba(52,211,153,0.25)', boxShadow: 'none' }), padding: 18, color: GN, fontSize: 14, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <Ic n="TrendingUp" s={28} /> Income
+          </T>
+        </div>
+      </Sheet>
     </div>
   );
 }
@@ -148,8 +181,10 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
   const [note, setNote] = useState('');
   const [receipt, setReceipt] = useState<string>('');
   const [items, setItems] = useState<{ name: string; amt: number }[]>([]);
+  const [scanning, setScanning] = useState(false);
   const scanRef = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
+  const runOcr = useServerFn(scanReceipt);
 
   const reset = () => { setName(''); setAmt(''); setCat(state.expenseCats[0]?.id ?? ''); setDate(new Date().toISOString().slice(0, 10)); setMerchant(''); setNote(''); setReceipt(''); setItems([]); };
 
@@ -160,17 +195,38 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
     r.readAsDataURL(file);
   };
 
-  // Scan-to-fill: capture from camera, store image, prefill with placeholder
-  // fields the user can edit. Real OCR can be added later by piping `img`
-  // through Tesseract.js / a vision API; the UI is structured for it.
+  /**
+   * Scan-to-fill: capture from camera, send image to the OCR server fn
+   * (Lovable AI Gateway / Gemini vision), and pre-fill the form fields.
+   * Falls back gracefully if the call fails.
+   */
   const onScan = () => {
     const f = scanRef.current?.files?.[0];
     if (!f) return;
-    readFile(f, (img) => {
+    readFile(f, async (img) => {
       setReceipt(img);
-      if (!name) setName('Receipt purchase');
-      if (!merchant) setMerchant('Detected merchant');
-      showToast('Receipt scanned — review fields');
+      setScanning(true);
+      showToast('Reading receipt…');
+      try {
+        const r = await runOcr({ data: { imageDataUrl: img } });
+        const next = {
+          name: r.merchant || name || 'Receipt purchase',
+          merchant: r.merchant || merchant,
+          amt: r.total != null ? String(r.total) : amt,
+          date: r.date || date,
+          items: Array.isArray(r.items) && r.items.length ? r.items.filter((i) => i?.name) : items,
+        };
+        setName(next.name);
+        setMerchant(next.merchant);
+        setAmt(next.amt);
+        setDate(next.date);
+        setItems(next.items);
+        showToast(r.total != null ? 'Receipt parsed — review fields' : 'Could not read total — review fields');
+      } catch (e: any) {
+        showToast('OCR failed — fill in manually');
+      } finally {
+        setScanning(false);
+      }
     });
     if (scanRef.current) scanRef.current.value = '';
   };
@@ -277,6 +333,73 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
 
       <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 8 }}>
         Save Expense
+      </T>
+    </Sheet>
+  );
+}
+
+/* ── ADD INCOME SHEET ── */
+export function AddIncomeSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { state, set } = useHazelStore();
+  const sym = getCurrencySym(state.settings.currency);
+  const [name, setName] = useState('');
+  const [amt, setAmt] = useState('');
+  const [cat, setCat] = useState(state.incomeCats[0]?.id ?? '');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [source, setSource] = useState('');
+  const [note, setNote] = useState('');
+
+  const reset = () => { setName(''); setAmt(''); setCat(state.incomeCats[0]?.id ?? ''); setDate(new Date().toISOString().slice(0, 10)); setSource(''); setNote(''); };
+
+  const save = () => {
+    const n = parseFloat(amt);
+    if (!name.trim()) return showToast('Enter a name');
+    if (!n || n <= 0) return showToast('Enter a valid amount');
+    if (!cat) return showToast('Pick a category');
+    const c = state.incomeCats.find((x) => x.id === cat)!;
+    const tx: Tx = {
+      id: Date.now(),
+      name: name.trim(),
+      cat,
+      icon: c.icon,
+      ibg: c.color + '22',
+      ic: c.color,
+      date,
+      amt: Math.abs(n),
+      merchant: source.trim() || undefined,
+      note: note.trim() || undefined,
+    };
+    set((s) => { s.txs = [tx, ...s.txs]; });
+    reset(); onClose(); showToast('Income saved');
+  };
+
+  return (
+    <Sheet open={open} onClose={() => { reset(); onClose(); }} title="Add Income">
+      <Field label="What was it?"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Salary, freelance, refund" style={inp} /></Field>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <Field label={`Amount (${sym})`}><input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" style={{ ...inp, fontSize: 20, fontWeight: 700 }} /></Field>
+        <Field label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} /></Field>
+      </div>
+      <Field label="Source (optional)"><input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Employer, client, person" style={inp} /></Field>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: S, marginBottom: 8 }}>Category</div>
+        {state.incomeCats.length === 0 ? (
+          <div style={{ ...gl('rgba(255,255,255,0.04)', 12), padding: 12, fontSize: 12, color: S, textAlign: 'center' }}>
+            No income categories yet. Add some under Settings → Income Categories.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }} className="no-scrollbar">
+            {state.incomeCats.map((c) => (
+              <T key={c.id} onClick={() => setCat(c.id)} style={{ padding: '8px 12px', borderRadius: 12, background: cat === c.id ? c.color + '22' : 'rgba(255,255,255,0.05)', border: cat === c.id ? `1px solid ${c.color}55` : '1px solid transparent', color: cat === c.id ? c.color : W, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <Ic n={c.icon} s={14} /> {c.name}
+              </T>
+            ))}
+          </div>
+        )}
+      </div>
+      <Field label="Note (optional)"><input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Extra details" style={inp} /></Field>
+      <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#34d399,#10b981)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 8 }}>
+        Save Income
       </T>
     </Sheet>
   );

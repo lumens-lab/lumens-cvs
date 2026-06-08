@@ -60,7 +60,8 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
   if (stage === 'splash') {
     return (
       <Cover>
-        <HaloLogo size={260} />
+        <HaloLogo size={390} animate />
+        <style>{splashCss}</style>
       </Cover>
     );
   }
@@ -73,7 +74,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
       <Cover>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px 36px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <img src={logo} alt="Lumens" style={{ height: 56 }} />
+            <img src={logo} alt="Lumens" style={{ height: 84 }} />
             <T onClick={() => setStage('allset')} style={{ color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', fontSize: 13, fontWeight: 600 }}>Skip</T>
           </div>
           <div key={slide} className="afu" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 24 }}>
@@ -110,7 +111,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px max(36px, env(safe-area-inset-bottom))' }}>
           <div />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
-            <HaloLogo size={170} />
+            <HaloLogo size={255} />
             <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em', textAlign: 'center' }}>You're all set,<br/>welcome to lumens.</h1>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignSelf: 'stretch', paddingLeft: 8 }}>
               {checks.map((c) => (
@@ -179,7 +180,7 @@ export function PinLock({ onUnlock, onCancel, title, subtitle }: { onUnlock: () 
             <Ic n="ChevronLeft" s={20} />
           </T>
         )}
-        <img src={logo} alt="Lumens" style={{ height: 56, opacity: 0.95 }} />
+        <img src={logo} alt="Lumens" style={{ height: 84, opacity: 0.95 }} />
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{title ?? 'Enter your PIN'}</h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 6 }}>{subtitle ?? 'Unlock to view your wallet'}</p>
@@ -225,7 +226,7 @@ function PinDots({ value }: { value: string }) {
 }
 
 /** White logo with a soft pulsing blue halo (from the design spec). */
-function HaloLogo({ size = 220 }: { size?: number }) {
+function HaloLogo({ size = 220, animate = false }: { size?: number; animate?: boolean }) {
   const halo = size * 1.6;
   return (
     <div style={{ position: 'relative', width: halo, height: halo, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -233,7 +234,7 @@ function HaloLogo({ size = 220 }: { size?: number }) {
       <img
         src={logo}
         alt="Lumens"
-        className="halo-pulse"
+        className={animate ? 'logo-reveal logo-pulse' : 'halo-pulse'}
         style={{
           width: size,
           height: 'auto',
@@ -264,3 +265,25 @@ function Keypad({ onTap }: { onTap: (d: string) => void }) {
     </div>
   );
 }
+
+const splashCss = `
+  .logo-reveal { animation: logoReveal 2.2s cubic-bezier(0.34,1.56,0.64,1) 0.4s both; }
+  .logo-pulse  { animation: logoReveal 2.2s cubic-bezier(0.34,1.56,0.64,1) 0.4s both,
+                            logoPulse 4s ease-in-out 2.8s infinite; }
+  @keyframes logoReveal {
+    from { opacity: 0; transform: scale(0.5) translateY(18px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes logoPulse {
+    0%,100% {
+      filter: drop-shadow(0 0 12px rgba(255,255,255,0.5))
+              drop-shadow(0 0 28px rgba(80,150,255,0.55))
+              drop-shadow(0 0 55px rgba(0,80,255,0.3));
+    }
+    50% {
+      filter: drop-shadow(0 0 22px rgba(255,255,255,0.95))
+              drop-shadow(0 0 50px rgba(100,180,255,0.9))
+              drop-shadow(0 0 90px rgba(0,100,255,0.6));
+    }
+  }
+`;
