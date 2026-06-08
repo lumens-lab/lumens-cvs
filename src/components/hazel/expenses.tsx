@@ -338,6 +338,73 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
   );
 }
 
+/* ── ADD INCOME SHEET ── */
+export function AddIncomeSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { state, set } = useHazelStore();
+  const sym = getCurrencySym(state.settings.currency);
+  const [name, setName] = useState('');
+  const [amt, setAmt] = useState('');
+  const [cat, setCat] = useState(state.incomeCats[0]?.id ?? '');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [source, setSource] = useState('');
+  const [note, setNote] = useState('');
+
+  const reset = () => { setName(''); setAmt(''); setCat(state.incomeCats[0]?.id ?? ''); setDate(new Date().toISOString().slice(0, 10)); setSource(''); setNote(''); };
+
+  const save = () => {
+    const n = parseFloat(amt);
+    if (!name.trim()) return showToast('Enter a name');
+    if (!n || n <= 0) return showToast('Enter a valid amount');
+    if (!cat) return showToast('Pick a category');
+    const c = state.incomeCats.find((x) => x.id === cat)!;
+    const tx: Tx = {
+      id: Date.now(),
+      name: name.trim(),
+      cat,
+      icon: c.icon,
+      ibg: c.color + '22',
+      ic: c.color,
+      date,
+      amt: Math.abs(n),
+      merchant: source.trim() || undefined,
+      note: note.trim() || undefined,
+    };
+    set((s) => { s.txs = [tx, ...s.txs]; });
+    reset(); onClose(); showToast('Income saved');
+  };
+
+  return (
+    <Sheet open={open} onClose={() => { reset(); onClose(); }} title="Add Income">
+      <Field label="What was it?"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Salary, freelance, refund" style={inp} /></Field>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <Field label={`Amount (${sym})`}><input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" style={{ ...inp, fontSize: 20, fontWeight: 700 }} /></Field>
+        <Field label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} /></Field>
+      </div>
+      <Field label="Source (optional)"><input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Employer, client, person" style={inp} /></Field>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: S, marginBottom: 8 }}>Category</div>
+        {state.incomeCats.length === 0 ? (
+          <div style={{ ...gl('rgba(255,255,255,0.04)', 12), padding: 12, fontSize: 12, color: S, textAlign: 'center' }}>
+            No income categories yet. Add some under Settings → Income Categories.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }} className="no-scrollbar">
+            {state.incomeCats.map((c) => (
+              <T key={c.id} onClick={() => setCat(c.id)} style={{ padding: '8px 12px', borderRadius: 12, background: cat === c.id ? c.color + '22' : 'rgba(255,255,255,0.05)', border: cat === c.id ? `1px solid ${c.color}55` : '1px solid transparent', color: cat === c.id ? c.color : W, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <Ic n={c.icon} s={14} /> {c.name}
+              </T>
+            ))}
+          </div>
+        )}
+      </div>
+      <Field label="Note (optional)"><input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Extra details" style={inp} /></Field>
+      <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#34d399,#10b981)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 8 }}>
+        Save Income
+      </T>
+    </Sheet>
+  );
+}
+
 const inp: React.CSSProperties = {
   width: '100%',
   padding: '12px 14px',
