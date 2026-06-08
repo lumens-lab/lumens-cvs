@@ -61,6 +61,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
     return (
       <Cover>
         <HaloLogo size={390} animate />
+        <style>{splashCss}</style>
       </Cover>
     );
   }
@@ -225,7 +226,7 @@ function PinDots({ value }: { value: string }) {
 }
 
 /** White logo with a soft pulsing blue halo (from the design spec). */
-function HaloLogo({ size = 220 }: { size?: number }) {
+function HaloLogo({ size = 220, animate = false }: { size?: number; animate?: boolean }) {
   const halo = size * 1.6;
   return (
     <div style={{ position: 'relative', width: halo, height: halo, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -233,7 +234,7 @@ function HaloLogo({ size = 220 }: { size?: number }) {
       <img
         src={logo}
         alt="Lumens"
-        className="halo-pulse"
+        className={animate ? 'logo-reveal logo-pulse' : 'halo-pulse'}
         style={{
           width: size,
           height: 'auto',
