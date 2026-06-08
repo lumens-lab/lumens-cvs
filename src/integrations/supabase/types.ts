@@ -397,6 +397,75 @@ export type Database = {
         }
         Relationships: []
       }
+      e2ee_identities: {
+        Row: {
+          created_at: string
+          identity_key: string
+          registration_id: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          identity_key: string
+          registration_id: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          identity_key?: string
+          registration_id?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      e2ee_prekeys: {
+        Row: {
+          created_at: string
+          key_id: number
+          public_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          key_id: number
+          public_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          key_id?: number
+          public_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      e2ee_signed_prekeys: {
+        Row: {
+          created_at: string
+          key_id: number
+          public_key: string
+          signature: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          key_id: number
+          public_key: string
+          signature: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          key_id?: number
+          public_key?: string
+          signature?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_members: {
         Row: {
           group_id: string
@@ -677,6 +746,18 @@ export type Database = {
         Args: { request_id: string }
         Returns: undefined
       }
+      fetch_prekey_bundle: {
+        Args: { p_user_id: string }
+        Returns: {
+          identity_key: string
+          prekey_id: number
+          prekey_public: string
+          registration_id: number
+          signed_prekey_id: number
+          signed_prekey_public: string
+          signed_prekey_signature: string
+        }[]
+      }
       gen_wallet_uid: { Args: never; Returns: string }
       get_or_create_conversation: {
         Args: { other_user_id: string }
@@ -733,6 +814,19 @@ export type Database = {
           name: string
           owner_id: string
         }[]
+      }
+      my_prekey_count: { Args: never; Returns: number }
+      publish_prekey_bundle: {
+        Args: {
+          p_identity_key: string
+          p_prekey_ids: number[]
+          p_prekey_publics: string[]
+          p_registration_id: number
+          p_signed_prekey_id: number
+          p_signed_prekey_public: string
+          p_signed_prekey_signature: string
+        }
+        Returns: undefined
       }
       remove_group_member: {
         Args: { p_group_id: string; p_user_id: string }

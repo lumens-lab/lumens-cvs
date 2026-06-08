@@ -42,6 +42,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AuthScreen } from "@/components/hazel/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useChatSync } from "@/lib/hazel/chat-sync";
+import { useEnsureE2EEIdentity } from "@/lib/e2ee/init";
 import { useCalls } from "@/lib/hazel/calls";
 import { subscribeToPush } from "@/lib/hazel/push";
 
@@ -135,6 +136,7 @@ function HazelApp() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [catCtx, setCatCtx] = useState<{ catId: string; monthKey: string } | null>(null);
   useChatSync(user?.id ?? null);
+  useEnsureE2EEIdentity(user?.id ?? null);
   // Hoisted call state so video calls can be started from anywhere
   // (chat header dropdown, calls tab, incoming-call ringer).
   const calls = useCalls(user?.id ?? null);
