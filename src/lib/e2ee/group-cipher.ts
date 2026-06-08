@@ -96,9 +96,11 @@ export async function encryptGroupPayload(
     }
   }));
 
+  const ivCopy = new Uint8Array(iv.length);
+  ivCopy.set(iv);
   const env: GroupFanEnvelope = {
     e: 'groupfan', v: 1,
-    iv: abToB64(iv.buffer),
+    iv: abToB64(ivCopy.buffer),
     ct: abToB64(ct),
     keys,
   };
