@@ -4,6 +4,7 @@ import { useHazelStore, type Contact, type Conv, type Group, type GroupMember } 
 import { GRAD_MAP } from './data';
 import { sendPushToUser } from './push-notify.functions';
 import { encryptDmPayload, decryptDmCiphertext, isSignalEnvelope } from '@/lib/e2ee/cipher';
+import { encryptGroupPayload, decryptGroupCiphertext, isGroupFanEnvelope } from '@/lib/e2ee/group-cipher';
 
 const GRADS = Object.keys(GRAD_MAP);
 const pickG = (seed: string) => GRADS[Math.abs(seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % GRADS.length];
@@ -55,6 +56,23 @@ async function decodeDmRow(row: any, myUserId: string): Promise<Record<string, a
     }
     const peer = row.sender_id as string;
     const pt = await decryptDmCiphertext(myUserId, peer, ct);
+    return pt ?? { text: '[unable to decrypt]' };
+  }
+  return decodePayload(ct) ?? {};
+}
+
+/**
+ * Decode a group message row, transparently handling both the group
+ * fan-out envelope and legacy base64-JSON rows.
+ */
+async function decodeGroupRow(row: any, myUserId: string): Promise<Record<string, any>> {
+  const ct = row.ciphertext as string;
+  const isMine = row.sender_id === myUserId;
+  if (isGroupFanEnvelope(ct)) {
+    if (isMine) {
+      return readOwnPayload(row.id) ?? { text: '[encrypted — sent from another device]' };
+    }
+    const pt = await decryptGroupCiphertext(myUserId, row.sender_id as string, ct);
     return pt ?? { text: '[unable to decrypt]' };
   }
   return decodePayload(ct) ?? {};
@@ -178,10 +196,10 @@ export function useChatSync(userId: string | null) {
           .order('created_at', { ascending: true })
           .limit(1000);
         const byGroup = new Map(groups.map((g) => [g.id, g]));
-        (gmsgs ?? []).forEach((m) => {
+        for (const m of (gmsgs ?? [])) {
           const g = byGroup.get(m.group_id as string);
-          if (!g) return;
-          const payload = decodePayload(m.ciphertext as string) || {};
+          if (!g) continue;
+          const payload = await decodeGroupRow(m, userId);
           g.msgs.push({
             id: m.id as string,
             text: payload.text,
@@ -193,7 +211,7 @@ export function useChatSync(userId: string | null) {
             sent: m.sender_id === userId,
             time: fmtTime(m.created_at as string),
           });
-        });
+        }
 
         // members
         const { data: gmRows } = await supabase
@@ -253,7 +271,7 @@ export function useChatSync(userId: string | null) {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const row: any = payload.new || {};
         if (!row.group_id) return;
-        applyIncomingGroup(row, userId, set);
+        void applyIncomingGroup(row, userId, set);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'group_members', filter: `user_id=eq.${userId}` }, () => { loadAll(); })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'groups' }, () => { loadAll(); })
@@ -411,9 +429,9 @@ export async function deleteChatMessage(messageId: string): Promise<void> {
   if (error) throw error;
 }
 
-function applyIncomingGroup(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
+async function applyIncomingGroup(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
   const isSent = row.sender_id === userId;
-  const payload = decodePayload(row.ciphertext) || {};
+  const payload = await decodeGroupRow(row, userId);
   const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
   set((s) => {
     const g = s.groups.find((x) => x.id === row.group_id);
@@ -445,15 +463,25 @@ function applyIncomingGroup(row: any, userId: string, set: ReturnType<typeof use
 export async function sendGroupMessage(groupId: string, payload: { text?: string; type?: 'image' | 'video' | 'voice' | 'money'; amt?: number; cur?: string; media?: string; dur?: number }) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('not authenticated');
-  const { ciphertext, nonce } = encodePayload(payload);
+  let ciphertext: string;
+  let nonce: string;
+  try {
+    ciphertext = await encryptGroupPayload(user.id, groupId, payload);
+    nonce = Math.random().toString(36).slice(2, 14);
+  } catch (err) {
+    console.warn('[e2ee] group encrypt failed, falling back to legacy', err);
+    const enc = encodePayload(payload);
+    ciphertext = enc.ciphertext; nonce = enc.nonce;
+  }
   const kind = payload.type ?? 'text';
   const preview = payload.type === 'image' ? '📷 Photo' : payload.type === 'video' ? '🎬 Video' : payload.type === 'voice' ? '🎙️ Voice note' : payload.type === 'money' ? `💸 ${payload.cur || ''}${payload.amt ?? ''}` : (payload.text ?? '');
-  const { error } = await supabase.from('messages').insert({
+  const { data: inserted, error } = await supabase.from('messages').insert({
     group_id: groupId,
     sender_id: user.id,
     ciphertext, nonce, kind,
-  });
+  }).select('id').single();
   if (error) throw error;
+  if (inserted?.id) cacheOwnPayload(inserted.id as string, payload);
   await supabase.from('groups').update({ last_preview: preview.slice(0, 200), last_at: new Date().toISOString() }).eq('id', groupId);
   // Push to all other group members
   try {
