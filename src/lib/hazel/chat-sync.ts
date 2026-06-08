@@ -228,10 +228,10 @@ export function useChatSync(userId: string | null) {
     const channel = supabase
       .channel(`chat:${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${userId}` }, (payload) => {
-        applyIncoming(payload.new as any, userId, set);
+        void applyIncoming(payload.new as any, userId, set);
       })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, (payload) => {
-        applyIncoming(payload.new as any, userId, set);
+        void applyIncoming(payload.new as any, userId, set);
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload) => {
         const old: any = payload.old || {};
