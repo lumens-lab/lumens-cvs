@@ -435,3 +435,28 @@ export async function createGroup(name: string, memberIds: string[]): Promise<st
   if (error) throw error;
   return data as string;
 }
+
+/** Add a confirmed contact to a group (admin/owner only). */
+export async function addGroupMember(groupId: string, userId: string): Promise<void> {
+  const { error } = await supabase.rpc('add_group_member', { p_group_id: groupId, p_user_id: userId });
+  if (error) throw error;
+}
+
+/** Remove a member from a group (admin/owner) or leave (self). */
+export async function removeGroupMember(groupId: string, userId: string): Promise<void> {
+  const { error } = await supabase.rpc('remove_group_member', { p_group_id: groupId, p_user_id: userId });
+  if (error) throw error;
+}
+
+/** Rename a group (admin/owner only). */
+export async function renameGroup(groupId: string, name: string): Promise<void> {
+  const { error } = await supabase.rpc('rename_group', { p_group_id: groupId, p_name: name });
+  if (error) throw error;
+}
+
+/** Current user leaves a group. */
+export async function leaveGroup(groupId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('not authenticated');
+  await removeGroupMember(groupId, user.id);
+}
