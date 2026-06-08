@@ -8,7 +8,7 @@ const { W, S, AC, BLUE_BRIGHT } = COLORS;
 /** Splash → onboarding slides → PIN setup. Calls onDone() when complete. */
 export function WelcomeFlow({ onDone }: { onDone: () => void }) {
   const { set } = useHazelStore();
-  const [stage, setStage] = useState<'splash' | 'intro' | 'pin'>('splash');
+  const [stage, setStage] = useState<'splash' | 'intro' | 'allset' | 'pin'>('splash');
   const [slide, setSlide] = useState(0);
   const [pin, setPin] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -60,12 +60,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
   if (stage === 'splash') {
     return (
       <Cover>
-        <div className="logo-anim" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22 }}>
-          <div className="logo-glow" style={{ background: 'rgba(255,255,255,0.96)', padding: '30px 44px', borderRadius: 28, backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)' }}>
-            <img src={logo} alt="Lumens" style={{ height: 128, display: 'block' }} />
-          </div>
-          <div style={{ color: '#fff', opacity: 0.7, fontSize: 13, letterSpacing: '0.3em', textTransform: 'uppercase', fontWeight: 600 }}>illuminate your money</div>
-        </div>
+        <HaloLogo size={260} />
       </Cover>
     );
   }
@@ -78,8 +73,8 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
       <Cover>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px 36px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <img src={logo} alt="Lumens" style={{ height: 88, filter: 'brightness(0) invert(1)' }} />
-            <T onClick={() => setStage('pin')} style={{ color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', fontSize: 13, fontWeight: 600 }}>Skip</T>
+            <img src={logo} alt="Lumens" style={{ height: 56 }} />
+            <T onClick={() => setStage('allset')} style={{ color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', fontSize: 13, fontWeight: 600 }}>Skip</T>
           </div>
           <div key={slide} className="afu" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 24 }}>
             <div style={{ width: 80, height: 80, borderRadius: 24, background: s.color + '33', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${s.color}55` }}>
@@ -94,10 +89,43 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
                 <div key={i} style={{ width: i === slide ? 24 : 6, height: 6, borderRadius: 3, background: i === slide ? '#2563eb' : 'rgba(255,255,255,0.25)', transition: 'width .25s' }} />
               ))}
             </div>
-            <T onClick={() => (isLast ? setStage('pin') : setSlide(slide + 1))} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 22px', borderRadius: 28, background: '#2563eb', color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, boxShadow: '0 12px 30px rgba(37,99,235,0.5)' }}>
+            <T onClick={() => (isLast ? setStage('allset') : setSlide(slide + 1))} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 22px', borderRadius: 28, background: '#2563eb', color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, boxShadow: '0 12px 30px rgba(37,99,235,0.5)' }}>
               {isLast ? 'Get started' : 'Next'} <Ic n="ArrowRight" s={16} />
             </T>
           </div>
+        </div>
+      </Cover>
+    );
+  }
+
+  // All-set screen (last page before PIN creation)
+  if (stage === 'allset') {
+    const checks = [
+      'Encrypted messaging enabled',
+      'Non-custodial wallet ready',
+      'Privacy protection active',
+    ];
+    return (
+      <Cover>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px max(36px, env(safe-area-inset-bottom))' }}>
+          <div />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
+            <HaloLogo size={170} />
+            <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em', textAlign: 'center' }}>You're all set,<br/>welcome to lumens.</h1>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignSelf: 'stretch', paddingLeft: 8 }}>
+              {checks.map((c) => (
+                <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 13, background: 'rgba(37,99,235,0.25)', border: '1px solid rgba(96,165,250,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ic n="Check" s={14} c="#60a5fa" />
+                  </div>
+                  <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14, fontWeight: 500 }}>{c}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <T onClick={() => setStage('pin')} style={{ width: '100%', padding: '18px 22px', borderRadius: 22, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: '#fff', border: 'none', fontSize: 15, fontWeight: 700, boxShadow: '0 12px 30px rgba(37,99,235,0.5)' }}>
+            Create account →
+          </T>
         </div>
       </Cover>
     );
