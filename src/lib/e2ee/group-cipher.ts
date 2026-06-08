@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { encryptDmPayload, decryptDmCiphertext, isSignalEnvelope } from './cipher';
+import { auditMessage } from './audit';
 
 /**
  * Group E2EE — per-message symmetric key fan-out.
@@ -104,7 +105,9 @@ export async function encryptGroupPayload(
     ct: abToB64(ct),
     keys,
   };
-  return JSON.stringify(env);
+  const wire = JSON.stringify(env);
+  auditMessage({ event: 'encrypt', scope: 'group', envelope: 'groupfan', groupId, ctLen: wire.length, success: true });
+  return wire;
 }
 
 /**
@@ -126,5 +129,7 @@ export async function decryptGroupCiphertext(
   const keyRaw = b64ToAb(unwrapped.gk);
   const iv = b64ToAb(env.iv);
   const ct = b64ToAb(env.ct);
-  return aesDecrypt(keyRaw, iv, ct);
+  const out = await aesDecrypt(keyRaw, iv, ct);
+  auditMessage({ event: 'decrypt', scope: 'group', envelope: 'groupfan', peerId: senderUserId, ctLen: ciphertext.length, success: !!out });
+  return out;
 }

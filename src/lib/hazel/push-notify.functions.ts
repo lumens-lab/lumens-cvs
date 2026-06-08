@@ -1,62 +1,65 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
+import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 
 const Input = z.object({
   recipientUserId: z.string().uuid(),
   title: z.string().min(1).max(120),
   body: z.string().min(1).max(400),
-  url: z.string().max(500).optional(),
+  url: z.string().max(500).regex(/^\/[a-zA-Z0-9/_\-?&=.%#]*$/, 'url must be a same-origin path').optional(),
   tag: z.string().max(80).optional(),
 });
 
 /**
- * Server-side Web Push delivery. Looks up the recipient's push_subscriptions
- * (admin client, bypasses RLS) and fans out a notification to each device.
- * Removes dead subscriptions (404/410). Silently no-ops if VAPID is not
- * configured.
+ * Server-side Web Push delivery.
+ *
+ * Authorization: the caller MUST be a confirmed contact of the recipient
+ * OR share at least one group with them. This prevents any signed-in user
+ * from spamming arbitrary push notifications to any other user (push
+ * phishing / harassment / notification DoS).
+ *
+ * The `url` field is constrained to a same-origin path by the validator,
+ * so a malicious caller cannot point a notification at an external
+ * phishing URL.
  */
 export const sendPushToUser = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d) => Input.parse(d))
-  .handler(async ({ data }) => {
-    const vapidPublic = process.env.VAPID_PUBLIC_KEY
-      || 'BJ1enulq3UtdHBklrQqONpwHpFGXffIYtUTsQgpow_UkMH3bQ4-Sbe_ZrdhEObe00BX9PaCOlG07iLRfXmkfV7Q';
-    const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
-    const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:notifications@lumens.app';
-    if (!vapidPrivate) return { sent: 0, skipped: true };
+  .handler(async ({ data, context }) => {
+    const callerId = context.userId;
+    if (!callerId) throw new Error('unauthenticated');
+    if (callerId === data.recipientUserId) return { sent: 0, skipped: true };
 
-    const [{ supabaseAdmin }, webpush] = await Promise.all([
-      import('@/integrations/supabase/client.server'),
-      import('web-push'),
-    ]);
-    const wp = (webpush as any).default ?? webpush;
-    try { wp.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate); } catch {}
+    // Relationship check: confirmed contact OR shared group membership.
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { count: contactCount } = await supabaseAdmin.from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', callerId)
+      .eq('contact_user_id', data.recipientUserId)
+      .eq('confirmed', true);
+    let sharesGroup = false;
+    if (!contactCount) {
+      const { data: myGroups } = await supabaseAdmin.from('group_members')
+        .select('group_id').eq('user_id', callerId);
+      const ids = (myGroups ?? []).map((r: any) => r.group_id as string);
+      if (ids.length) {
+        const { count: sharedCount } = await supabaseAdmin.from('group_members')
+          .select('group_id', { count: 'exact', head: true })
+          .eq('user_id', data.recipientUserId)
+          .in('group_id', ids);
+        sharesGroup = (sharedCount ?? 0) > 0;
+      }
+    }
+    if (!contactCount && !sharesGroup) {
+      return { sent: 0, skipped: true, reason: 'no relationship' as const };
+    }
 
-    const { data: subs } = await supabaseAdmin
-      .from('push_subscriptions')
-      .select('id, subscription')
-      .eq('user_id', data.recipientUserId);
-    if (!subs || subs.length === 0) return { sent: 0 };
-
-    const payload = JSON.stringify({
+    const { deliverPush } = await import('./push-deliver.server');
+    return deliverPush({
+      recipientUserId: data.recipientUserId,
       title: data.title,
       body: data.body,
-      url: data.url || '/',
-      tag: data.tag || 'lumens',
+      url: data.url,
+      tag: data.tag,
     });
-
-    const dead: string[] = [];
-    let sent = 0;
-    await Promise.all(subs.map(async (row: any) => {
-      try {
-        await wp.sendNotification(row.subscription, payload, { TTL: 60 });
-        sent++;
-      } catch (err: any) {
-        const code = err?.statusCode;
-        if (code === 404 || code === 410) dead.push(row.id);
-      }
-    }));
-    if (dead.length) {
-      await supabaseAdmin.from('push_subscriptions').delete().in('id', dead);
-    }
-    return { sent };
   });
