@@ -42,6 +42,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AuthScreen } from "@/components/hazel/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useChatSync } from "@/lib/hazel/chat-sync";
+import { useEnsureE2EEIdentity } from "@/lib/e2ee/init";
 import { useCalls } from "@/lib/hazel/calls";
 import { subscribeToPush } from "@/lib/hazel/push";
 
