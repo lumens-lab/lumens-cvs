@@ -179,7 +179,7 @@ export function PinLock({ onUnlock, onCancel, title, subtitle }: { onUnlock: () 
             <Ic n="ChevronLeft" s={20} />
           </T>
         )}
-        <img src={logo} alt="Lumens" style={{ height: 64, filter: 'brightness(0) invert(1)', opacity: 0.95 }} />
+        <img src={logo} alt="Lumens" style={{ height: 56, opacity: 0.95 }} />
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{title ?? 'Enter your PIN'}</h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 6 }}>{subtitle ?? 'Unlock to view your wallet'}</p>
