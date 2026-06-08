@@ -846,6 +846,24 @@ export type Database = {
         }[]
       }
       send_contact_request: { Args: { to_user_id: string }; Returns: string }
+      wallet_deposit: {
+        Args: { p_amount: number }
+        Returns: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          user_id: string
+          wallet_uid: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "domicile_wallets"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never

@@ -49,23 +49,9 @@ export function useDomicileWallet(userId: string | null, preferredCurrency?: str
 
 /** Increment the domicile wallet balance for the current user (deposit demo). */
 export async function depositToWallet(amount: number): Promise<DomicileWallet | null> {
-  const { data: user } = await supabase.auth.getUser();
-  if (!user.user) throw new Error('not authenticated');
-  // Read current
-  const { data: cur, error: e1 } = await supabase
-    .from('domicile_wallets')
-    .select('*')
-    .eq('user_id', user.user.id)
-    .maybeSingle();
-  if (e1) throw e1;
-  if (!cur) throw new Error('wallet missing');
-  const next = Number(cur.balance || 0) + amount;
-  const { data, error: e2 } = await supabase
-    .from('domicile_wallets')
-    .update({ balance: next })
-    .eq('user_id', user.user.id)
-    .select('*')
-    .maybeSingle();
-  if (e2) throw e2;
-  return data as unknown as DomicileWallet;
+  // Balance writes are server-validated via SECURITY DEFINER RPC — the
+  // table has no client UPDATE policy to prevent direct API tampering.
+  const { data, error } = await supabase.rpc('wallet_deposit', { p_amount: amount });
+  if (error) throw error;
+  return (data as unknown as DomicileWallet) ?? null;
 }
