@@ -11,6 +11,7 @@ import {
 import appCss from "../styles.css?url";
 import { useEffect } from "react";
 import { initObservability } from "@/lib/observability";
+import { SwipeBackProvider } from "@/components/swipe-back";
 
 function NotFoundComponent() {
   return (
@@ -130,6 +131,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <SwipeBackProvider />
       <Outlet />
     </QueryClientProvider>
   );
