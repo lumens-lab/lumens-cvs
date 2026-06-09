@@ -629,7 +629,7 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
   }, [convId]);
   const setDisappearing = async (secs: number | null) => {
     if (!convId) { showToast('Send a message first'); return; }
-    const { error } = await supabase.rpc('set_disappearing', { p_conversation_id: convId, p_seconds: secs });
+    const { error } = await supabase.rpc('set_disappearing', { p_conversation_id: convId, p_seconds: secs as any });
     if (error) { showToast('Could not update timer'); return; }
     setTtl(secs);
     setTtlMenuOpen(false);
