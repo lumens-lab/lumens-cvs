@@ -502,7 +502,7 @@ export function ChatScreen({ openSub, openChat, openGroup, openNewGroup }: any) 
         </div>
       )}
       <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
-        <LumensWordmark height={50} />
+        <LumensWordmark height={75} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
