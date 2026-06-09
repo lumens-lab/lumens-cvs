@@ -339,6 +339,38 @@ export async function fetchContactProfile(userId: string) {
   };
 }
 
+/**
+ * Disconnect a confirmed contact: removes the contact row (so the user no
+ * longer appears in our contact / chat / call lists), and clears any local
+ * conversation cached for that contact. Conversation rows in the DB stay
+ * intact for the other side — but without a matching contact, our UI hides
+ * them everywhere.
+ */
+export async function removeContact(otherUserId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('not authenticated');
+  const { error } = await supabase
+    .from('contacts')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('contact_user_id', otherUserId);
+  if (error) throw error;
+  // Best-effort: also drop the reverse row so the other side's "Contacts"
+  // section reflects the disconnect. RLS may block this, which is fine.
+  await supabase
+    .from('contacts')
+    .delete()
+    .eq('user_id', otherUserId)
+    .eq('contact_user_id', user.id);
+  const { getStateSnapshot } = await import('./store');
+  const s = getStateSnapshot();
+  const setter = (useHazelStore as any);
+  // Update via a transient subscription-free path: mutate snapshot then notify
+  s.contacts = s.contacts.filter((c) => c.id !== otherUserId);
+  s.conversations = s.conversations.filter((c) => c.cid !== otherUserId);
+  try { window.dispatchEvent(new CustomEvent('lumens:refresh-chats')); } catch {}
+}
+
 async function applyIncoming(row: any, userId: string, set: ReturnType<typeof useHazelStore>['set']) {
   const other: string = row.sender_id === userId ? row.recipient_id : row.sender_id;
   const isSent = row.sender_id === userId;
