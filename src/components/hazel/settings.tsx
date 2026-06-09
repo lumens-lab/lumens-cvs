@@ -149,9 +149,17 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
     try {
       const r = await restoreFromFile(f);
       if (r.kind === 'full') {
-        showToast(r.ok ? 'Backup restored' : 'Invalid backup file');
+        if (r.ok) {
+          const a = r.added;
+          showToast(a && a.txs > 0
+            ? `Restored — ${a.txs} new transaction${a.txs === 1 ? '' : 's'}`
+            : 'Backup restored (nothing new to add)');
+        } else {
+          showToast(r.errors?.[0] ?? 'Invalid backup file');
+        }
       } else {
-        showToast(r.count ? `Imported ${r.count} transaction${r.count === 1 ? '' : 's'}` : 'No transactions found in file');
+        if (r.count) showToast(`Imported ${r.count} transaction${r.count === 1 ? '' : 's'}`);
+        else showToast(r.errors?.[0] ?? 'No transactions found — check date/amount columns');
       }
     } catch (e: any) {
       showToast(e?.message ?? 'Import failed');
