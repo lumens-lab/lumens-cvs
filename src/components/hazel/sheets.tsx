@@ -392,8 +392,21 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
             <div style={{ fontSize: 12, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your Contacts</div>
             {confirmed.length === 0 ? (
               <div style={{ ...gl(), padding: 20, textAlign: 'center', color: S, fontSize: 12 }}>No confirmed contacts yet. Search above to connect.</div>
-            ) : confirmed.map((c) => (
-              <T key={c.id} onClick={() => onOpenChat?.(c.id)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.04)', 14, { boxShadow: 'none' }), padding: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
+            ) : confirmed.map((c) => {
+              const sel = selected.has(c.id);
+              return (
+              <T key={c.id}
+                onClick={() => {
+                  if (longPressed.current) { longPressed.current = false; return; }
+                  if (selectMode) { toggleSelect(c.id); return; }
+                  onOpenChat?.(c.id);
+                }}
+                onPointerDown={() => startLongPress(c.id)}
+                onPointerUp={cancelLongPress}
+                onPointerLeave={cancelLongPress}
+                onContextMenu={(e: any) => { e.preventDefault(); setSelectMode(true); setSelected((s) => { const n = new Set(s); n.add(c.id); return n; }); }}
+                style={{ width: '100%', textAlign: 'left', ...gl(sel ? 'rgba(37,99,235,0.18)' : 'rgba(255,255,255,0.04)', 14, { boxShadow: 'none' }), padding: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
+                {selectMode && <div style={{ width: 22, height: 22, borderRadius: 11, border: `2px solid ${sel ? AC : S2}`, background: sel ? AC : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{sel && <Ic n="Check" s={12} c={'#001535' as any} />}</div>}
                 <Av ini={c.ini} g={c.g} on={c.on} sz={40} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: W, fontSize: 13, fontWeight: 600 }}>{c.name}</div>
@@ -401,7 +414,8 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
                 </div>
                 <Ic n="MessageCircle" s={16} c={AC as any} />
               </T>
-            ))}
+              );
+            })}
           </div>
         );
       })()}
