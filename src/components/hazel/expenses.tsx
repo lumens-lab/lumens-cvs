@@ -459,3 +459,70 @@ function Field({ label, children }: { label: string; children: any }) {
     </div>
   );
 }
+
+/* ── EDIT TX SHEET (expense or income) ── */
+function EditTxSheet({ open, onClose, tx }: { open: boolean; onClose: () => void; tx: Tx }) {
+  const { state, set } = useHazelStore();
+  const sym = getCurrencySym(state.settings.currency);
+  const isIncome = tx.amt > 0;
+  const catList = isIncome ? state.incomeCats : state.expenseCats;
+  const [name, setName] = useState(tx.name);
+  const [amt, setAmt] = useState(String(Math.abs(tx.amt)));
+  const [cat, setCat] = useState(tx.cat);
+  const [date, setDate] = useState(tx.date.slice(0, 10));
+  const [merchant, setMerchant] = useState(tx.merchant ?? '');
+  const [note, setNote] = useState(tx.note ?? '');
+
+  const save = () => {
+    const n = parseFloat(amt);
+    if (!name.trim()) return showToast('Enter a name');
+    if (!n || n <= 0) return showToast('Enter a valid amount');
+    const c = catList.find((x) => x.id === cat);
+    if (!c) return showToast('Pick a category');
+    set((s) => {
+      s.txs = s.txs.map((t) =>
+        t.id === tx.id
+          ? {
+              ...t,
+              name: name.trim(),
+              cat,
+              icon: c.icon,
+              ibg: c.color + '22',
+              ic: c.color,
+              date,
+              amt: isIncome ? Math.abs(n) : -Math.abs(n),
+              merchant: merchant.trim() || undefined,
+              note: note.trim() || undefined,
+            }
+          : t,
+      );
+    });
+    onClose();
+    showToast('Updated');
+  };
+
+  return (
+    <Sheet open={open} onClose={onClose} title={isIncome ? 'Edit Income' : 'Edit Expense'}>
+      <Field label="What was it?"><input value={name} onChange={(e) => setName(e.target.value)} style={inp} /></Field>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <Field label={`Amount (${sym})`}><input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d.]/g, ''))} style={{ ...inp, fontSize: 20, fontWeight: 700 }} /></Field>
+        <Field label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} /></Field>
+      </div>
+      <Field label={isIncome ? 'Source (optional)' : 'Merchant (optional)'}><input value={merchant} onChange={(e) => setMerchant(e.target.value)} style={inp} /></Field>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: S, marginBottom: 8 }}>Category</div>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }} className="no-scrollbar">
+          {catList.map((c) => (
+            <T key={c.id} onClick={() => setCat(c.id)} style={{ padding: '8px 12px', borderRadius: 12, background: cat === c.id ? c.color + '22' : 'rgba(255,255,255,0.05)', border: cat === c.id ? `1px solid ${c.color}55` : '1px solid transparent', color: cat === c.id ? c.color : W, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <Ic n={c.icon} s={14} /> {c.name}
+            </T>
+          ))}
+        </div>
+      </div>
+      <Field label="Note (optional)"><input value={note} onChange={(e) => setNote(e.target.value)} style={inp} /></Field>
+      <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 8 }}>
+        Save Changes
+      </T>
+    </Sheet>
+  );
+}
