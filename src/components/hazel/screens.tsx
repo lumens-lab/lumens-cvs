@@ -807,12 +807,23 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
             { icon: 'Phone', label: 'Voice call', fn: () => { setMenuOpen(false); if (onVoiceCall) onVoiceCall(); else showToast('Calling…'); }, disabled: !canRichSend },
             { icon: 'Video', label: 'Video call', fn: () => { setMenuOpen(false); if (onVideoCall) onVideoCall(); else showToast('Calling…'); }, disabled: !canRichSend },
             { icon: 'UserCircle2', label: 'View profile', fn: () => { setMenuOpen(false); setProfileOpen(true); } },
+            { icon: 'Timer', label: `Disappearing: ${ttlLabel(ttl)}`, fn: () => setTtlMenuOpen((v) => !v), disabled: !convId },
           ].map((it) => (
             <T key={it.label} onClick={it.fn} disabled={it.disabled} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'none', border: 'none', color: W, fontSize: 13, fontWeight: 600, textAlign: 'left', borderRadius: 10, opacity: it.disabled ? 0.4 : 1 }}>
               <Ic n={it.icon} s={16} c={AC as any} />
               {it.label}
             </T>
           ))}
+          {ttlMenuOpen && (
+            <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              {TTL_OPTIONS.map((opt) => (
+                <T key={String(opt.secs)} onClick={() => setDisappearing(opt.secs)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'none', border: 'none', color: W, fontSize: 12, fontWeight: 600, textAlign: 'left', borderRadius: 8 }}>
+                  <span>{opt.label}</span>
+                  {ttl === opt.secs && <Ic n="Check" s={14} c={AC as any} />}
+                </T>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
