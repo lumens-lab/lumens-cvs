@@ -832,6 +832,22 @@ export type Database = {
           username: string
         }[]
       }
+      get_my_profile: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          cover_url: string
+          created_at: string
+          currency: string
+          display_name: string
+          dob: string
+          id: string
+          language: string
+          phone: string
+          updated_at: string
+          username: string
+        }[]
+      }
       get_or_create_conversation: {
         Args: { other_user_id: string }
         Returns: string
@@ -927,6 +943,8 @@ export type Database = {
         }[]
       }
       send_contact_request: { Args: { to_user_id: string }; Returns: string }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       touch_conversation_preview: {
         Args: { p_conversation_id: string; p_preview: string }
         Returns: undefined

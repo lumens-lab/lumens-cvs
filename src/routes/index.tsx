@@ -102,7 +102,9 @@ function HazelApp() {
     let cancelled = false;
     (async () => {
       const meta: any = user.user_metadata || {};
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+      // phone/dob are owner-only; use SECURITY DEFINER RPC instead of direct table read.
+      const { data: rows } = await supabase.rpc("get_my_profile");
+      const data: any = Array.isArray(rows) ? rows[0] : rows;
       if (cancelled) return;
       set((s) => {
         s.profile = {
