@@ -36,6 +36,8 @@ export type ChatMsg = {
   cur?: string;
   /** data URL for image/video/voice attachments */
   media?: string;
+  /** storage path in chat-media bucket (used to refresh expired signed URLs) */
+  mediaPath?: string;
   /** voice note duration in seconds */
   dur?: number;
   sent: boolean;
