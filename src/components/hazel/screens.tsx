@@ -752,9 +752,13 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
       rec.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
         const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
-        const media = await fileToDataURL(new File([blob], 'voice.webm', { type: blob.type }));
         const dur = Math.max(1, Math.round((Date.now() - start) / 1000));
-        pushMsg({ type: 'voice', media, dur });
+        try {
+          const { url, path } = await uploadChatMedia(blob, 'voice', { type: blob.type });
+          pushMsg({ type: 'voice', media: url, mediaPath: path, dur } as any);
+        } catch (err: any) {
+          showToast(err?.message || 'Could not upload voice note');
+        }
         recRef.current = null;
         setRecording(false);
       };
