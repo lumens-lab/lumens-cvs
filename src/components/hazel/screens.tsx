@@ -601,6 +601,27 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
   const [attachOpen, setAttachOpen] = useState(false);
   const [actionFor, setActionFor] = useState<string | null>(null); // msg id with action popover open
   const [replyTo, setReplyTo] = useState<{ id: string; preview: string } | null>(null);
+  const [ttl, setTtl] = useState<number | null>(null); // disappearing_seconds
+  const [ttlMenuOpen, setTtlMenuOpen] = useState(false);
+  const convId = (conv as any)?.convId as string | undefined;
+  useEffect(() => {
+    if (!convId) { setTtl(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from('conversations').select('disappearing_seconds').eq('id', convId).maybeSingle();
+      if (!cancelled) setTtl((data as any)?.disappearing_seconds ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [convId]);
+  const setDisappearing = async (secs: number | null) => {
+    if (!convId) { showToast('Send a message first'); return; }
+    const { error } = await supabase.rpc('set_disappearing', { p_conversation_id: convId, p_seconds: secs });
+    if (error) { showToast('Could not update timer'); return; }
+    setTtl(secs);
+    setTtlMenuOpen(false);
+    setMenuOpen(false);
+    showToast(secs ? `Messages disappear after ${ttlLabel(secs)}` : 'Disappearing off');
+  };
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [conv?.msgs?.length]);
   // Swipe-to-go-back (right swipe from left edge)
