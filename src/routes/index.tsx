@@ -474,6 +474,64 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
 }
 
 /** Encrypted voice-call screen — UI scaffold over confirmed contacts. */
+function GlobalCallOverlay({ calls }: { calls: ReturnType<typeof useCalls> }) {
+  const { state } = useHazelStore();
+  const { state: call, acceptCall, declineCall, endCall } = calls;
+  // Soft ringtone via WebAudio + vibration while incoming
+  useEffect(() => {
+    if (call.status !== "incoming") return;
+    let ctx: AudioContext | null = null;
+    let stop = false;
+    try {
+      ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const ring = () => {
+        if (stop || !ctx) return;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine"; o.frequency.value = 660;
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.45);
+        o.connect(g).connect(ctx.destination);
+        o.start(); o.stop(ctx.currentTime + 0.5);
+      };
+      ring();
+      const t = setInterval(ring, 1200);
+      if ("vibrate" in navigator) {
+        try { navigator.vibrate?.([400, 200, 400, 200, 400]); } catch { /* noop */ }
+      }
+      return () => { stop = true; clearInterval(t); ctx?.close().catch(() => {}); };
+    } catch { return; }
+  }, [call.status]);
+
+  if (call.status === "idle" || call.status === "ended") return null;
+  const peer = state.contacts.find((c) => c.id === call.peerId);
+  const label = call.status === "outgoing" ? "Calling…" : call.status === "incoming" ? "Incoming call" : call.status === "connecting" ? "Connecting…" : "In call";
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "linear-gradient(180deg,#001535,#001a48)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, gap: 18 }}>
+      <div style={{ width: 120, height: 120, borderRadius: 60, background: "linear-gradient(135deg,#2563eb,#2563eb)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 36, fontWeight: 800, boxShadow: "0 18px 60px rgba(37,99,235,0.45)", animation: call.status === "incoming" ? "navPop 1s ease-in-out infinite alternate" : undefined }}>
+        {peer?.ini || "?"}
+      </div>
+      <div style={{ color: W, fontSize: 22, fontWeight: 800 }}>{peer?.name || "Contact"}</div>
+      <div style={{ color: S, fontSize: 13 }}>{label}</div>
+      {call.remoteStream && (
+        <audio autoPlay ref={(el) => { if (el && call.remoteStream) el.srcObject = call.remoteStream; }} />
+      )}
+      <div style={{ display: "flex", gap: 16, marginTop: 18 }}>
+        {call.status === "incoming" ? (
+          <>
+            <T onClick={declineCall} style={{ width: 64, height: 64, borderRadius: 32, background: "#ef4444", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center" }}><Ic n="PhoneOff" s={24} /></T>
+            <T onClick={acceptCall} style={{ width: 64, height: 64, borderRadius: 32, background: "#22c55e", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center" }}><Ic n="Phone" s={24} /></T>
+          </>
+        ) : (
+          <T onClick={endCall} style={{ width: 72, height: 72, borderRadius: 36, background: "#ef4444", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 30px rgba(239,68,68,0.5)" }}><Ic n="PhoneOff" s={26} /></T>
+        )}
+      </div>
+      {call.error && <div style={{ color: "#fca5a5", fontSize: 12 }}>{call.error}</div>}
+    </div>
+  );
+}
+
 function CallScreen({ calls }: { calls: ReturnType<typeof useCalls> }) {
   const { state } = useHazelStore();
   const { state: call, startCall } = calls;
