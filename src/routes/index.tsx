@@ -365,8 +365,8 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
         ]
       : [
           { id: "assets", icon: "Layers", label: "Assets" },
-          { id: "budget", icon: "PieChart", label: "Budget" },
-          { id: "expenses", icon: "ReceiptText", label: "Expenses" },
+          { id: "budget", icon: "PieChart", label: "Analytics" },
+          { id: "expenses", icon: "ReceiptText", label: "CashFlow" },
           { id: "settings", icon: "Settings2", label: "Settings" },
         ];
 
