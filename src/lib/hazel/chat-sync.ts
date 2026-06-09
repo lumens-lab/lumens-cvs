@@ -362,12 +362,8 @@ export async function removeContact(otherUserId: string): Promise<void> {
     .delete()
     .eq('user_id', otherUserId)
     .eq('contact_user_id', user.id);
-  const { getStateSnapshot } = await import('./store');
-  const s = getStateSnapshot();
-  const setter = (useHazelStore as any);
-  // Update via a transient subscription-free path: mutate snapshot then notify
-  s.contacts = s.contacts.filter((c) => c.id !== otherUserId);
-  s.conversations = s.conversations.filter((c) => c.cid !== otherUserId);
+  // The realtime contacts subscription in useChatSync triggers a reload, but
+  // also fire the chat refresh event so the UI updates immediately.
   try { window.dispatchEvent(new CustomEvent('lumens:refresh-chats')); } catch {}
 }
 
