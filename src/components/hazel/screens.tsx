@@ -1243,7 +1243,7 @@ function ContactProfileSheet({ contactId, fallback, onClose }: { contactId: stri
   const phone = p?.phone || '';
   const dobDate = p?.dob ? new Date(p.dob) : null;
   const dobShown = dobDate ? dobDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : '';
-  const ini = name.split(' ').filter(Boolean).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+  const ini = (name || '').split(' ').filter(Boolean).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, maxHeight: '88vh', overflowY: 'auto', background: '#001535', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 24, animation: 'pulse .22s ease' }}>
