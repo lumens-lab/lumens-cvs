@@ -329,6 +329,7 @@ function HazelApp() {
 
       <BottomNav tab={tab} setTab={(t) => { setTab(t); setSub(null); }} togglePhase={togglePhase} />
       <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} requirePin={requirePin} />
+      <GlobalCallOverlay calls={calls} />
     </Shell>
   );
 }
