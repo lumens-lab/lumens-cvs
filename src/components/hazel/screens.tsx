@@ -25,6 +25,20 @@ export function LumensWordmark({ height = 112 }: { height?: number }) {
 
 const { W, S, S2, AC, GN, RD, BL, PP, AM } = COLORS;
 
+const TTL_OPTIONS: { secs: number | null; label: string }[] = [
+  { secs: null, label: 'Off' },
+  { secs: 86400, label: '24 hours' },
+  { secs: 604800, label: '7 days' },
+  { secs: 2592000, label: '30 days' },
+];
+function ttlLabel(secs: number | null): string {
+  if (!secs) return 'Off';
+  if (secs >= 2592000) return '30d';
+  if (secs >= 604800) return '7d';
+  if (secs >= 86400) return '24h';
+  return `${Math.round(secs / 60)}m`;
+}
+
 export function getCurrencySym(code: string) {
   return CURRENCIES.find((c) => c.code === code)?.symbol ?? '$';
 }
