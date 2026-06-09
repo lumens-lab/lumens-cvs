@@ -563,34 +563,43 @@ export type Database = {
           ciphertext: string
           conversation_id: string | null
           created_at: string
+          delivered_at: string | null
           group_id: string | null
           id: string
           kind: string
           nonce: string
+          read_at: string | null
           recipient_id: string | null
           sender_id: string
+          status: string
         }
         Insert: {
           ciphertext: string
           conversation_id?: string | null
           created_at?: string
+          delivered_at?: string | null
           group_id?: string | null
           id?: string
           kind?: string
           nonce: string
+          read_at?: string | null
           recipient_id?: string | null
           sender_id: string
+          status?: string
         }
         Update: {
           ciphertext?: string
           conversation_id?: string | null
           created_at?: string
+          delivered_at?: string | null
           group_id?: string | null
           id?: string
           kind?: string
           nonce?: string
+          read_at?: string | null
           recipient_id?: string | null
           sender_id?: string
+          status?: string
         }
         Relationships: [
           {
@@ -878,6 +887,14 @@ export type Database = {
           name: string
           owner_id: string
         }[]
+      }
+      mark_messages_delivered: {
+        Args: { p_conversation_id: string }
+        Returns: undefined
+      }
+      mark_messages_read: {
+        Args: { p_conversation_id: string }
+        Returns: undefined
       }
       my_prekey_count: { Args: never; Returns: number }
       publish_prekey_bundle: {
