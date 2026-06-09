@@ -729,8 +729,13 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
     const f = e.target.files?.[0];
     e.target.value = '';
     if (!f) return;
-    const media = await fileToDataURL(f);
-    pushMsg({ type, media });
+    try {
+      showToast(`Uploading ${type}…`);
+      const { url, path } = await uploadChatMedia(f, type, { name: f.name, type: f.type });
+      pushMsg({ type, media: url, mediaPath: path } as any);
+    } catch (err: any) {
+      showToast(err?.message || `Could not upload ${type}`);
+    }
   };
 
   const toggleRecord = async () => {
