@@ -990,7 +990,7 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
         </div>
         {recording && <div style={{ marginTop: 8, fontSize: 11, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: 4, background: '#ef4444', animation: 'pulse 1s infinite' }} /> Recording…</div>}
       </div>
-      {profileOpen && <ContactProfileSheet contactId={contactId} fallback={ct} onClose={() => setProfileOpen(false)} />}
+      {profileOpen && <ContactProfileSheet contactId={contactId} fallback={ct} onClose={() => setProfileOpen(false)} onRemoved={() => { setProfileOpen(false); onBack?.(); }} />}
     </div>
   );
 }
