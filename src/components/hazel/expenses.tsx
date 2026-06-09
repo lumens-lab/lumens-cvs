@@ -464,7 +464,7 @@ function Field({ label, children }: { label: string; children: any }) {
 function EditTxSheet({ open, onClose, tx }: { open: boolean; onClose: () => void; tx: Tx }) {
   const { state, set } = useHazelStore();
   const sym = getCurrencySym(state.settings.currency);
-  const isIncome = tx.amt > 0;
+  const [isIncome, setIsIncome] = useState(tx.amt > 0);
   const catList = isIncome ? state.incomeCats : state.expenseCats;
   const [name, setName] = useState(tx.name);
   const [amt, setAmt] = useState(String(Math.abs(tx.amt)));
@@ -477,7 +477,8 @@ function EditTxSheet({ open, onClose, tx }: { open: boolean; onClose: () => void
     const n = parseFloat(amt);
     if (!name.trim()) return showToast('Enter a name');
     if (!n || n <= 0) return showToast('Enter a valid amount');
-    const c = catList.find((x) => x.id === cat);
+    let c = catList.find((x) => x.id === cat);
+    if (!c) c = catList[0];
     if (!c) return showToast('Pick a category');
     set((s) => {
       s.txs = s.txs.map((t) =>
@@ -485,7 +486,7 @@ function EditTxSheet({ open, onClose, tx }: { open: boolean; onClose: () => void
           ? {
               ...t,
               name: name.trim(),
-              cat,
+              cat: c.id,
               icon: c.icon,
               ibg: c.color + '22',
               ic: c.color,
@@ -503,6 +504,10 @@ function EditTxSheet({ open, onClose, tx }: { open: boolean; onClose: () => void
 
   return (
     <Sheet open={open} onClose={onClose} title={isIncome ? 'Edit Income' : 'Edit Expense'}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14, padding: 4, borderRadius: 12, background: 'rgba(255,255,255,0.05)' }}>
+        <T onClick={() => { if (isIncome) { setIsIncome(false); setCat(state.expenseCats[0]?.id || ''); } }} style={{ flex: 1, padding: 10, borderRadius: 10, background: !isIncome ? 'rgba(239,68,68,0.18)' : 'transparent', color: !isIncome ? '#ef4444' : W, fontSize: 12, fontWeight: 700, border: 'none' }}>Expense</T>
+        <T onClick={() => { if (!isIncome) { setIsIncome(true); setCat(state.incomeCats[0]?.id || ''); } }} style={{ flex: 1, padding: 10, borderRadius: 10, background: isIncome ? 'rgba(52,211,153,0.18)' : 'transparent', color: isIncome ? GN : W, fontSize: 12, fontWeight: 700, border: 'none' }}>Income</T>
+      </div>
       <Field label="What was it?"><input value={name} onChange={(e) => setName(e.target.value)} style={inp} /></Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <Field label={`Amount (${sym})`}><input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d.]/g, ''))} style={{ ...inp, fontSize: 20, fontWeight: 700 }} /></Field>
