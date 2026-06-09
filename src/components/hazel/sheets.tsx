@@ -224,6 +224,42 @@ export function SendSheet({ open, onClose, fromChat, recip, onSent, requirePin }
 export function FindPeopleScreen({ onBack, onOpenChat }: any) {
   const { state, set } = useHazelStore();
   const [q, setQ] = useState('');
+  // Multi-select via long-press on "Your Contacts" list
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const pressTimer = useRef<any>(null);
+  const longPressed = useRef(false);
+  const startLongPress = (id: string) => {
+    longPressed.current = false;
+    pressTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      setSelectMode(true);
+      setSelected((s) => { const n = new Set(s); n.add(id); return n; });
+      try { (navigator as any).vibrate?.(20); } catch {}
+    }, 450);
+  };
+  const cancelLongPress = () => { if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; } };
+  const toggleSelect = (id: string) => {
+    setSelected((s) => {
+      const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id);
+      if (n.size === 0) setSelectMode(false);
+      return n;
+    });
+  };
+  const exitSelect = () => { setSelectMode(false); setSelected(new Set()); };
+  const deleteSelected = async () => {
+    if (selected.size === 0) return;
+    if (typeof window !== 'undefined' && !window.confirm(`Delete ${selected.size} contact${selected.size > 1 ? 's' : ''}? They will be disconnected and removed from your contact, chat and call lists.`)) return;
+    const ids = Array.from(selected);
+    const { removeContact } = await import('@/lib/hazel/chat-sync');
+    for (const id of ids) { try { await removeContact(id); } catch {} }
+    set((s) => {
+      s.contacts = s.contacts.filter((c) => !selected.has(c.id));
+      s.conversations = s.conversations.filter((c) => !selected.has(c.cid));
+    });
+    exitSelect();
+    showToast(`${ids.length} contact${ids.length > 1 ? 's' : ''} deleted`);
+  };
   type Found = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
   type Req = { id: string; from_user: string; to_user: string; name: string; ini: string; g: string; dir: 'sent'|'received'; avatar?: string | null };
   const [results, setResults] = useState<Found[]>([]);
@@ -294,7 +330,13 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
     <div className="afi" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <T onClick={onBack} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="ChevronLeft" s={20} /></T>
-        <h1 style={{ color: W, fontSize: 20, fontWeight: 800 }}>Find People</h1>
+        <h1 style={{ color: W, fontSize: 20, fontWeight: 800, flex: 1 }}>{selectMode ? `${selected.size} selected` : 'Find People'}</h1>
+        {selectMode && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <T onClick={deleteSelected} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.35)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="Trash2" s={18} /></T>
+            <T onClick={exitSelect} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="X" s={18} /></T>
+          </div>
+        )}
       </div>
       <div style={{ position: 'relative', marginBottom: 14 }}>
         <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: S2 }}><Ic n="Search" s={16} /></div>
@@ -350,8 +392,21 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
             <div style={{ fontSize: 12, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your Contacts</div>
             {confirmed.length === 0 ? (
               <div style={{ ...gl(), padding: 20, textAlign: 'center', color: S, fontSize: 12 }}>No confirmed contacts yet. Search above to connect.</div>
-            ) : confirmed.map((c) => (
-              <T key={c.id} onClick={() => onOpenChat?.(c.id)} style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.04)', 14, { boxShadow: 'none' }), padding: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
+            ) : confirmed.map((c) => {
+              const sel = selected.has(c.id);
+              return (
+              <T key={c.id}
+                onClick={() => {
+                  if (longPressed.current) { longPressed.current = false; return; }
+                  if (selectMode) { toggleSelect(c.id); return; }
+                  onOpenChat?.(c.id);
+                }}
+                onPointerDown={() => startLongPress(c.id)}
+                onPointerUp={cancelLongPress}
+                onPointerLeave={cancelLongPress}
+                onContextMenu={(e: any) => { e.preventDefault(); setSelectMode(true); setSelected((s) => { const n = new Set(s); n.add(c.id); return n; }); }}
+                style={{ width: '100%', textAlign: 'left', ...gl(sel ? 'rgba(37,99,235,0.18)' : 'rgba(255,255,255,0.04)', 14, { boxShadow: 'none' }), padding: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, border: 'none' }}>
+                {selectMode && <div style={{ width: 22, height: 22, borderRadius: 11, border: `2px solid ${sel ? AC : S2}`, background: sel ? AC : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{sel && <Ic n="Check" s={12} c={'#001535' as any} />}</div>}
                 <Av ini={c.ini} g={c.g} on={c.on} sz={40} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: W, fontSize: 13, fontWeight: 600 }}>{c.name}</div>
@@ -359,7 +414,8 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
                 </div>
                 <Ic n="MessageCircle" s={16} c={AC as any} />
               </T>
-            ))}
+              );
+            })}
           </div>
         );
       })()}

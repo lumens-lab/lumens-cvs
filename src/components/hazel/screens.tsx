@@ -462,9 +462,52 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
 
 /* ── CHAT LIST ── */
 export function ChatScreen({ openSub, openChat, openGroup, openNewGroup }: any) {
-  const { state } = useHazelStore();
+  const { state, set } = useHazelStore();
   const [q, setQ] = useState('');
   const sym = getCurrencySym(state.settings.currency);
+  // Multi-select via long-press for deleting chats/contacts
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const pressTimer = useRef<any>(null);
+  const longPressed = useRef(false);
+  const startLongPress = (id: string) => {
+    longPressed.current = false;
+    pressTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      setSelectMode(true);
+      setSelected((s) => { const n = new Set(s); n.add(id); return n; });
+      try { (navigator as any).vibrate?.(20); } catch {}
+    }, 450);
+  };
+  const cancelLongPress = () => { if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; } };
+  const toggleSelect = (id: string) => {
+    setSelected((s) => {
+      const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id);
+      if (n.size === 0) setSelectMode(false);
+      return n;
+    });
+  };
+  const exitSelect = () => { setSelectMode(false); setSelected(new Set()); };
+  const deleteSelected = async () => {
+    if (selected.size === 0) return;
+    if (typeof window !== 'undefined' && !window.confirm(`Delete ${selected.size} chat${selected.size > 1 ? 's' : ''}? The contacts will be disconnected and removed from chat, call and contact lists.`)) return;
+    const ids = Array.from(selected);
+    const { removeContact } = await import('@/lib/hazel/chat-sync');
+    for (const id of ids) {
+      try { await removeContact(id); } catch {}
+    }
+    set((s) => {
+      s.contacts = s.contacts.filter((c) => !selected.has(c.id));
+      s.conversations = s.conversations.filter((c) => !selected.has(c.cid));
+    });
+    exitSelect();
+    showToast(`${ids.length} chat${ids.length > 1 ? 's' : ''} deleted`);
+  };
+  const onItemClick = (id: string, run: () => void) => () => {
+    if (longPressed.current) { longPressed.current = false; return; }
+    if (selectMode) { toggleSelect(id); return; }
+    run();
+  };
   // Pull-to-refresh
   const [ptrY, setPtrY] = useState(0);
   const [ptrLoading, setPtrLoading] = useState(false);
@@ -521,8 +564,18 @@ export function ChatScreen({ openSub, openChat, openGroup, openNewGroup }: any) 
         <LumensWordmark height={75} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
+        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>{selectMode ? `${selected.size} selected` : 'Chat'}</h1>
         <div style={{ display: 'flex', gap: 8 }}>
+          {selectMode ? (
+            <>
+              <T onClick={deleteSelected} style={{ ...gl('rgba(239,68,68,0.18)', 14, { boxShadow: 'none', border: '1px solid rgba(239,68,68,0.35)' }), width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+                <Ic n="Trash2" s={18} />
+              </T>
+              <T onClick={exitSelect} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: S }}>
+                <Ic n="X" s={18} />
+              </T>
+            </>
+          ) : <>
           <T onClick={() => openSub('call-history')} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: S }}>
             <Ic n="Phone" s={18} />
           </T>
@@ -534,6 +587,7 @@ export function ChatScreen({ openSub, openChat, openGroup, openNewGroup }: any) 
           <T onClick={() => openSub('find-people')} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: S }}>
             <Ic n="UserPlus" s={18} />
           </T>
+          </>}
         </div>
       </div>
       <div style={{ position: 'relative', marginBottom: 14 }}>
@@ -563,8 +617,16 @@ export function ChatScreen({ openSub, openChat, openGroup, openNewGroup }: any) 
           {filtered.map((conv) => {
           const ct = state.contacts.find((x) => x.id === conv.cid);
           if (!ct) return null;
+          const sel = selected.has(ct.id);
           return (
-            <T key={conv.cid} onClick={() => openChat(ct.id)} active="rgba(255,255,255,0.06)" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 4px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left' }}>
+            <T key={conv.cid}
+              onClick={onItemClick(ct.id, () => openChat(ct.id))}
+              onPointerDown={() => startLongPress(ct.id)}
+              onPointerUp={cancelLongPress}
+              onPointerLeave={cancelLongPress}
+              onContextMenu={(e: any) => { e.preventDefault(); setSelectMode(true); setSelected((s) => { const n = new Set(s); n.add(ct.id); return n; }); }}
+              active="rgba(255,255,255,0.06)" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 4px', background: sel ? 'rgba(37,99,235,0.12)' : 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'left', borderRadius: sel ? 10 : 0 }}>
+              {selectMode && <div style={{ width: 22, height: 22, borderRadius: 11, border: `2px solid ${sel ? AC : S2}`, background: sel ? AC : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{sel && <Ic n="Check" s={12} c={'#001535' as any} />}</div>}
               <Av ini={ct.ini} g={ct.g} on={ct.on} sz={46} src={ct.avatar} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -582,8 +644,17 @@ export function ChatScreen({ openSub, openChat, openGroup, openNewGroup }: any) 
         {confirmedContacts.length > 0 && (
           <div style={{ marginTop: 18 }}>
             <div style={{ fontSize: 11, color: S, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Contacts</div>
-            {confirmedContacts.map((ct) => (
-              <T key={ct.id} onClick={() => openChat(ct.id)} active="rgba(255,255,255,0.06)" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'left' }}>
+            {confirmedContacts.map((ct) => {
+              const sel = selected.has(ct.id);
+              return (
+              <T key={ct.id}
+                onClick={onItemClick(ct.id, () => openChat(ct.id))}
+                onPointerDown={() => startLongPress(ct.id)}
+                onPointerUp={cancelLongPress}
+                onPointerLeave={cancelLongPress}
+                onContextMenu={(e: any) => { e.preventDefault(); setSelectMode(true); setSelected((s) => { const n = new Set(s); n.add(ct.id); return n; }); }}
+                active="rgba(255,255,255,0.06)" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px', background: sel ? 'rgba(37,99,235,0.12)' : 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'left' }}>
+                {selectMode && <div style={{ width: 22, height: 22, borderRadius: 11, border: `2px solid ${sel ? AC : S2}`, background: sel ? AC : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{sel && <Ic n="Check" s={12} c={'#001535' as any} />}</div>}
                 <Av ini={ct.ini} g={ct.g} on={ct.on} sz={42} src={ct.avatar} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: W, fontSize: 14, fontWeight: 600 }}>{ct.name}</div>
@@ -591,7 +662,8 @@ export function ChatScreen({ openSub, openChat, openGroup, openNewGroup }: any) 
                 </div>
                 <Ic n="MessageCircle" s={16} c={AC as any} />
               </T>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

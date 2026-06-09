@@ -5,6 +5,7 @@ import { CURRENCIES, LANGUAGES } from '@/lib/hazel/data';
 import { useHazelStore, exportState, importState, resetState } from '@/lib/hazel/store';
 import type { Cat } from '@/lib/hazel/store';
 import { encodeMmbak, restoreFromFile } from '@/lib/hazel/restore';
+import { getRate, round2 } from '@/lib/hazel/fx';
 
 const { W, S, S2, AC, GN, RD, BL } = COLORS;
 
@@ -61,8 +62,40 @@ export function SettingsRoot({ go, onBack }: { go: (s: SettingsScreen) => void; 
 export function CurrencyScreen({ onBack }: { onBack: () => void }) {
   const { state, set } = useHazelStore();
   const [q, setQ] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
   const cur = state.settings.currency;
   const filtered = CURRENCIES.filter((c) => (c.code + c.name).toLowerCase().includes(q.toLowerCase()));
+
+  const switchCurrency = async (code: string) => {
+    if (code === cur) return;
+    if (typeof window !== 'undefined' && !window.confirm(
+      `Switch from ${cur} to ${code}? All amounts (balances, transactions, budgets) will be converted at current exchange rates.`
+    )) return;
+    setBusy(code);
+    let rate = 1;
+    try {
+      rate = await getRate(cur, code);
+    } catch (e: any) {
+      setBusy(null);
+      showToast(e?.message || 'Failed to fetch exchange rates');
+      return;
+    }
+    set((s) => {
+      s.settings.currency = code;
+      s.txs = s.txs.map((t) => ({ ...t, amt: round2(t.amt * rate) }));
+      const newBudgets: typeof s.budgets = {};
+      for (const k of Object.keys(s.budgets)) {
+        const b = s.budgets[k];
+        newBudgets[k] = { ...b, total: round2(b.total * rate) };
+      }
+      s.budgets = newBudgets;
+      s.expenseCats = s.expenseCats.map((c) => c.budget != null ? { ...c, budget: round2(c.budget * rate) } : c);
+      s.incomeCats = s.incomeCats.map((c) => c.budget != null ? { ...c, budget: round2(c.budget * rate) } : c);
+    });
+    setBusy(null);
+    showToast(`Converted to ${code} (1 ${cur} = ${rate.toFixed(4)} ${code})`);
+  };
+
   return (
     <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Preferred Currency" onBack={onBack} />
@@ -71,13 +104,13 @@ export function CurrencyScreen({ onBack }: { onBack: () => void }) {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search currency..." style={{ width: '100%', padding: '12px 16px 12px 40px', ...gl(), color: W, fontSize: 13, outline: 'none', minHeight: 48 }} />
       </div>
       {filtered.map((c) => (
-        <T key={c.code} onClick={() => { set((s) => { s.settings.currency = c.code; }); showToast(`Currency set to ${c.code}`); }} style={{ width: '100%', textAlign: 'left', padding: '14px 16px', borderRadius: 14, background: cur === c.code ? 'rgba(37,99,235,0.1)' : 'rgba(255,255,255,0.04)', border: cur === c.code ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12, color: W }}>
+        <T key={c.code} disabled={busy !== null} onClick={() => switchCurrency(c.code)} style={{ width: '100%', textAlign: 'left', padding: '14px 16px', borderRadius: 14, background: cur === c.code ? 'rgba(37,99,235,0.1)' : 'rgba(255,255,255,0.04)', border: cur === c.code ? '1px solid rgba(37,99,235,0.3)' : '1px solid transparent', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 12, color: W, opacity: busy && busy !== c.code ? 0.5 : 1 }}>
           <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: cur === c.code ? AC : W }}>{c.symbol}</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 700 }}>{c.code}</div>
             <div style={{ fontSize: 11, color: S }}>{c.name}</div>
           </div>
-          {cur === c.code && <Ic n="Check" s={18} c={AC} />}
+          {busy === c.code ? <span style={{ fontSize: 11, color: AC }}>Converting…</span> : (cur === c.code && <Ic n="Check" s={18} c={AC} />)}
         </T>
       ))}
     </div>
