@@ -234,64 +234,104 @@ function sanitizeCat(c: any): Cat | null {
   };
 }
 
+/** Validate a parsed backup snapshot. Returns plain-English error strings. */
+export function validateBackupSnapshot(parsed: any): string[] {
+  const errs: string[] = [];
+  if (!parsed || typeof parsed !== 'object') return ['File is not a valid Lumens backup (not a JSON object).'];
+  const hasAny =
+    parsed.profile || Array.isArray(parsed.txs) ||
+    Array.isArray(parsed.incomeCats) || Array.isArray(parsed.expenseCats) ||
+    parsed.settings || Array.isArray(parsed.accounts) || Array.isArray(parsed.cards);
+  if (!hasAny) errs.push('No recognisable Lumens fields (txs, profile, settings, accounts…).');
+  if (parsed.txs != null && !Array.isArray(parsed.txs)) errs.push('Field "txs" must be a list.');
+  if (Array.isArray(parsed.txs)) {
+    const bad = parsed.txs.findIndex((t: any) => !t || typeof t.name !== 'string' || typeof t.date !== 'string' || typeof t.amt !== 'number');
+    if (bad >= 0) errs.push(`Transaction #${bad + 1} is missing required fields (name, date, amt).`);
+  }
+  if (parsed.settings && typeof parsed.settings !== 'object') errs.push('Field "settings" must be an object.');
+  return errs;
+}
+
 /**
- * Restore a backup. Validates shape, escapes string fields, and NEVER
- * imports the PIN or onboarded flag — those stay as the existing
- * in-memory values so a malicious backup cannot bypass the lock screen.
+ * Restore a backup by MERGING into the current state — NEVER wipes data.
+ * Dedupes transactions by (date|name|amt). Only fills empty profile fields.
+ * PIN and onboarded flag are never imported.
  */
 export function importState(json: string): boolean {
+  return importStateDetailed(json).ok;
+}
+
+export function importStateDetailed(json: string): { ok: boolean; errors: string[]; added: { txs: number; cats: number } } {
+  let parsed: any;
+  try { parsed = JSON.parse(json); }
+  catch { return { ok: false, errors: ['File is not valid JSON.'], added: { txs: 0, cats: 0 } }; }
+  const errs = validateBackupSnapshot(parsed);
+  if (errs.length) return { ok: false, errors: errs, added: { txs: 0, cats: 0 } };
   try {
-    const parsed = JSON.parse(json);
-    if (!parsed || typeof parsed !== 'object') return false;
-
-    const next: HazelState = { ...initial };
-
+    const next: HazelState = { ...mem };
+    let addedTxs = 0;
+    let addedCats = 0;
     if (parsed.profile && typeof parsed.profile === 'object') {
       next.profile = {
-        ...initial.profile,
-        name: escStr(parsed.profile.name) || initial.profile.name,
-        email: escStr(parsed.profile.email) || initial.profile.email,
-        username: escStr(parsed.profile.username) || initial.profile.username,
-        phone: escStr(parsed.profile.phone) || initial.profile.phone,
-        dob: escStr(parsed.profile.dob) || initial.profile.dob,
-        avatar: typeof parsed.profile.avatar === 'string' && parsed.profile.avatar.startsWith('data:image/') ? parsed.profile.avatar : '',
-        cover: typeof parsed.profile.cover === 'string' && parsed.profile.cover.startsWith('data:image/') ? parsed.profile.cover : '',
+        ...next.profile,
+        name: escStr(parsed.profile.name) || next.profile.name,
+        email: escStr(parsed.profile.email) || next.profile.email,
+        username: escStr(parsed.profile.username) || next.profile.username,
+        phone: escStr(parsed.profile.phone) || next.profile.phone,
+        dob: escStr(parsed.profile.dob) || next.profile.dob,
+        avatar: (typeof parsed.profile.avatar === 'string' && parsed.profile.avatar.startsWith('data:image/')) ? parsed.profile.avatar : next.profile.avatar,
+        cover: (typeof parsed.profile.cover === 'string' && parsed.profile.cover.startsWith('data:image/')) ? parsed.profile.cover : next.profile.cover,
       };
     }
-
     if (Array.isArray(parsed.txs)) {
-      next.txs = parsed.txs.map(sanitizeTx).filter(Boolean) as Tx[];
+      const incoming = parsed.txs.map(sanitizeTx).filter(Boolean) as Tx[];
+      const seen = new Set(next.txs.map((t) => `${t.date}|${t.name}|${t.amt}`));
+      const merged = [...next.txs];
+      for (const t of incoming) {
+        const k = `${t.date}|${t.name}|${t.amt}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        merged.unshift(t);
+        addedTxs++;
+      }
+      next.txs = merged;
     }
-    if (Array.isArray(parsed.incomeCats)) {
-      next.incomeCats = parsed.incomeCats.map(sanitizeCat).filter(Boolean) as Cat[];
-    }
-    if (Array.isArray(parsed.expenseCats)) {
-      next.expenseCats = parsed.expenseCats.map(sanitizeCat).filter(Boolean) as Cat[];
-    }
+    const mergeCats = (existing: Cat[], extra: any[]): Cat[] => {
+      const out = [...existing];
+      const seen = new Set(existing.map((c) => c.id));
+      for (const raw of extra) {
+        const c = sanitizeCat(raw);
+        if (!c || seen.has(c.id)) continue;
+        seen.add(c.id);
+        out.push(c);
+        addedCats++;
+      }
+      return out;
+    };
+    if (Array.isArray(parsed.incomeCats)) next.incomeCats = mergeCats(next.incomeCats, parsed.incomeCats);
+    if (Array.isArray(parsed.expenseCats)) next.expenseCats = mergeCats(next.expenseCats, parsed.expenseCats);
     if (parsed.settings && typeof parsed.settings === 'object') {
       next.settings = {
-        ...initial.settings,
+        ...next.settings,
         ...parsed.settings,
-        currency: typeof parsed.settings.currency === 'string' ? escStr(parsed.settings.currency).slice(0, 10) : initial.settings.currency,
-        language: typeof parsed.settings.language === 'string' ? escStr(parsed.settings.language).slice(0, 10) : initial.settings.language,
-        notifications: { ...initial.settings.notifications, ...(parsed.settings.notifications || {}) },
-        security: { ...initial.settings.security, ...(parsed.settings.security || {}) },
-        devices: initial.settings.devices,
+        currency: typeof parsed.settings.currency === 'string' ? escStr(parsed.settings.currency).slice(0, 10) : next.settings.currency,
+        language: typeof parsed.settings.language === 'string' ? escStr(parsed.settings.language).slice(0, 10) : next.settings.language,
+        notifications: { ...next.settings.notifications, ...(parsed.settings.notifications || {}) },
+        security: { ...next.settings.security, ...(parsed.settings.security || {}) },
+        devices: next.settings.devices,
       };
     }
-
-    // Preserve existing PIN + onboarded — never import from backup.
     next.pin = mem.pin;
     next.onboarded = mem.onboarded;
-
     mem = next;
     persist();
     subs.forEach((s) => s());
-    return true;
-  } catch { return false; }
+    return { ok: true, errors: [], added: { txs: addedTxs, cats: addedCats } };
+  } catch (e: any) {
+    return { ok: false, errors: [e?.message ?? 'Unknown error while restoring backup.'], added: { txs: 0, cats: 0 } };
+  }
 }
 
-/** Export state with PIN stripped — credentials never leave the device. */
 export function exportState(): string {
   const { pin: _pin, ...safe } = mem;
   return JSON.stringify(safe, null, 2);
