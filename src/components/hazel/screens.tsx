@@ -778,7 +778,10 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
         </T>
         <T onClick={() => setProfileOpen(true)} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', textAlign: 'left', padding: '4px 6px' }}>
           <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{ct.name}</div>
-          <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? '● Online' : 'Offline'}</div>
+          <div style={{ color: ct.on ? GN : S, fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>{ct.on ? '● Online' : 'Offline'}</span>
+            {ttl ? <span style={{ color: AC, fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 8, background: 'rgba(255,255,255,0.08)' }}>⏱ {ttlLabel(ttl)}</span> : null}
+          </div>
         </T>
         <T onClick={() => setMenuOpen((v) => !v)} aria-label="More actions" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="MoreVertical" s={18} />
