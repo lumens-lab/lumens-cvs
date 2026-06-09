@@ -328,6 +328,7 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
+          disappearing_seconds: number | null
           id: string
           last_at: string
           last_preview: string | null
@@ -336,6 +337,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          disappearing_seconds?: number | null
           id?: string
           last_at?: string
           last_preview?: string | null
@@ -344,6 +346,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          disappearing_seconds?: number | null
           id?: string
           last_at?: string
           last_preview?: string | null
@@ -564,6 +567,7 @@ export type Database = {
           conversation_id: string | null
           created_at: string
           delivered_at: string | null
+          expires_at: string | null
           group_id: string | null
           id: string
           kind: string
@@ -578,6 +582,7 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           delivered_at?: string | null
+          expires_at?: string | null
           group_id?: string | null
           id?: string
           kind?: string
@@ -592,6 +597,7 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           delivered_at?: string | null
+          expires_at?: string | null
           group_id?: string | null
           id?: string
           kind?: string
@@ -943,6 +949,10 @@ export type Database = {
         }[]
       }
       send_contact_request: { Args: { to_user_id: string }; Returns: string }
+      set_disappearing: {
+        Args: { p_conversation_id: string; p_seconds: number }
+        Returns: undefined
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       touch_conversation_preview: {
