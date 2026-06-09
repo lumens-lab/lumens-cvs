@@ -475,39 +475,14 @@ function BottomNav({ tab, setTab, togglePhase }: { tab: Tab; setTab: (t: Tab) =>
 /** Encrypted voice-call screen — UI scaffold over confirmed contacts. */
 function CallScreen({ calls }: { calls: ReturnType<typeof useCalls> }) {
   const { state } = useHazelStore();
-  const { state: call, startCall, acceptCall, declineCall, endCall } = calls;
+  const { state: call, startCall } = calls;
   const [q, setQ] = useState("");
   const list = state.contacts.filter((c) =>
     c.confirmed && (!q || c.name.toLowerCase().includes(q.toLowerCase()))
   );
-
-  if (call.status !== "idle" && call.status !== "ended") {
-    const peer = state.contacts.find((c) => c.id === call.peerId);
-    const label = call.status === "outgoing" ? "Calling…" : call.status === "incoming" ? "Incoming call" : call.status === "connecting" ? "Connecting…" : "In call";
-    return (
-      <div className="afi" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, gap: 18, background: "linear-gradient(180deg,#001535,#001a48)" }}>
-        <div style={{ width: 120, height: 120, borderRadius: 60, background: "linear-gradient(135deg,#2563eb,#2563eb)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 36, fontWeight: 800, boxShadow: "0 18px 60px rgba(37,99,235,0.45)" }}>
-          {peer?.ini || "?"}
-        </div>
-        <div style={{ color: W, fontSize: 22, fontWeight: 800 }}>{peer?.name || "Contact"}</div>
-        <div style={{ color: S, fontSize: 13 }}>{label}</div>
-        {call.remoteStream && (
-          <audio autoPlay ref={(el) => { if (el && call.remoteStream) el.srcObject = call.remoteStream; }} />
-        )}
-        <div style={{ display: "flex", gap: 16, marginTop: 18 }}>
-          {call.status === "incoming" ? (
-            <>
-              <T onClick={declineCall} style={{ width: 64, height: 64, borderRadius: 32, background: "#ef4444", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center" }}><Ic n="PhoneOff" s={24} /></T>
-              <T onClick={acceptCall} style={{ width: 64, height: 64, borderRadius: 32, background: "#22c55e", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center" }}><Ic n="Phone" s={24} /></T>
-            </>
-          ) : (
-            <T onClick={endCall} style={{ width: 72, height: 72, borderRadius: 36, background: "#ef4444", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 30px rgba(239,68,68,0.5)" }}><Ic n="PhoneOff" s={26} /></T>
-          )}
-        </div>
-        {call.error && <div style={{ color: "#fca5a5", fontSize: 12 }}>{call.error}</div>}
-      </div>
-    );
-  }
+  // The active-call UI is rendered globally by <GlobalCallOverlay /> so the
+  // callee gets a ringer from any tab/screen, not just when sitting on Calls.
+  void call;
 
   return (
     <div className="afi" style={{ padding: "14px 20px 140px" }}>
