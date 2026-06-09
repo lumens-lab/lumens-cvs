@@ -11,13 +11,13 @@ import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel
 import lumensLogo from '@/assets/lumens-logo.png';
 
 /** Compact app logo shown on Wallet/Chat headers (matches the onboarding splash logo). */
-export function LumensWordmark({ height = 75 }: { height?: number }) {
+export function LumensWordmark({ height = 112 }: { height?: number }) {
   return (
     <img
       src={lumensLogo}
       alt="Lumens"
       height={height}
-      style={{ height, width: 'auto', display: 'block' }}
+      style={{ height, width: 'auto', maxWidth: '70vw', objectFit: 'contain', display: 'block', imageRendering: 'auto' as const }}
     />
   );
 }
@@ -46,15 +46,15 @@ export function HomeScreen({
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       {/* Brand mark */}
       <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
-        <LumensWordmark height={75} />
+        <LumensWordmark height={112} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: W, letterSpacing: '-0.02em' }}>{pName}</div>
         </div>
-        <T onClick={() => openSub('profile')} aria-label="Open profile" style={{ background: 'none', border: 'none', padding: 0, borderRadius: 22 }}>
-          <Av ini={pName.split(' ').map((w) => w[0] || '').join('').slice(0, 2)} src={state.profile?.avatar} sz={44} />
+        <T onClick={() => openSub('profile')} aria-label="Open profile" style={{ background: 'none', border: 'none', padding: 0, borderRadius: 33 }}>
+          <Av ini={(pName || '').split(' ').map((w) => w[0] || '').join('').slice(0, 2)} src={state.profile?.avatar} sz={66} />
         </T>
       </div>
 
