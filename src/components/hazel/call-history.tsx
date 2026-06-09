@@ -66,11 +66,19 @@ export function CallHistoryScreen({ onBack, onCall }: { onBack: () => void; onCa
       </div>
       {loading ? (
         <div style={{ ...gl(), padding: 24, textAlign: 'center', color: S }}>Loading…</div>
-      ) : rows.length === 0 ? (
+      ) : (() => {
+          const visible = rows.filter((r) => {
+            const otherId = r.caller_id === me ? r.callee_id : r.caller_id;
+            return state.contacts.some((c) => c.id === otherId);
+          });
+          if (visible.length === 0) {
+            return (
         <div style={{ ...gl(), padding: 24, textAlign: 'center', color: S }}>No calls yet.</div>
-      ) : (
-        <div style={{ ...gl(), padding: 6 }}>
-          {rows.map((r) => {
+            );
+          }
+          return (
+            <div style={{ ...gl(), padding: 6 }}>
+              {visible.map((r) => {
             const otherId = r.caller_id === me ? r.callee_id : r.caller_id;
             const ct = state.contacts.find((c) => c.id === otherId);
             const outgoing = r.caller_id === me;
@@ -95,9 +103,10 @@ export function CallHistoryScreen({ onBack, onCall }: { onBack: () => void; onCa
                 )}
               </div>
             );
-          })}
-        </div>
-      )}
+              })}
+            </div>
+          );
+        })()}
     </div>
   );
 }
