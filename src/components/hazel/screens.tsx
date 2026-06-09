@@ -1289,13 +1289,27 @@ function MediaBubble({ sent, kind, src, dur, filename }: { sent: boolean; kind: 
 }
 
 /* ── Contact profile sheet (cover, avatar, bio fields) ── */
-function ContactProfileSheet({ contactId, fallback, onClose }: { contactId: string; fallback: any; onClose: () => void }) {
+function ContactProfileSheet({ contactId, fallback, onClose, onRemoved }: { contactId: string; fallback: any; onClose: () => void; onRemoved?: () => void }) {
   const [p, setP] = useState<any>(null);
+  const [removing, setRemoving] = useState(false);
   useEffect(() => {
     let cancelled = false;
     fetchContactProfile(contactId).then((row) => { if (!cancelled) setP(row); }).catch(() => {});
     return () => { cancelled = true; };
   }, [contactId]);
+  const onRemove = async () => {
+    if (removing) return;
+    if (typeof window !== 'undefined' && !window.confirm(`Disconnect from ${p?.display_name || fallback?.name || 'this contact'}? They will be removed from your contact, chat and call lists.`)) return;
+    setRemoving(true);
+    try {
+      await removeContact(contactId);
+      showToast('Contact removed');
+      onRemoved ? onRemoved() : onClose();
+    } catch (e: any) {
+      showToast(e?.message || 'Could not remove contact');
+      setRemoving(false);
+    }
+  };
   const name = p?.display_name || fallback?.name || 'Contact';
   const username = p?.username || '';
   const avatar = p?.avatar_url || fallback?.avatar;
@@ -1327,6 +1341,9 @@ function ContactProfileSheet({ contactId, fallback, onClose }: { contactId: stri
               <div style={{ color: COLORS.S, fontSize: 12, textAlign: 'center', padding: 8 }}>No additional details shared.</div>
             )}
           </div>
+          <T onClick={onRemove} style={{ width: '100%', marginTop: 16, padding: '14px 16px', borderRadius: 14, background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.3)', color: '#ef4444', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <Ic n="UserMinus" s={16} /> {removing ? 'Removing…' : 'Disconnect contact'}
+          </T>
         </div>
       </div>
     </div>
