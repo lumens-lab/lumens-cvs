@@ -369,6 +369,7 @@ async function applyIncoming(row: any, userId: string, set: ReturnType<typeof us
         amt: payload.amt,
         cur: payload.cur,
         media: payload.media,
+        mediaPath: payload.mediaPath,
         dur: payload.dur,
         sent: isSent,
         time: fmtTime(row.created_at),
