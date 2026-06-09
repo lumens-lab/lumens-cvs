@@ -13,6 +13,13 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
   const sym = getCurrencySym(state.settings.currency);
   const [q, setQ] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [view, setView] = useState<'expense' | 'income'>('expense');
+  const swipeRef = useRef<HTMLDivElement>(null);
+  const onSwipe = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const idx = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
+    setView(idx === 0 ? 'expense' : 'income');
+  };
   const expenses = useMemo(
     () =>
       state.txs
@@ -20,10 +27,18 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
         .sort((a, b) => b.date.localeCompare(a.date)),
     [state.txs, q],
   );
+  const incomes = useMemo(
+    () =>
+      state.txs
+        .filter((t) => t.amt > 0 && t.name.toLowerCase().includes(q.toLowerCase()))
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    [state.txs, q],
+  );
   const today = new Date().toISOString().slice(0, 10).slice(0, 7);
-  const monthTotal = expenses
-    .filter((t) => t.date.startsWith(today))
-    .reduce((s, t) => s + Math.abs(t.amt), 0);
+  const monthTotal = useMemo(
+    () => state.txs.filter((t) => t.amt < 0 && t.date.startsWith(today)).reduce((s, t) => s + Math.abs(t.amt), 0),
+    [state.txs, today],
+  );
   const monthIncome = useMemo(
     () =>
       state.txs
@@ -35,21 +50,27 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
     () => state.txs.filter((t) => t.amt > 0).length,
     [state.txs],
   );
+  const expenseCount = useMemo(
+    () => state.txs.filter((t) => t.amt < 0).length,
+    [state.txs],
+  );
+  const isIncome = view === 'income';
+  const list = isIncome ? incomes : expenses;
 
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Expenses</h1>
+        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>{isIncome ? 'Income' : 'Expenses'}</h1>
         <T onClick={() => setPickerOpen(true)} style={{ ...gl('rgba(37,99,235,0.12)', 14, { boxShadow: 'none', border: '1px solid rgba(37,99,235,0.3)' }), padding: '8px 14px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Ic n="Plus" s={16} /> Add
         </T>
       </div>
 
-      <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', gap: 12, marginBottom: 16, paddingBottom: 4 }}>
+      <div ref={swipeRef} onScroll={onSwipe} className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', gap: 12, marginBottom: 16, paddingBottom: 4 }}>
         <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(248,113,113,0.06)', 20), padding: 18, textAlign: 'center', border: '1px solid rgba(248,113,113,0.18)' }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Spent this month</div>
           <div style={{ fontSize: 28, color: RD, fontWeight: 800, letterSpacing: '-0.02em' }}>{sym}{monthTotal.toFixed(2)}</div>
-          <div style={{ fontSize: 11, color: S, marginTop: 4 }}>{expenses.length} {expenses.length === 1 ? 'expense' : 'expenses'} total</div>
+          <div style={{ fontSize: 11, color: S, marginTop: 4 }}>{expenseCount} {expenseCount === 1 ? 'expense' : 'expenses'} total</div>
         </div>
         <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(52,211,153,0.06)', 20), padding: 18, textAlign: 'center', border: '1px solid rgba(52,211,153,0.18)' }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Earned this month</div>
@@ -57,21 +78,25 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
           <div style={{ fontSize: 11, color: S, marginTop: 4 }}>{incomeCount} income {incomeCount === 1 ? 'entry' : 'entries'} total</div>
         </div>
       </div>
-      <div style={{ textAlign: 'center', fontSize: 10, color: S, marginBottom: 14, letterSpacing: '0.06em' }}>← swipe to see income →</div>
+      <div style={{ textAlign: 'center', fontSize: 10, color: S, marginBottom: 14, letterSpacing: '0.06em' }}>
+        {isIncome ? '← swipe to see expenses' : 'swipe to see income →'}
+      </div>
 
       <div style={{ position: 'relative', marginBottom: 14 }}>
         <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: S2 }}>
           <Ic n="Search" s={16} />
         </div>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search expenses..." style={{ width: '100%', padding: '12px 16px 12px 40px', ...gl(), color: W, fontSize: 13, outline: 'none', minHeight: 48 }} />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={isIncome ? 'Search income...' : 'Search expenses...'} style={{ width: '100%', padding: '12px 16px 12px 40px', ...gl(), color: W, fontSize: 13, outline: 'none', minHeight: 48 }} />
       </div>
 
       <div style={{ fontSize: 13, fontWeight: 800, color: W, margin: '4px 2px 10px', letterSpacing: '-0.01em' }}>Recent Activities</div>
 
-      {expenses.length === 0 ? (
-        <div style={{ ...gl(), padding: 24, textAlign: 'center', color: S }}>No expenses yet. Tap “+ Add” to record one.</div>
+      {list.length === 0 ? (
+        <div style={{ ...gl(), padding: 24, textAlign: 'center', color: S }}>
+          {isIncome ? 'No income yet. Tap “+ Add” to record one.' : 'No expenses yet. Tap “+ Add” to record one.'}
+        </div>
       ) : (
-        expenses.map((t) => (
+        list.map((t) => (
           <T key={t.id} onClick={() => openDetail(t.id!)} active="rgba(255,255,255,0.06)" style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 42, height: 42, borderRadius: 12, background: t.ibg, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
               <Ic n={t.icon} s={18} c={t.ic} />
@@ -84,7 +109,7 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
                 {t.note ? ` • ${t.note}` : ''}
               </div>
             </div>
-            <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{sym}{Math.abs(t.amt).toFixed(2)}</div>
+            <div style={{ color: isIncome ? GN : W, fontSize: 14, fontWeight: 700 }}>{isIncome ? '+' : ''}{sym}{Math.abs(t.amt).toFixed(2)}</div>
           </T>
         ))
       )}
