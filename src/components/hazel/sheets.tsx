@@ -224,6 +224,42 @@ export function SendSheet({ open, onClose, fromChat, recip, onSent, requirePin }
 export function FindPeopleScreen({ onBack, onOpenChat }: any) {
   const { state, set } = useHazelStore();
   const [q, setQ] = useState('');
+  // Multi-select via long-press on "Your Contacts" list
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const pressTimer = useRef<any>(null);
+  const longPressed = useRef(false);
+  const startLongPress = (id: string) => {
+    longPressed.current = false;
+    pressTimer.current = setTimeout(() => {
+      longPressed.current = true;
+      setSelectMode(true);
+      setSelected((s) => { const n = new Set(s); n.add(id); return n; });
+      try { (navigator as any).vibrate?.(20); } catch {}
+    }, 450);
+  };
+  const cancelLongPress = () => { if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; } };
+  const toggleSelect = (id: string) => {
+    setSelected((s) => {
+      const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id);
+      if (n.size === 0) setSelectMode(false);
+      return n;
+    });
+  };
+  const exitSelect = () => { setSelectMode(false); setSelected(new Set()); };
+  const deleteSelected = async () => {
+    if (selected.size === 0) return;
+    if (typeof window !== 'undefined' && !window.confirm(`Delete ${selected.size} contact${selected.size > 1 ? 's' : ''}? They will be disconnected and removed from your contact, chat and call lists.`)) return;
+    const ids = Array.from(selected);
+    const { removeContact } = await import('@/lib/hazel/chat-sync');
+    for (const id of ids) { try { await removeContact(id); } catch {} }
+    set((s) => {
+      s.contacts = s.contacts.filter((c) => !selected.has(c.id));
+      s.conversations = s.conversations.filter((c) => !selected.has(c.cid));
+    });
+    exitSelect();
+    showToast(`${ids.length} contact${ids.length > 1 ? 's' : ''} deleted`);
+  };
   type Found = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
   type Req = { id: string; from_user: string; to_user: string; name: string; ini: string; g: string; dir: 'sent'|'received'; avatar?: string | null };
   const [results, setResults] = useState<Found[]>([]);
