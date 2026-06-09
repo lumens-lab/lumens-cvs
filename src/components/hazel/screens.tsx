@@ -226,7 +226,7 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Budget</h1>
+        <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Analytics</h1>
         <T onClick={() => openSheet('month-picker', { monthKey, onPick: setMonthKey })} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', color: S, fontSize: 12, fontWeight: 600 }}>
           <Ic n="Calendar" s={14} /> {monthLabel}
         </T>
