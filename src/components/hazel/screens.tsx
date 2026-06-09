@@ -5,6 +5,7 @@ import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
 import { sendChatMessage, deleteChatMessage, fetchContactProfile } from '@/lib/hazel/chat-sync';
+import { uploadChatMedia } from '@/lib/hazel/chat-media';
 import { supabase } from '@/integrations/supabase/client';
 import { useDebitOrders, deleteDebitOrder, daysUntil, isDue, type DebitOrder } from '@/lib/hazel/debit-orders';
 import { useAuth } from '@/hooks/use-auth';
