@@ -16,7 +16,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     if (stage !== 'splash') return;
-    const t = setTimeout(() => setStage('intro'), 1900);
+    const t = setTimeout(() => setStage('intro'), 4500);
     return () => clearTimeout(t);
   }, [stage]);
 
