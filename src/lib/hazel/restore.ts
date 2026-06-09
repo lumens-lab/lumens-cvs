@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import type { Tx } from "./store";
-import { importState, getStateSnapshot } from "./store";
+import { importState, importStateDetailed, getStateSnapshot } from "./store";
 
 /** ─── Backup formats ─────────────────────────────────────────────── */
 
@@ -17,6 +17,10 @@ export function encodeMmbak(json: string): string {
 
 /** Decode a .mmbak file back to its JSON snapshot. Returns null if invalid. */
 export function decodeMmbak(raw: string): string | null {
+  const trimmed = raw.trimStart();
+  // Legacy / portable backups may have been saved as plain JSON with a
+  // .mmbak extension — accept those too.
+  if (trimmed.startsWith("{")) return trimmed;
   if (!raw.startsWith(MMBAK_MAGIC)) return null;
   const b64 = raw.slice(MMBAK_MAGIC.length).trim();
   try {
@@ -60,20 +64,39 @@ function parseDate(v: unknown): string | null {
 
 function parseAmt(v: unknown): number | null {
   if (v == null || v === "") return null;
-  if (typeof v === "number") return v;
-  const s = String(v).replace(/[^\d.\-]/g, "");
-  const n = parseFloat(s);
-  return isNaN(n) ? null : n;
+  if (typeof v === "number") return isFinite(v) ? v : null;
+  let raw = String(v).trim();
+  if (!raw) return null;
+  // Parentheses = negative accounting convention.
+  let neg = false;
+  if (/^\(.*\)$/.test(raw)) { neg = true; raw = raw.slice(1, -1); }
+  if (/-\s*$/.test(raw)) { neg = true; raw = raw.replace(/-\s*$/, ""); }
+  // Strip currency symbols, spaces, thousands separators.
+  let cleaned = raw.replace(/[A-Za-z€$£¥₹R\s]/g, "");
+  // Handle EU-style "1.234,56" by swapping if needed.
+  if (/,\d{1,2}$/.test(cleaned) && /\.\d{3}/.test(cleaned)) {
+    cleaned = cleaned.replace(/\./g, "").replace(",", ".");
+  } else {
+    cleaned = cleaned.replace(/,/g, "");
+  }
+  const n = parseFloat(cleaned);
+  if (isNaN(n)) return null;
+  return neg ? -Math.abs(n) : n;
 }
 
 function rowsToTxs(rows: RowLike[]): Tx[] {
   const txs: Tx[] = [];
   for (const r of rows) {
-    const name = pickField(r, ["name", "description", "merchant", "details", "memo"]);
-    const amt = parseAmt(pickField(r, ["amount", "amt", "value", "total"]));
-    const date = parseDate(pickField(r, ["date", "datetime", "when", "day"]));
-    const cat = pickField(r, ["category", "cat", "type"]);
-    const note = pickField(r, ["note", "notes"]);
+    const name = pickField(r, ["name","description","desc","merchant","details","memo","narration","payee","reference","transaction"]);
+    let amt = parseAmt(pickField(r, ["amount","amt","value","total"]));
+    const debit = parseAmt(pickField(r, ["debit","spent","out","withdrawal","withdrawals"]));
+    const credit = parseAmt(pickField(r, ["credit","earned","in","deposit","deposits"]));
+    if ((amt == null) && (debit != null || credit != null)) {
+      amt = (credit ?? 0) - (debit ?? 0);
+    }
+    const date = parseDate(pickField(r, ["date","datetime","when","day","posted","transactiondate","bookingdate","valuedate"]));
+    const cat = pickField(r, ["category","cat","type"]);
+    const note = pickField(r, ["note","notes","comments","comment"]);
     if (amt == null || !date) continue;
     const nameStr = name ? String(name).slice(0, 200) : "Imported";
     txs.push({
@@ -93,10 +116,19 @@ function rowsToTxs(rows: RowLike[]): Tx[] {
 
 /** Parse a CSV string into transactions. */
 export function parseCsvTxs(text: string): Tx[] {
-  const wb = XLSX.read(text, { type: "string" });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json<RowLike>(ws, { defval: "" });
-  return rowsToTxs(rows);
+  // Detect the dominant delimiter from the first non-empty line.
+  const firstLine = text.split(/\r?\n/).find((l) => l.trim().length) ?? "";
+  const counts: Record<string, number> = { ",": 0, ";": 0, "\t": 0, "|": 0 };
+  for (const ch of firstLine) if (ch in counts) counts[ch]++;
+  const delim = (Object.entries(counts).sort((a,b) => b[1]-a[1])[0]?.[0]) || ",";
+  const wb = XLSX.read(text, { type: "string", FS: delim });
+  const all: Tx[] = [];
+  for (const sn of wb.SheetNames) {
+    const ws = wb.Sheets[sn];
+    const rows = XLSX.utils.sheet_to_json<RowLike>(ws, { defval: "", raw: true });
+    all.push(...rowsToTxs(rows));
+  }
+  return all;
 }
 
 /** Parse an XLS/XLSX binary into transactions. */
@@ -187,24 +219,26 @@ export async function parsePdfTxs(buf: ArrayBuffer): Promise<Tx[]> {
 /** ─── Top-level dispatcher ───────────────────────────────────────── */
 
 export type RestoreResult =
-  | { kind: "full"; ok: boolean }
-  | { kind: "txs"; count: number };
+  | { kind: "full"; ok: boolean; errors?: string[]; added?: { txs: number; cats: number } }
+  | { kind: "txs"; count: number; errors?: string[] };
 
 export async function restoreFromFile(file: File): Promise<RestoreResult> {
   const name = file.name.toLowerCase();
 
-  // .mmbak — text envelope
+  // .mmbak — text envelope (or legacy plain JSON)
   if (name.endsWith(".mmbak")) {
     const raw = await file.text();
     const json = decodeMmbak(raw);
-    if (!json) return { kind: "full", ok: false };
-    return { kind: "full", ok: importState(json) };
+    if (!json) return { kind: "full", ok: false, errors: ["File is not a recognisable .mmbak backup."] };
+    const r = importStateDetailed(json);
+    return { kind: "full", ok: r.ok, errors: r.errors, added: r.added };
   }
 
   // .json — direct snapshot
   if (name.endsWith(".json")) {
     const raw = await file.text();
-    return { kind: "full", ok: importState(raw) };
+    const r = importStateDetailed(raw);
+    return { kind: "full", ok: r.ok, errors: r.errors, added: r.added };
   }
 
   // .csv — transactions

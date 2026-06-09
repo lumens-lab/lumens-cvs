@@ -11,13 +11,13 @@ import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel
 import lumensLogo from '@/assets/lumens-logo.png';
 
 /** Compact app logo shown on Wallet/Chat headers (matches the onboarding splash logo). */
-export function LumensWordmark({ height = 75 }: { height?: number }) {
+export function LumensWordmark({ height = 112 }: { height?: number }) {
   return (
     <img
       src={lumensLogo}
       alt="Lumens"
       height={height}
-      style={{ height, width: 'auto', display: 'block' }}
+      style={{ height, width: 'auto', maxWidth: '70vw', objectFit: 'contain', display: 'block', imageRendering: 'auto' as const }}
     />
   );
 }
@@ -46,15 +46,15 @@ export function HomeScreen({
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       {/* Brand mark */}
       <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
-        <LumensWordmark height={75} />
+        <LumensWordmark height={112} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: W, letterSpacing: '-0.02em' }}>{pName}</div>
         </div>
-        <T onClick={() => openSub('profile')} aria-label="Open profile" style={{ background: 'none', border: 'none', padding: 0, borderRadius: 22 }}>
-          <Av ini={pName.split(' ').map((w) => w[0] || '').join('').slice(0, 2)} src={state.profile?.avatar} sz={44} />
+        <T onClick={() => openSub('profile')} aria-label="Open profile" style={{ background: 'none', border: 'none', padding: 0, borderRadius: 33 }}>
+          <Av ini={(pName || '').split(' ').map((w) => w[0] || '').join('').slice(0, 2)} src={state.profile?.avatar} sz={66} />
         </T>
       </div>
 
@@ -502,7 +502,7 @@ export function ChatScreen({ openSub, openChat, openGroup, openNewGroup }: any) 
         </div>
       )}
       <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
-        <LumensWordmark height={50} />
+        <LumensWordmark height={75} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Chat</h1>
@@ -1243,7 +1243,7 @@ function ContactProfileSheet({ contactId, fallback, onClose }: { contactId: stri
   const phone = p?.phone || '';
   const dobDate = p?.dob ? new Date(p.dob) : null;
   const dobShown = dobDate ? dobDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : '';
-  const ini = name.split(' ').filter(Boolean).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+  const ini = (name || '').split(' ').filter(Boolean).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, maxHeight: '88vh', overflowY: 'auto', background: '#001535', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 24, animation: 'pulse .22s ease' }}>

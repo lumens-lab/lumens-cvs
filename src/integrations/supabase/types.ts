@@ -810,6 +810,19 @@ export type Database = {
         }[]
       }
       gen_wallet_uid: { Args: never; Returns: string }
+      get_contact_full_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          avatar_url: string
+          cover_url: string
+          display_name: string
+          dob: string
+          email: string
+          id: string
+          phone: string
+          username: string
+        }[]
+      }
       get_or_create_conversation: {
         Args: { other_user_id: string }
         Returns: string

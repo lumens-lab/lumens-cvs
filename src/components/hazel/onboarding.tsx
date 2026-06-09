@@ -16,7 +16,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     if (stage !== 'splash') return;
-    const t = setTimeout(() => setStage('intro'), 1900);
+    const t = setTimeout(() => setStage('intro'), 4500);
     return () => clearTimeout(t);
   }, [stage]);
 
@@ -60,7 +60,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
   if (stage === 'splash') {
     return (
       <Cover>
-        <HaloLogo size={390} animate />
+        <HaloLogo size={480} animate />
         <style>{splashCss}</style>
       </Cover>
     );
@@ -74,7 +74,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
       <Cover>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px 36px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <img src={logo} alt="Lumens" style={{ height: 84 }} />
+            <img src={logo} alt="Lumens" style={{ height: 126, maxWidth: '70vw', objectFit: 'contain' }} />
             <T onClick={() => setStage('allset')} style={{ color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', fontSize: 13, fontWeight: 600 }}>Skip</T>
           </div>
           <div key={slide} className="afu" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 24 }}>
@@ -111,7 +111,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px max(36px, env(safe-area-inset-bottom))' }}>
           <div />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
-            <HaloLogo size={255} />
+            <HaloLogo size={380} />
             <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em', textAlign: 'center' }}>You're all set,<br/>welcome to lumens.</h1>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignSelf: 'stretch', paddingLeft: 8 }}>
               {checks.map((c) => (
@@ -180,7 +180,7 @@ export function PinLock({ onUnlock, onCancel, title, subtitle }: { onUnlock: () 
             <Ic n="ChevronLeft" s={20} />
           </T>
         )}
-        <img src={logo} alt="Lumens" style={{ height: 84, opacity: 0.95 }} />
+        <img src={logo} alt="Lumens" style={{ height: 126, maxWidth: '70vw', objectFit: 'contain', opacity: 0.95 }} />
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 800 }}>{title ?? 'Enter your PIN'}</h1>
           <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 6 }}>{subtitle ?? 'Unlock to view your wallet'}</p>
@@ -267,9 +267,9 @@ function Keypad({ onTap }: { onTap: (d: string) => void }) {
 }
 
 const splashCss = `
-  .logo-reveal { animation: logoReveal 2.2s cubic-bezier(0.34,1.56,0.64,1) 0.4s both; }
-  .logo-pulse  { animation: logoReveal 2.2s cubic-bezier(0.34,1.56,0.64,1) 0.4s both,
-                            logoPulse 4s ease-in-out 2.8s infinite; }
+  .logo-reveal { animation: logoReveal 4s cubic-bezier(0.34,1.56,0.64,1) 0.2s both; }
+  .logo-pulse  { animation: logoReveal 4s cubic-bezier(0.34,1.56,0.64,1) 0.2s both,
+                            logoPulse 4s ease-in-out 4.4s infinite; }
   @keyframes logoReveal {
     from { opacity: 0; transform: scale(0.5) translateY(18px); }
     to   { opacity: 1; transform: scale(1) translateY(0); }

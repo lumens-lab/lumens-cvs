@@ -384,10 +384,46 @@ export function EditProfileScreen({ onBack }: any) {
     reader.readAsDataURL(f);
   };
 
-  const save = () => {
+  const save = async () => {
     if (!name.trim() || !email.trim()) return showToast('Name and email required');
     set((s) => { s.profile = { name: name.trim(), email: email.trim(), username, phone, dob, avatar, cover }; });
-    onBack(); showToast('Profile updated');
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Upload data-URL images to the public avatars bucket so other users can see them.
+        const uploadDataUrl = async (dataUrl: string, kind: 'avatar' | 'cover'): Promise<string> => {
+          if (!dataUrl || !dataUrl.startsWith('data:image/')) return dataUrl;
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          const ext = (blob.type.split('/')[1] || 'png').replace('+xml', '');
+          const path = `${user.id}/${kind}-${Date.now()}.${ext}`;
+          const up = await supabase.storage.from('avatars').upload(path, blob, { upsert: true, contentType: blob.type });
+          if (up.error) throw up.error;
+          const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+          return data.publicUrl;
+        };
+        const avatarUrl = await uploadDataUrl(avatar, 'avatar');
+        const coverUrl = await uploadDataUrl(cover, 'cover');
+        const payload: any = {
+          id: user.id,
+          display_name: name.trim(),
+          username: username || null,
+          phone: phone || null,
+          dob: dob || null,
+          avatar_url: avatarUrl || null,
+          cover_url: coverUrl || null,
+        };
+        const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
+        if (error) throw error;
+        if (avatarUrl !== avatar) set((s) => { s.profile = { ...s.profile, avatar: avatarUrl }; });
+        if (coverUrl !== cover) set((s) => { s.profile = { ...s.profile, cover: coverUrl }; });
+      }
+      onBack(); showToast('Profile updated');
+    } catch (e: any) {
+      showToast(e?.message ?? 'Saved locally — sync failed');
+      onBack();
+    }
   };
 
   return (
