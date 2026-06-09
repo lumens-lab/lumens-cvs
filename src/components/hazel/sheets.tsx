@@ -330,7 +330,13 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
     <div className="afi" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <T onClick={onBack} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="ChevronLeft" s={20} /></T>
-        <h1 style={{ color: W, fontSize: 20, fontWeight: 800 }}>Find People</h1>
+        <h1 style={{ color: W, fontSize: 20, fontWeight: 800, flex: 1 }}>{selectMode ? `${selected.size} selected` : 'Find People'}</h1>
+        {selectMode && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <T onClick={deleteSelected} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.35)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="Trash2" s={18} /></T>
+            <T onClick={exitSelect} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="X" s={18} /></T>
+          </div>
+        )}
       </div>
       <div style={{ position: 'relative', marginBottom: 14 }}>
         <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: S2 }}><Ic n="Search" s={16} /></div>
