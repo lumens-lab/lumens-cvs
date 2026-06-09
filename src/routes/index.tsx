@@ -45,6 +45,7 @@ import { useChatSync } from "@/lib/hazel/chat-sync";
 import { useEnsureE2EEIdentity } from "@/lib/e2ee/init";
 import { useCalls } from "@/lib/hazel/calls";
 import { subscribeToPush } from "@/lib/hazel/push";
+import { InstallPrompt } from "@/components/hazel/install-prompt";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -332,6 +333,7 @@ function HazelApp() {
       <BottomNav tab={tab} setTab={(t) => { setTab(t); setSub(null); }} togglePhase={togglePhase} />
       <Sheets sheet={sheet} sheetData={sheetData} closeSheet={closeSheet} chatId={chatId} requirePin={requirePin} />
       <GlobalCallOverlay calls={calls} />
+      <InstallPrompt />
     </Shell>
   );
 }

@@ -369,6 +369,7 @@ async function applyIncoming(row: any, userId: string, set: ReturnType<typeof us
         amt: payload.amt,
         cur: payload.cur,
         media: payload.media,
+        mediaPath: payload.mediaPath,
         dur: payload.dur,
         sent: isSent,
         time: fmtTime(row.created_at),
@@ -378,7 +379,7 @@ async function applyIncoming(row: any, userId: string, set: ReturnType<typeof us
 }
 
 /** Send a message to a confirmed contact. Resolves with the conversation id. */
-export async function sendChatMessage(otherUserId: string, payload: { text?: string; type?: 'image' | 'video' | 'voice' | 'money'; amt?: number; cur?: string; media?: string; dur?: number }) {
+export async function sendChatMessage(otherUserId: string, payload: { text?: string; type?: 'image' | 'video' | 'voice' | 'money'; amt?: number; cur?: string; media?: string; mediaPath?: string; dur?: number }) {
   const { data: convId, error: ce } = await supabase.rpc('get_or_create_conversation', { other_user_id: otherUserId });
   if (ce || !convId) throw ce || new Error('no conversation');
   const { data: { user } } = await supabase.auth.getUser();

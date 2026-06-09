@@ -263,7 +263,13 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
     setBusy(u.id);
     const { error } = await supabase.rpc('send_contact_request', { to_user_id: u.id });
     setBusy(null);
-    if (error) return showToast(error.message);
+    if (error) {
+      const m = error.message || '';
+      if (m.includes('rate_limited')) return showToast("You've sent too many requests. Try again later.");
+      if (m.includes('blocked')) return showToast('This user is not accepting requests from you.');
+      if (m.includes('already in your contacts')) return showToast('Already in your contacts');
+      return showToast(m);
+    }
     showToast(`Request sent to ${u.display_name || u.username || 'user'}`);
     setResults((r) => r.filter((x) => x.id !== u.id));
     loadReqs();

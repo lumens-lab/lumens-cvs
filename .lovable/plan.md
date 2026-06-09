@@ -1,72 +1,144 @@
-# Plan — Onboarding, Auth, Profile, Restore, Logo, Swipe-Back
+# Lumens — Feature Roadmap (6 phases)
 
-Scoped to the six items in your message; no other changes will be made.
+Tackled in the order you asked: **3 → 4 → 5 → 6 → 1 → 2**. Each phase is a single, reviewable change set. Wait for each to ship and pass review before the next.
 
-## 1. Backup / restore — fix and validate
+---
 
-**Problem:** `.mmbak/.json/.csv/.xls/.xlsx/.pdf` imports either silently flash the whole DB or report "no transactions in the file". Header detection, sheet detection and the .mmbak envelope are too strict.
+## Phase 3 — Disappearing messages
 
-**Fix in `src/lib/hazel/restore.ts`:**
-- **Never wipe state.** Switch every import to merge-only: dedupe by `id`/`(date,name,amt)` and add to existing `txs` instead of replacing.
-- **Robust header matching:** accept many synonyms — `description/desc/payee/details/memo/narration/transaction/reference` for name; `debit/credit/amount/amt/value/total/spent/in/out` for amount; `posted/transaction date/booking date/value date` for date; treat blank header rows by scanning the first 10 rows for the most header-like row.
-- **Sign handling:** if `debit`/`credit` columns exist, compute `amt = credit − debit`; otherwise honour the sign on `amount`.
-- **CSV:** detect delimiter (`,` `;` `\t` `|`) instead of relying on XLSX to guess.
-- **XLSX:** scan every sheet, not just the first.
-- **PDF:** widen amount regex to handle `R 1 234,56`, `$1,234.56`, `(123.45)` (parentheses = negative); fall back to line-by-line if no header row.
-- **`.mmbak`:** allow legacy/no magic header — if the body parses as valid JSON snapshot, accept it.
-- **Schema validation:** validate the parsed snapshot against a zod schema (`txs[]`, `cats[]`, `wallet`, etc.). On failure return `{ ok:false, error:"…" }` with the missing field listed.
-- **UI feedback:** in `settings.tsx`, surface counts ("Imported 42 transactions, 3 skipped") and explicit errors ("Missing required field: date") via the toast.
+**What you'll see**
+- A per-conversation menu: *Off / 24 hours / 7 days / 30 days*.
+- Sent messages auto-delete server-side after the chosen TTL.
+- Small "⏱ 7d" badge next to the conversation title when enabled.
 
-## 2. Logo +50% — re-audit and animation
+**Technical**
+- Migration:
+  - `conversations.disappearing_seconds int` (null = off).
+  - `messages.expires_at timestamptz` (computed at insert from the conversation setting via trigger).
+  - RPC `set_disappearing(conversation_id, seconds)` — only participants.
+- `pg_cron` job every minute: `DELETE FROM messages WHERE expires_at < now()`.
+- UI: dropdown in chat header (`screens.tsx`), badge in conversation list.
 
-- **Audit every `<img>` of `lumens-logo.png` / wordmark across:** `onboarding.tsx`, `auth.tsx`, `screens.tsx` (wallet/chat headers, side menu), `settings.tsx`, splash, sheets. Bump each by 1.5× from its *original* (pre-attempted) size, then add `maxWidth: '70vw'` so it cannot overflow on narrow phones.
-- **Welcome animation:** stretch `logoReveal` from 2.2s → **4s** with the same bezier, delay 0.2s, and render the splash logo at 480px with `image-rendering: -webkit-optimize-contrast` and a 2× DPR source so it stays crisp.
-- Verify on a 360-wide mobile breakpoint via the preview.
+---
 
-## 3. Auth — keep the new flow, delete the old
+## Phase 4 — Friend-request rate limiting & abuse protection
 
-- The new multi-step flow in `auth.tsx` becomes the **only** auth surface.
-- Search for any remaining old `AuthScreen` reference, old email/password form duplicates, and the old "sign up" component — delete them.
-- Ensure the entrypoint after PIN creation, the reset-password route, and the side-menu "Sign in" all route to this one flow.
+**What you'll see**
+- Toast: "You've sent too many requests, try again in X minutes" after 20/hour.
+- Repeated decline from same sender → soft block (24h cooldown to that user).
 
-## 4. Profile picture, cover picture, profile info — end-to-end
+**Technical**
+- Modify `send_contact_request()` RPC:
+  - Count `contact_requests` from caller in last 1h; raise if ≥ 20.
+  - If recipient declined caller ≥ 3 times in 7d, raise "user not accepting requests".
+- No new tables needed — uses existing `contact_requests` history.
+- Client surfaces the error with a friendly message.
 
-**Storage:**
-- Add a public `covers` bucket (mirrors `avatars`) with RLS: owner can upload/update; everyone authenticated can read.
-- Public read URLs for avatar + cover so they render in every contact card, chat header, and group member list.
+---
 
-**Schema (`profiles`):** add `cover_url text` (nullable). Existing `avatar_url`, `display_name`, `username`, `phone`, `email` stay.
+## Phase 5 — Media messages + voice/video calls
 
-**Privacy rules (this is the important bit):**
-- `avatar_url`, `display_name`, `username` → visible to **anyone** signed in (so search and chat headers work for non-contacts too).
-- `email`, `phone`, `birthday`, full `username` detail → visible **only to confirmed contacts in the chat phase**.
-- Implement via a `profiles_public` view (avatar + display_name + username only) and an RPC `get_contact_profile(p_user_id uuid)` that returns the full record only if `contacts` has a confirmed row in either direction. Update `search_profiles` to return the public view shape.
+Split into two sub-phases because of size.
 
-**UI:**
-- Add cover upload to the profile-edit sheet; show it as the banner behind the avatar on the wallet page and on contact profile sheets.
-- When a contact opens another user's profile in chat, call `get_contact_profile`; if not confirmed, hide phone/email/birthday and show a "Add contact to see details" hint.
-- Realtime/refetch profile after save so the new avatar appears immediately on wallet, chat list, side menu, and group members.
+### 5a — Media messages (images, voice notes, short video)
+- Storage bucket `chat-media` (private), RLS: sender uploads, conversation participants read.
+- `messages` already has `attachment_url` etc.; add `attachment_kind` ('image'|'audio'|'video') and `attachment_duration_ms`.
+- Client:
+  - Image: `browser-image-compression` → upload → signed URL → send message.
+  - Voice: `MediaRecorder` → opus/webm → 10 MB cap → upload.
+  - Video: file picker, 10 MB cap, no transcode.
+  - Inline render in chat bubble (img / audio player / video tag).
 
-## 5. Wallet main-page avatar +50%
+### 5b — Voice & video calls (WebRTC via LiveKit)
+- Use LiveKit Cloud free tier (10k participant-min/mo).
+- New secrets: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `VITE_LIVEKIT_URL`.
+- Server fn `mintCallToken(callId)` — checks call participants, returns JWT.
+- Replace placeholder `CallScreen` with `@livekit/components-react` Room.
+- Existing `calls` table + signalling already in place; we layer LiveKit on top.
 
-- In `screens.tsx` wallet header, bump the avatar size by 1.5× and keep the cover banner sized to match (height grows proportionally).
+Will pause after 5a for approval before doing 5b.
 
-## 6. Swipe-back navigation (PWA-wide)
+---
 
-- Add a single `useSwipeBack()` hook plus a `<SwipeBackProvider>` mounted in `__root.tsx`.
-- Horizontal pan from the **left 24px edge**, threshold 60px or velocity > 0.4 px/ms → `router.history.back()`.
-- Skips when: the gesture starts inside a horizontally-scrollable element (carousels, the new income/expense slider, chat message lists), or when an input/sheet is open.
-- Adds a subtle live-tracking page slide using `transform: translateX(...)` for tactile feel; cancels on release if threshold not met.
-- Works for both real routes and the internal "screen stack" in `screens.tsx` (chat → conversation, wallet → send, etc.) by exposing a `pushScreen/popScreen` aware of the gesture.
+## Phase 6 — PWA offline + push polish
 
-## Technical notes
+**What you'll see**
+- App opens instantly on flaky network, shows last known data.
+- "Install Lumens" prompt on Android/desktop.
 
-- Database changes go in a single new migration with `GRANT`s and RLS.
-- No edits to `client.ts`, `types.ts` (regenerated automatically), or `client.server.ts`.
-- Runtime error `Cannot read properties of null (reading 'split')` will be addressed only if it falls inside the files I'm already editing for the items above.
+**Technical**
+- Add `vite-plugin-pwa` with Workbox.
+  - Precache app shell.
+  - `NetworkFirst` for Supabase REST.
+  - `StaleWhileRevalidate` for avatars/icons.
+- Merge existing `public/sw.js` push handler into Workbox SW (`injectManifest` strategy so we keep the push listener).
+- `manifest.json` already exists; add maskable icon + screenshots field for richer install UI.
 
-## Out of scope (will not touch)
+---
 
-E2EE, wallet/payment logic, OCR, budget slider, expenses slider, security regression suite, push notifications, group chat logic.
+## Phase 1 — Stellar wallet (non-custodial)
 
-Reply "go" to execute, or tell me what to adjust.
+Largest phase. Split.
+
+### 1a — Key generation + secure on-device storage
+- `npm i stellar-sdk`.
+- On first wallet open: generate keypair, derive AES-GCM key from PIN via PBKDF2 (250k iters), store encrypted secret in IndexedDB. Public address goes to a new `wallets` table (`user_id, stellar_address, network`).
+- "Reveal secret key" gated by PIN; never sent to server.
+- Show address + QR.
+
+### 1b — Read-only: balances & history via Horizon
+- Use public Horizon endpoint (`horizon.stellar.org`).
+- `useWalletBalances(address)` and `useWalletTxs(address)` via TanStack Query.
+- Filters: sent/received, date range, currency. CSV export.
+
+### 1c — Send XLM / assets
+- `sendPayment(destination, amount, asset, memo)` — sign locally with decrypted secret, submit via Horizon.
+- Confirm sheet with network fee + memo field.
+- QR scan for destination (use `@zxing/browser`).
+
+### 1d — Swap via SDEX
+- `pathPaymentStrictSend` with on-chain best path.
+- Show path + slippage before confirm.
+
+### 1e — On/off ramp (deferred to user)
+- Yellow Card and Stellar Anchor integrations require business agreements/KYC API keys I cannot get. I'll wire the UI screens and stub the provider call so you can drop credentials in later. Will not block the rest of the wallet.
+
+---
+
+## Phase 2 — Request-money in chat
+
+**What you'll see**
+- "+" menu in chat → *Request money* sheet → enter amount/asset/note.
+- A bubble appears in the thread with "Accept & Pay" / "Decline" buttons.
+- Accepting opens the wallet send flow pre-filled.
+
+**Technical**
+- New message kind: `payment_request` with payload `{ amount, asset, note, status }`.
+- RPC `respond_payment_request(message_id, action)` — only recipient.
+- Bubble component in `screens.tsx` with status pill (Pending/Paid/Declined/Expired).
+- Expiry: 24h (cron updates status).
+
+---
+
+## Order of execution & checkpoints
+
+```
+Phase 3  ──► review ──►
+Phase 4  ──► review ──►
+Phase 5a ──► review ──►
+Phase 5b ──► review ──► (requires LiveKit secrets)
+Phase 6  ──► review ──►
+Phase 1a ──► review ──►
+Phase 1b ──► review ──►
+Phase 1c ──► review ──►
+Phase 1d ──► review ──►
+Phase 2  ──► review ──► done
+```
+
+I'll start with **Phase 3 (disappearing messages)** the moment you approve this plan. Each phase ships as its own migration + code change so you can roll back individually.
+
+## Things I'll need from you along the way
+- **Before Phase 5b**: LiveKit Cloud account + API key/secret/URL.
+- **Before Phase 1e** (optional): Yellow Card or Stellar Anchor credentials.
+
+Everything else uses what's already provisioned.

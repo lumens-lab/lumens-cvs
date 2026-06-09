@@ -5,6 +5,8 @@ import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useHazelStore } from '@/lib/hazel/store';
 import { sendChatMessage, deleteChatMessage, fetchContactProfile } from '@/lib/hazel/chat-sync';
+import { uploadChatMedia } from '@/lib/hazel/chat-media';
+import { supabase } from '@/integrations/supabase/client';
 import { useDebitOrders, deleteDebitOrder, daysUntil, isDue, type DebitOrder } from '@/lib/hazel/debit-orders';
 import { useAuth } from '@/hooks/use-auth';
 import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel/wallet';
@@ -23,6 +25,20 @@ export function LumensWordmark({ height = 112 }: { height?: number }) {
 }
 
 const { W, S, S2, AC, GN, RD, BL, PP, AM } = COLORS;
+
+const TTL_OPTIONS: { secs: number | null; label: string }[] = [
+  { secs: null, label: 'Off' },
+  { secs: 86400, label: '24 hours' },
+  { secs: 604800, label: '7 days' },
+  { secs: 2592000, label: '30 days' },
+];
+function ttlLabel(secs: number | null): string {
+  if (!secs) return 'Off';
+  if (secs >= 2592000) return '30d';
+  if (secs >= 604800) return '7d';
+  if (secs >= 86400) return '24h';
+  return `${Math.round(secs / 60)}m`;
+}
 
 export function getCurrencySym(code: string) {
   return CURRENCIES.find((c) => c.code === code)?.symbol ?? '$';
@@ -600,6 +616,27 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
   const [attachOpen, setAttachOpen] = useState(false);
   const [actionFor, setActionFor] = useState<string | null>(null); // msg id with action popover open
   const [replyTo, setReplyTo] = useState<{ id: string; preview: string } | null>(null);
+  const [ttl, setTtl] = useState<number | null>(null); // disappearing_seconds
+  const [ttlMenuOpen, setTtlMenuOpen] = useState(false);
+  const convId = (conv as any)?.convId as string | undefined;
+  useEffect(() => {
+    if (!convId) { setTtl(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from('conversations').select('disappearing_seconds').eq('id', convId).maybeSingle();
+      if (!cancelled) setTtl((data as any)?.disappearing_seconds ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [convId]);
+  const setDisappearing = async (secs: number | null) => {
+    if (!convId) { showToast('Send a message first'); return; }
+    const { error } = await supabase.rpc('set_disappearing', { p_conversation_id: convId, p_seconds: secs as any });
+    if (error) { showToast('Could not update timer'); return; }
+    setTtl(secs);
+    setTtlMenuOpen(false);
+    setMenuOpen(false);
+    showToast(secs ? `Messages disappear after ${ttlLabel(secs)}` : 'Disappearing off');
+  };
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [conv?.msgs?.length]);
   // Swipe-to-go-back (right swipe from left edge)
@@ -692,8 +729,13 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
     const f = e.target.files?.[0];
     e.target.value = '';
     if (!f) return;
-    const media = await fileToDataURL(f);
-    pushMsg({ type, media });
+    try {
+      showToast(`Uploading ${type}…`);
+      const { url, path } = await uploadChatMedia(f, type, { name: f.name, type: f.type });
+      pushMsg({ type, media: url, mediaPath: path } as any);
+    } catch (err: any) {
+      showToast(err?.message || `Could not upload ${type}`);
+    }
   };
 
   const toggleRecord = async () => {
@@ -710,9 +752,13 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
       rec.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
         const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
-        const media = await fileToDataURL(new File([blob], 'voice.webm', { type: blob.type }));
         const dur = Math.max(1, Math.round((Date.now() - start) / 1000));
-        pushMsg({ type: 'voice', media, dur });
+        try {
+          const { url, path } = await uploadChatMedia(blob, 'voice', { type: blob.type });
+          pushMsg({ type: 'voice', media: url, mediaPath: path, dur } as any);
+        } catch (err: any) {
+          showToast(err?.message || 'Could not upload voice note');
+        }
         recRef.current = null;
         setRecording(false);
       };
@@ -742,7 +788,10 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
         </T>
         <T onClick={() => setProfileOpen(true)} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', textAlign: 'left', padding: '4px 6px' }}>
           <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{ct.name}</div>
-          <div style={{ color: ct.on ? GN : S, fontSize: 11 }}>{ct.on ? '● Online' : 'Offline'}</div>
+          <div style={{ color: ct.on ? GN : S, fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>{ct.on ? '● Online' : 'Offline'}</span>
+            {ttl ? <span style={{ color: AC, fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 8, background: 'rgba(255,255,255,0.08)' }}>⏱ {ttlLabel(ttl)}</span> : null}
+          </div>
         </T>
         <T onClick={() => setMenuOpen((v) => !v)} aria-label="More actions" style={{ width: 38, height: 38, borderRadius: 19, background: 'rgba(255,255,255,0.07)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="MoreVertical" s={18} />
@@ -768,12 +817,23 @@ export function ChatView({ contactId, onBack, onSendMoney, onVideoCall, onVoiceC
             { icon: 'Phone', label: 'Voice call', fn: () => { setMenuOpen(false); if (onVoiceCall) onVoiceCall(); else showToast('Calling…'); }, disabled: !canRichSend },
             { icon: 'Video', label: 'Video call', fn: () => { setMenuOpen(false); if (onVideoCall) onVideoCall(); else showToast('Calling…'); }, disabled: !canRichSend },
             { icon: 'UserCircle2', label: 'View profile', fn: () => { setMenuOpen(false); setProfileOpen(true); } },
+            { icon: 'Timer', label: `Disappearing: ${ttlLabel(ttl)}`, fn: () => setTtlMenuOpen((v) => !v), disabled: !convId },
           ].map((it) => (
             <T key={it.label} onClick={it.fn} disabled={it.disabled} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'none', border: 'none', color: W, fontSize: 13, fontWeight: 600, textAlign: 'left', borderRadius: 10, opacity: it.disabled ? 0.4 : 1 }}>
               <Ic n={it.icon} s={16} c={AC as any} />
               {it.label}
             </T>
           ))}
+          {ttlMenuOpen && (
+            <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              {TTL_OPTIONS.map((opt) => (
+                <T key={String(opt.secs)} onClick={() => setDisappearing(opt.secs)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'none', border: 'none', color: W, fontSize: 12, fontWeight: 600, textAlign: 'left', borderRadius: 8 }}>
+                  <span>{opt.label}</span>
+                  {ttl === opt.secs && <Ic n="Check" s={14} c={AC as any} />}
+                </T>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
