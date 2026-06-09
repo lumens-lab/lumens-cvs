@@ -400,8 +400,10 @@ export function EditProfileScreen({ onBack }: any) {
           const path = `${user.id}/${kind}-${Date.now()}.${ext}`;
           const up = await supabase.storage.from('avatars').upload(path, blob, { upsert: true, contentType: blob.type });
           if (up.error) throw up.error;
-          const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-          return data.publicUrl;
+          // Bucket is private but a public-read RLS policy is in place; use a long-lived signed URL.
+          const signed = await supabase.storage.from('avatars').createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+          if (signed.error || !signed.data?.signedUrl) throw signed.error ?? new Error('Could not create image URL');
+          return signed.data.signedUrl;
         };
         const avatarUrl = await uploadDataUrl(avatar, 'avatar');
         const coverUrl = await uploadDataUrl(cover, 'cover');
