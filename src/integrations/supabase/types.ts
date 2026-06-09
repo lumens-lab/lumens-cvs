@@ -953,8 +953,6 @@ export type Database = {
         Args: { p_conversation_id: string; p_seconds: number }
         Returns: undefined
       }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
       touch_conversation_preview: {
         Args: { p_conversation_id: string; p_preview: string }
         Returns: undefined
