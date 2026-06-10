@@ -60,7 +60,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
   if (stage === 'splash') {
     return (
       <Cover>
-        <HaloLogo size={480} animate />
+        <HaloLogo size={340} animate sharp />
         <style>{splashCss}</style>
       </Cover>
     );
