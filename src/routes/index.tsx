@@ -37,11 +37,12 @@ import { WelcomeFlow, PinLock } from "@/components/hazel/onboarding";
 import { SecurityScreen, HelpScreen } from "@/components/hazel/security";
 import { NotificationsScreen, AppearanceScreen } from "@/components/hazel/prefs";
 import { CallHistoryScreen } from "@/components/hazel/call-history";
-import { useHazelStore } from "@/lib/hazel/store";
+import { useHazelStore, setUserScope } from "@/lib/hazel/store";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthScreen } from "@/components/hazel/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useChatSync } from "@/lib/hazel/chat-sync";
+import { useTxSync } from "@/lib/hazel/tx-sync";
 import { useEnsureE2EEIdentity } from "@/lib/e2ee/init";
 import { useCalls } from "@/lib/hazel/calls";
 import { subscribeToPush } from "@/lib/hazel/push";
@@ -97,6 +98,14 @@ function HazelApp() {
   const [pendingPhase, setPendingPhase] = useState<"wallet" | null>(null);
   const [pinChallenge, setPinChallenge] = useState<null | { onOk: () => void; title?: string; subtitle?: string }>(null);
   useEffect(() => { setMounted(true); }, []);
+  // Bind store to the signed-in user so each account has its own
+  // localStorage namespace on this device. Lock screen is re-armed on
+  // every account switch so PIN can be loaded from the server first.
+  useEffect(() => {
+    if (!mounted) return;
+    setUserScope(user?.id ?? null);
+    setUnlocked(false);
+  }, [user?.id, mounted]);
   // Populate profile from Supabase + signup metadata on auth.
   useEffect(() => {
     if (!user) return;
@@ -106,6 +115,9 @@ function HazelApp() {
       // phone/dob are owner-only; use SECURITY DEFINER RPC instead of direct table read.
       const { data: rows } = await supabase.rpc("get_my_profile");
       const data: any = Array.isArray(rows) ? rows[0] : rows;
+      // PIN follows the user — load the hashed PIN from the server so we
+      // never ask them to create a new one on a fresh device.
+      const { data: pinHash } = await supabase.rpc("get_my_pin_hash");
       if (cancelled) return;
       set((s) => {
         s.profile = {
@@ -117,6 +129,10 @@ function HazelApp() {
           avatar: data?.avatar_url || meta.avatar_url || s.profile.avatar || "",
           cover: data?.cover_url || s.profile.cover || "",
         };
+        if (typeof pinHash === 'string' && pinHash) {
+          s.pin = pinHash;
+          s.onboarded = true;
+        }
       });
     })();
     return () => { cancelled = true; };
@@ -139,6 +155,7 @@ function HazelApp() {
   const [groupId, setGroupId] = useState<string | null>(null);
   const [catCtx, setCatCtx] = useState<{ catId: string; monthKey: string } | null>(null);
   useChatSync(user?.id ?? null);
+  useTxSync(user?.id ?? null);
   useEnsureE2EEIdentity(user?.id ?? null);
   // Hoisted call state so video calls can be started from anywhere
   // (chat header dropdown, calls tab, incoming-call ringer).
