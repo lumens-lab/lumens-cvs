@@ -226,7 +226,7 @@ function PinDots({ value }: { value: string }) {
 }
 
 /** White logo with a soft pulsing blue halo (from the design spec). */
-function HaloLogo({ size = 220, animate = false }: { size?: number; animate?: boolean }) {
+function HaloLogo({ size = 220, animate = false, sharp = false }: { size?: number; animate?: boolean; sharp?: boolean }) {
   const halo = size * 1.6;
   return (
     <div style={{ position: 'relative', width: halo, height: halo, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -235,12 +235,20 @@ function HaloLogo({ size = 220, animate = false }: { size?: number; animate?: bo
         src={logo}
         alt="Lumens"
         className={animate ? 'logo-reveal logo-pulse' : 'halo-pulse'}
+        decoding="async"
+        loading="eager"
         style={{
           width: size,
           height: 'auto',
           position: 'relative',
           zIndex: 1,
-          filter: 'drop-shadow(0 0 18px rgba(255,255,255,0.85)) drop-shadow(0 0 40px rgba(100,180,255,0.8))',
+          // Crisper render: a single tight white glow + colour bloom, no
+          // heavy multi-shadow stack that softens edges into a blur.
+          filter: sharp
+            ? 'drop-shadow(0 0 6px rgba(255,255,255,0.55)) drop-shadow(0 0 18px rgba(100,180,255,0.45))'
+            : 'drop-shadow(0 0 18px rgba(255,255,255,0.85)) drop-shadow(0 0 40px rgba(100,180,255,0.8))',
+          willChange: 'transform, filter',
+          transform: 'translateZ(0)',
         }}
       />
     </div>
