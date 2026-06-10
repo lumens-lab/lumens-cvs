@@ -635,6 +635,7 @@ export type Database = {
           id: string
           language: string | null
           phone: string | null
+          pin_hash: string | null
           updated_at: string
           username: string | null
         }
@@ -648,6 +649,7 @@ export type Database = {
           id: string
           language?: string | null
           phone?: string | null
+          pin_hash?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -661,6 +663,7 @@ export type Database = {
           id?: string
           language?: string | null
           phone?: string | null
+          pin_hash?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -838,6 +841,7 @@ export type Database = {
           username: string
         }[]
       }
+      get_my_pin_hash: { Args: never; Returns: string }
       get_my_profile: {
         Args: never
         Returns: {
@@ -953,6 +957,7 @@ export type Database = {
         Args: { p_conversation_id: string; p_seconds: number }
         Returns: undefined
       }
+      set_my_pin_hash: { Args: { p_hash: string }; Returns: undefined }
       touch_conversation_preview: {
         Args: { p_conversation_id: string; p_preview: string }
         Returns: undefined

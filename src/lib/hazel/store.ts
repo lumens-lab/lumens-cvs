@@ -21,6 +21,8 @@ export type Tx = {
   receipt?: string;
   /** Itemized receipt lines */
   items?: { name: string; amt: number }[];
+  /** Supabase row id (set after remote sync). */
+  serverId?: string;
 };
 export type Profile = {
   name: string; email: string; username: string; phone: string;
@@ -85,7 +87,11 @@ export type HazelState = {
   pin: string | null;
 };
 
-const KEY = 'lumens-state-v2';
+const KEY_BASE = 'lumens-state-v2';
+let currentUserId: string | null = null;
+function storageKey(): string {
+  return currentUserId ? `${KEY_BASE}:${currentUserId}` : `${KEY_BASE}:anon`;
+}
 
 const initial: HazelState = {
   profile: {
@@ -122,7 +128,7 @@ const initial: HazelState = {
 function load(): HazelState {
   if (typeof window === 'undefined') return initial;
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(storageKey());
     if (!raw) return initial;
     const parsed = JSON.parse(raw);
     return {
@@ -162,7 +168,7 @@ function persist() {
       phone: '',
       dob: '',
     };
-    localStorage.setItem(KEY, JSON.stringify({ ...rest, profile: safeProfile }));
+    localStorage.setItem(storageKey(), JSON.stringify({ ...rest, profile: safeProfile }));
   } catch {}
 }
 
@@ -187,6 +193,20 @@ export function useHazelStore() {
 }
 
 export function getStateSnapshot(): HazelState { boot(); return mem; }
+
+/**
+ * Bind the store to a specific signed-in user (or `null` for signed-out).
+ * Each user gets a separate localStorage namespace so device sharing never
+ * leaks data between accounts. PIN, CashFlow entries, and chats are then
+ * hydrated from Supabase for that user.
+ */
+export function setUserScope(userId: string | null) {
+  if (currentUserId === userId) return;
+  currentUserId = userId;
+  booted = true;
+  mem = load();
+  subs.forEach((s) => s());
+}
 
 /** Escape HTML special chars to neutralize any pre-injected XSS payloads. */
 function escStr(v: unknown): string {

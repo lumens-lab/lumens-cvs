@@ -60,7 +60,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
   if (stage === 'splash') {
     return (
       <Cover>
-        <HaloLogo size={480} animate />
+        <HaloLogo size={340} animate sharp />
         <style>{splashCss}</style>
       </Cover>
     );
@@ -108,11 +108,11 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
     ];
     return (
       <Cover>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px max(36px, env(safe-area-inset-bottom))' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '32px 28px max(24px, env(safe-area-inset-bottom))' }}>
           <div />
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
-            <HaloLogo size={380} />
-            <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em', textAlign: 'center' }}>You're all set,<br/>welcome to lumens.</h1>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <HaloLogo size={220} sharp />
+            <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em', textAlign: 'center', marginTop: -40 }}>You're all set,<br/>welcome to lumens.</h1>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignSelf: 'stretch', paddingLeft: 8 }}>
               {checks.map((c) => (
                 <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -226,7 +226,7 @@ function PinDots({ value }: { value: string }) {
 }
 
 /** White logo with a soft pulsing blue halo (from the design spec). */
-function HaloLogo({ size = 220, animate = false }: { size?: number; animate?: boolean }) {
+function HaloLogo({ size = 220, animate = false, sharp = false }: { size?: number; animate?: boolean; sharp?: boolean }) {
   const halo = size * 1.6;
   return (
     <div style={{ position: 'relative', width: halo, height: halo, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -235,12 +235,20 @@ function HaloLogo({ size = 220, animate = false }: { size?: number; animate?: bo
         src={logo}
         alt="Lumens"
         className={animate ? 'logo-reveal logo-pulse' : 'halo-pulse'}
+        decoding="async"
+        loading="eager"
         style={{
           width: size,
           height: 'auto',
           position: 'relative',
           zIndex: 1,
-          filter: 'drop-shadow(0 0 18px rgba(255,255,255,0.85)) drop-shadow(0 0 40px rgba(100,180,255,0.8))',
+          // Crisper render: a single tight white glow + colour bloom, no
+          // heavy multi-shadow stack that softens edges into a blur.
+          filter: sharp
+            ? 'drop-shadow(0 0 6px rgba(255,255,255,0.55)) drop-shadow(0 0 18px rgba(100,180,255,0.45))'
+            : 'drop-shadow(0 0 18px rgba(255,255,255,0.85)) drop-shadow(0 0 40px rgba(100,180,255,0.8))',
+          willChange: 'transform, filter',
+          transform: 'translateZ(0)',
         }}
       />
     </div>

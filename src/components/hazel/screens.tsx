@@ -490,7 +490,17 @@ export function ChatScreen({ openSub, openChat, openGroup, openNewGroup }: any) 
   const exitSelect = () => { setSelectMode(false); setSelected(new Set()); };
   const deleteSelected = async () => {
     if (selected.size === 0) return;
-    if (typeof window !== 'undefined' && !window.confirm(`Delete ${selected.size} chat${selected.size > 1 ? 's' : ''}? The contacts will be disconnected and removed from chat, call and contact lists.`)) return;
+    if (typeof window !== 'undefined') {
+      const n = selected.size;
+      const msg =
+        `Remove ${n} contact${n > 1 ? 's' : ''}?\n\n` +
+        `This will:\n` +
+        `  • Disconnect them as a contact\n` +
+        `  • Delete the chat${n > 1 ? 's' : ''} from your Chat list\n` +
+        `  • Remove their entries from your Call history\n\n` +
+        `This cannot be undone.`;
+      if (!window.confirm(msg)) return;
+    }
     const ids = Array.from(selected);
     const { removeContact } = await import('@/lib/hazel/chat-sync');
     for (const id of ids) {
