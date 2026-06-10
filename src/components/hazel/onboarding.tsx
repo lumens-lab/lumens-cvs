@@ -108,11 +108,11 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
     ];
     return (
       <Cover>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px max(36px, env(safe-area-inset-bottom))' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '32px 28px max(24px, env(safe-area-inset-bottom))' }}>
           <div />
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
-            <HaloLogo size={380} />
-            <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em', textAlign: 'center' }}>You're all set,<br/>welcome to lumens.</h1>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <HaloLogo size={220} sharp />
+            <h1 style={{ color: '#fff', fontSize: 26, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.02em', textAlign: 'center', marginTop: -40 }}>You're all set,<br/>welcome to lumens.</h1>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignSelf: 'stretch', paddingLeft: 8 }}>
               {checks.map((c) => (
                 <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
