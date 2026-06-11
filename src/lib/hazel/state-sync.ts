@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useHazelStore } from './store';
+import { useHazelStore, getStateSnapshot } from './store';
 
 /**
  * Mirrors per-user app state (categories, budgets, accounts, cards, settings)
@@ -55,18 +55,19 @@ export function useUserStateSync(userId: string | null) {
         });
       }
       seededFor.current = userId;
-      lastSnap.current = snapshot(state);
+      const live = getStateSnapshot();
+      lastSnap.current = snapshot(live);
       if (!hasRemoteCats) {
         // Bootstrap the row with current local state so other devices that
         // sign in next can pull a meaningful snapshot immediately.
         await supabase.from('user_state' as any).upsert({
           user_id: userId,
-          income_cats: state.incomeCats,
-          expense_cats: state.expenseCats,
-          budgets: state.budgets,
-          accounts: state.accounts,
-          cards: state.cards,
-          settings: state.settings,
+          income_cats: live.incomeCats,
+          expense_cats: live.expenseCats,
+          budgets: live.budgets,
+          accounts: live.accounts,
+          cards: live.cards,
+          settings: live.settings,
         }, { onConflict: 'user_id' });
       }
     })();
