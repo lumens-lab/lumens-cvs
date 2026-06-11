@@ -401,10 +401,8 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
   const { state, set } = useHazelStore();
   const sym = getCurrencySym(state.settings.currency);
   const { quotes, loading, error, updatedAt } = useCryptoPrices('usd');
-  const cryptoTotal = useMemo(
-    () => quotes.reduce((s, c) => s + c.price * (state.cryptoBal?.[c.id] ?? 0), 0),
-    [quotes, state.cryptoBal],
-  );
+  // No on-chain wallet yet — portfolio value is 0 until balances are wired in.
+  const cryptoTotal = 0;
 
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
@@ -447,7 +445,7 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
           <div style={{ fontSize: 28, color: W, fontWeight: 800, letterSpacing: '-0.02em' }}>${fmtM(cryptoTotal)}</div>
         </div>
         {(quotes.length ? quotes : []).map((c) => {
-          const bal = state.cryptoBal?.[c.id] ?? 0;
+          const bal = 0;
           const val = c.price * bal;
           const pos = c.chg >= 0;
           return (
