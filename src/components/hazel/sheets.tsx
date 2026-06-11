@@ -277,7 +277,10 @@ export function FindPeopleScreen({ onBack, onOpenChat }: any) {
   const [reqs, setReqs] = useState<Req[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const gs = Object.keys(GRAD_MAP);
-  const pickG = (seed: string) => gs[Math.abs(seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % gs.length];
+  const pickG = (seed: string | null | undefined) => {
+    const s = typeof seed === 'string' && seed.length ? seed : '?';
+    return gs[Math.abs(s.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % gs.length];
+  };
   const initials = (n: string) => n.split(' ').filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
 
   const loadReqs = useCallback(async () => {

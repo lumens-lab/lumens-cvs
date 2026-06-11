@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useHazelStore } from './store';
+import { useHazelStore, getStateSnapshot } from './store';
 
 /**
  * Mirrors per-user app state (categories, budgets, accounts, cards, settings)
@@ -27,11 +27,19 @@ export function useUserStateSync(userId: string | null) {
         .eq('user_id', userId)
         .maybeSingle();
       if (cancelled) return;
+      // A non-empty cat array on the remote row is the authoritative truth —
+      // that's how adds / edits / deletes flow across devices. An EMPTY
+      // array means "this user has deleted everything", which we also honour.
+      // A NULL field (no array at all) means the row was bootstrapped without
+      // categories yet; in that case we keep local defaults and push them up
+      // so future devices see something.
+      const hasRemoteCats =
+        !!data && (Array.isArray((data as any).income_cats) || Array.isArray((data as any).expense_cats));
       if (data) {
         const row: any = data;
         set((s) => {
-          if (Array.isArray(row.income_cats) && row.income_cats.length) s.incomeCats = row.income_cats;
-          if (Array.isArray(row.expense_cats) && row.expense_cats.length) s.expenseCats = row.expense_cats;
+          if (Array.isArray(row.income_cats)) s.incomeCats = row.income_cats;
+          if (Array.isArray(row.expense_cats)) s.expenseCats = row.expense_cats;
           if (row.budgets && typeof row.budgets === 'object') s.budgets = row.budgets;
           if (Array.isArray(row.accounts)) s.accounts = row.accounts;
           if (Array.isArray(row.cards)) s.cards = row.cards;
@@ -47,11 +55,21 @@ export function useUserStateSync(userId: string | null) {
         });
       }
       seededFor.current = userId;
-      lastSnap.current = snapshot(state);
-      // Ensure a row exists for this user (so first-write conflicts don't matter).
-      await supabase
-        .from('user_state' as any)
-        .upsert({ user_id: userId }, { onConflict: 'user_id' });
+      const live = getStateSnapshot();
+      lastSnap.current = snapshot(live);
+      if (!hasRemoteCats) {
+        // Bootstrap the row with current local state so other devices that
+        // sign in next can pull a meaningful snapshot immediately.
+        await supabase.from('user_state' as any).upsert({
+          user_id: userId,
+          income_cats: live.incomeCats,
+          expense_cats: live.expenseCats,
+          budgets: live.budgets,
+          accounts: live.accounts,
+          cards: live.cards,
+          settings: live.settings,
+        }, { onConflict: 'user_id' });
+      }
     })();
     return () => { cancelled = true; };
   }, [userId, set]);

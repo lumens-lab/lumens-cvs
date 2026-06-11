@@ -7,8 +7,14 @@ import { encryptDmPayload, decryptDmCiphertext, isSignalEnvelope } from '@/lib/e
 import { encryptGroupPayload, decryptGroupCiphertext, isGroupFanEnvelope } from '@/lib/e2ee/group-cipher';
 
 const GRADS = Object.keys(GRAD_MAP);
-const pickG = (seed: string) => GRADS[Math.abs(seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % GRADS.length];
-const initials = (n: string) => n.split(' ').filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+const pickG = (seed: string | null | undefined) => {
+  const s = typeof seed === 'string' && seed.length ? seed : '?';
+  return GRADS[Math.abs(s.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % GRADS.length];
+};
+const initials = (n: string | null | undefined) => {
+  const s = typeof n === 'string' ? n : '';
+  return s.split(' ').filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+};
 
 /**
  * Wire-format obfuscation. The schema requires ciphertext+nonce. This is a

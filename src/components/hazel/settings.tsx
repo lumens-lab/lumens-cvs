@@ -279,6 +279,7 @@ export function CategoriesScreen({ kind, onBack }: { kind: 'income'|'expense'; o
   const { state, set } = useHazelStore();
   const list: Cat[] = kind === 'income' ? state.incomeCats : state.expenseCats;
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [color, setColor] = useState('#2563eb');
   const [icon, setIcon] = useState('Tag');
@@ -286,18 +287,40 @@ export function CategoriesScreen({ kind, onBack }: { kind: 'income'|'expense'; o
   const colors = ['#2563eb', '#34d399', '#60a5fa', '#c084fc', '#f87171', '#fb923c', '#fbbf24', '#f472b6'];
   const icons = ['Tag', 'ShoppingBag', 'Coffee', 'Car', 'Music', 'Receipt', 'Home', 'Heart', 'Gift', 'Plane', 'Book', 'Briefcase'];
 
+  const resetForm = () => { setName(''); setBudget(''); setColor('#2563eb'); setIcon('Tag'); };
+  const startEdit = (c: Cat) => {
+    setEditingId(c.id);
+    setAdding(true);
+    setName(c.name);
+    setColor(c.color);
+    setIcon(c.icon);
+    setBudget(c.budget != null ? String(c.budget) : '');
+  };
+  const cancel = () => { setAdding(false); setEditingId(null); resetForm(); };
+
   const add = () => {
     if (!name.trim()) return showToast('Name required');
-    const cat: Cat = { id: Date.now().toString(), name: name.trim(), color, icon, ...(kind === 'expense' && budget ? { budget: parseFloat(budget) } : {}) };
-    set((s) => { if (kind === 'expense') s.expenseCats = [...s.expenseCats, cat]; else s.incomeCats = [...s.incomeCats, cat]; });
-    setName(''); setBudget(''); setAdding(false); showToast('Category added');
+    if (editingId) {
+      const patch: Partial<Cat> = { name: name.trim(), color, icon };
+      if (kind === 'expense') (patch as any).budget = budget ? parseFloat(budget) : undefined;
+      set((s) => {
+        const apply = (arr: Cat[]) => arr.map((c) => c.id === editingId ? { ...c, ...patch } : c);
+        if (kind === 'expense') s.expenseCats = apply(s.expenseCats); else s.incomeCats = apply(s.incomeCats);
+      });
+      showToast('Category updated');
+    } else {
+      const cat: Cat = { id: Date.now().toString(), name: name.trim(), color, icon, ...(kind === 'expense' && budget ? { budget: parseFloat(budget) } : {}) };
+      set((s) => { if (kind === 'expense') s.expenseCats = [...s.expenseCats, cat]; else s.incomeCats = [...s.incomeCats, cat]; });
+      showToast('Category added');
+    }
+    cancel();
   };
   const remove = (id: string) => set((s) => { if (kind === 'expense') s.expenseCats = s.expenseCats.filter((c) => c.id !== id); else s.incomeCats = s.incomeCats.filter((c) => c.id !== id); });
 
   return (
     <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title={kind === 'income' ? 'Income Categories' : 'Expense Categories'} onBack={onBack} right={
-        <T onClick={() => setAdding(!adding)} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', color: AC, fontSize: 12, fontWeight: 700 }}>{adding ? 'Cancel' : '+ Add'}</T>
+        <T onClick={() => { if (adding) cancel(); else { resetForm(); setAdding(true); } }} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', color: AC, fontSize: 12, fontWeight: 700 }}>{adding ? 'Cancel' : '+ Add'}</T>
       } />
       {adding && (
         <div style={{ ...gl('rgba(255,255,255,0.05)', 16), padding: 14, marginBottom: 12 }}>
@@ -315,7 +338,7 @@ export function CategoriesScreen({ kind, onBack }: { kind: 'income'|'expense'; o
               {icons.map((i) => (<T key={i} onClick={() => setIcon(i)} style={{ aspectRatio: '1', borderRadius: 10, background: icon === i ? color + '33' : 'rgba(255,255,255,0.05)', border: icon === i ? `1px solid ${color}` : '1px solid transparent', color: icon === i ? color : W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n={i} s={16} /></T>))}
             </div>
           </div>
-          <T onClick={add} style={{ width: '100%', padding: 12, borderRadius: 14, background: AC, color: '#001535', border: 'none', fontSize: 14, fontWeight: 800 }}>Save Category</T>
+          <T onClick={add} style={{ width: '100%', padding: 12, borderRadius: 14, background: AC, color: '#001535', border: 'none', fontSize: 14, fontWeight: 800 }}>{editingId ? 'Update Category' : 'Save Category'}</T>
         </div>
       )}
       {list.map((c) => (
@@ -325,7 +348,8 @@ export function CategoriesScreen({ kind, onBack }: { kind: 'income'|'expense'; o
             <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{c.name}</div>
             {c.budget != null && <div style={{ color: S, fontSize: 11 }}>Budget: {c.budget.toFixed(2)}</div>}
           </div>
-          <T onClick={() => remove(c.id)} style={{ padding: 8, background: 'none', border: 'none', color: RD }}><Ic n="Trash2" s={16} /></T>
+          <T onClick={() => startEdit(c)} style={{ padding: 8, background: 'none', border: 'none', color: AC }} aria-label="Edit category"><Ic n="Pencil" s={16} /></T>
+          <T onClick={() => remove(c.id)} style={{ padding: 8, background: 'none', border: 'none', color: RD }} aria-label="Delete category"><Ic n="Trash2" s={16} /></T>
         </div>
       ))}
     </div>
