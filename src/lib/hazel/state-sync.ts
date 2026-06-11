@@ -30,8 +30,11 @@ export function useUserStateSync(userId: string | null) {
       if (data) {
         const row: any = data;
         set((s) => {
-          if (Array.isArray(row.income_cats) && row.income_cats.length) s.incomeCats = row.income_cats;
-          if (Array.isArray(row.expense_cats) && row.expense_cats.length) s.expenseCats = row.expense_cats;
+          // Remote row is authoritative once it exists for this user — this is
+          // how adds, edits, and deletes propagate across devices. Only fall
+          // back to local defaults when the field is missing/null on the row.
+          if (Array.isArray(row.income_cats)) s.incomeCats = row.income_cats;
+          if (Array.isArray(row.expense_cats)) s.expenseCats = row.expense_cats;
           if (row.budgets && typeof row.budgets === 'object') s.budgets = row.budgets;
           if (Array.isArray(row.accounts)) s.accounts = row.accounts;
           if (Array.isArray(row.cards)) s.cards = row.cards;
