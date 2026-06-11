@@ -33,7 +33,7 @@ import {
 import { ExpensesScreen, ExpenseDetailScreen, AddExpenseSheet, AddIncomeSheet } from "@/components/hazel/expenses";
 import { SwapSheet, ReceiveSheet } from "@/components/hazel/extras";
 import { PaySheet } from "@/components/hazel/paysheet";
-import { WelcomeFlow, PinLock } from "@/components/hazel/onboarding";
+import { WelcomeFlow, PinLock, PinSetup } from "@/components/hazel/onboarding";
 import { SecurityScreen, HelpScreen } from "@/components/hazel/security";
 import { NotificationsScreen, AppearanceScreen } from "@/components/hazel/prefs";
 import { CallHistoryScreen } from "@/components/hazel/call-history";
@@ -43,6 +43,7 @@ import { AuthScreen } from "@/components/hazel/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useChatSync } from "@/lib/hazel/chat-sync";
 import { useTxSync } from "@/lib/hazel/tx-sync";
+import { useUserStateSync } from "@/lib/hazel/state-sync";
 import { useEnsureE2EEIdentity } from "@/lib/e2ee/init";
 import { useCalls } from "@/lib/hazel/calls";
 import { subscribeToPush } from "@/lib/hazel/push";
@@ -156,6 +157,7 @@ function HazelApp() {
   const [catCtx, setCatCtx] = useState<{ catId: string; monthKey: string } | null>(null);
   useChatSync(user?.id ?? null);
   useTxSync(user?.id ?? null);
+  useUserStateSync(user?.id ?? null);
   useEnsureE2EEIdentity(user?.id ?? null);
   // Hoisted call state so video calls can be started from anywhere
   // (chat header dropdown, calls tab, incoming-call ringer).
@@ -220,6 +222,8 @@ function HazelApp() {
   // Order: Welcome flow first, then Auth, then PIN unlock.
   if (!state.onboarded) return <WelcomeFlow onDone={() => { setUnlocked(true); }} />;
   if (!user) return <AuthScreen />;
+  // PIN is created AFTER signup/verification + sign-in, not during onboarding.
+  if (!state.pin) return <PinSetup onDone={() => { setUnlocked(true); }} />;
   if (state.pin && !unlocked) {
     return <PinLock onUnlock={() => { setUnlocked(true); if (pendingPhase) { setTab(pendingPhase); setPendingPhase(null); } }} />;
   }
