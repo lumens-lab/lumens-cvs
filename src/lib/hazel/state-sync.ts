@@ -27,12 +27,17 @@ export function useUserStateSync(userId: string | null) {
         .eq('user_id', userId)
         .maybeSingle();
       if (cancelled) return;
+      // A non-empty cat array on the remote row is the authoritative truth —
+      // that's how adds / edits / deletes flow across devices. An EMPTY
+      // array means "this user has deleted everything", which we also honour.
+      // A NULL field (no array at all) means the row was bootstrapped without
+      // categories yet; in that case we keep local defaults and push them up
+      // so future devices see something.
+      const hasRemoteCats =
+        !!data && (Array.isArray((data as any).income_cats) || Array.isArray((data as any).expense_cats));
       if (data) {
         const row: any = data;
         set((s) => {
-          // Remote row is authoritative once it exists for this user — this is
-          // how adds, edits, and deletes propagate across devices. Only fall
-          // back to local defaults when the field is missing/null on the row.
           if (Array.isArray(row.income_cats)) s.incomeCats = row.income_cats;
           if (Array.isArray(row.expense_cats)) s.expenseCats = row.expense_cats;
           if (row.budgets && typeof row.budgets === 'object') s.budgets = row.budgets;
@@ -51,10 +56,19 @@ export function useUserStateSync(userId: string | null) {
       }
       seededFor.current = userId;
       lastSnap.current = snapshot(state);
-      // Ensure a row exists for this user (so first-write conflicts don't matter).
-      await supabase
-        .from('user_state' as any)
-        .upsert({ user_id: userId }, { onConflict: 'user_id' });
+      if (!hasRemoteCats) {
+        // Bootstrap the row with current local state so other devices that
+        // sign in next can pull a meaningful snapshot immediately.
+        await supabase.from('user_state' as any).upsert({
+          user_id: userId,
+          income_cats: state.incomeCats,
+          expense_cats: state.expenseCats,
+          budgets: state.budgets,
+          accounts: state.accounts,
+          cards: state.cards,
+          settings: state.settings,
+        }, { onConflict: 'user_id' });
+      }
     })();
     return () => { cancelled = true; };
   }, [userId, set]);
