@@ -57,6 +57,12 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
   const isIncome = view === 'income';
   const list = isIncome ? incomes : expenses;
 
+  const searching = q.trim().length > 0;
+  const searchTotal = useMemo(
+    () => list.reduce((s, t) => s + Math.abs(t.amt), 0),
+    [list],
+  );
+
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -68,14 +74,30 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
 
       <div ref={swipeRef} onScroll={onSwipe} className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', gap: 12, marginBottom: 16, paddingBottom: 4 }}>
         <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(248,113,113,0.06)', 20), padding: 18, textAlign: 'center', border: '1px solid rgba(248,113,113,0.18)' }}>
-          <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Spent this month</div>
-          <div style={{ fontSize: 28, color: RD, fontWeight: 800, letterSpacing: '-0.02em' }}>{sym}{monthTotal.toFixed(2)}</div>
-          <div style={{ fontSize: 11, color: S, marginTop: 4 }}>{expenseCount} {expenseCount === 1 ? 'expense' : 'expenses'} total</div>
+          <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>
+            {searching && !isIncome ? `Matching "${q.trim()}"` : 'Spent this month'}
+          </div>
+          <div style={{ fontSize: 28, color: RD, fontWeight: 800, letterSpacing: '-0.02em' }}>
+            {sym}{(searching && !isIncome ? searchTotal : monthTotal).toFixed(2)}
+          </div>
+          <div style={{ fontSize: 11, color: S, marginTop: 4 }}>
+            {searching && !isIncome
+              ? `${expenses.length} ${expenses.length === 1 ? 'match' : 'matches'}`
+              : `${expenseCount} ${expenseCount === 1 ? 'expense' : 'expenses'} total`}
+          </div>
         </div>
         <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(52,211,153,0.06)', 20), padding: 18, textAlign: 'center', border: '1px solid rgba(52,211,153,0.18)' }}>
-          <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Earned this month</div>
-          <div style={{ fontSize: 28, color: GN, fontWeight: 800, letterSpacing: '-0.02em' }}>{sym}{monthIncome.toFixed(2)}</div>
-          <div style={{ fontSize: 11, color: S, marginTop: 4 }}>{incomeCount} income {incomeCount === 1 ? 'entry' : 'entries'} total</div>
+          <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>
+            {searching && isIncome ? `Matching "${q.trim()}"` : 'Earned this month'}
+          </div>
+          <div style={{ fontSize: 28, color: GN, fontWeight: 800, letterSpacing: '-0.02em' }}>
+            {sym}{(searching && isIncome ? searchTotal : monthIncome).toFixed(2)}
+          </div>
+          <div style={{ fontSize: 11, color: S, marginTop: 4 }}>
+            {searching && isIncome
+              ? `${incomes.length} ${incomes.length === 1 ? 'match' : 'matches'}`
+              : `${incomeCount} income ${incomeCount === 1 ? 'entry' : 'entries'} total`}
+          </div>
         </div>
       </div>
       <div style={{ textAlign: 'center', fontSize: 10, color: S, marginBottom: 14, letterSpacing: '0.06em' }}>
