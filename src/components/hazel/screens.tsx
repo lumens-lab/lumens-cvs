@@ -3,6 +3,7 @@ import { Ic, T, Av, gl, COLORS, showToast } from './ui';
 import { CardComp } from './CardComp';
 import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
+import { useCryptoPrices } from '@/lib/hazel/crypto-prices';
 import { useHazelStore } from '@/lib/hazel/store';
 import { sendChatMessage, deleteChatMessage, fetchContactProfile, removeContact } from '@/lib/hazel/chat-sync';
 import { uploadChatMedia } from '@/lib/hazel/chat-media';
@@ -399,7 +400,11 @@ export function CatDetailScreen({ catId, monthKey, onBack, onPickMonth }: any) {
 export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
   const { state, set } = useHazelStore();
   const sym = getCurrencySym(state.settings.currency);
-  const cryptoTotal = useMemo(() => CRYPTO.reduce((s, c) => s + c.price * c.bal, 0), []);
+  const { quotes, loading, error, updatedAt } = useCryptoPrices('usd');
+  const cryptoTotal = useMemo(
+    () => quotes.reduce((s, c) => s + c.price * (state.cryptoBal?.[c.id] ?? 0), 0),
+    [quotes, state.cryptoBal],
+  );
 
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
@@ -430,13 +435,20 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
 
       {/* Crypto section */}
       <div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: W, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7 }}>Crypto Assets</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: W, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7 }}>Crypto Assets</div>
+          <div style={{ fontSize: 10, color: S, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 6, height: 6, borderRadius: 3, background: error ? RD : (loading ? '#fbbf24' : GN), display: 'inline-block' }} />
+            {error ? 'Offline' : loading ? 'Loading…' : updatedAt ? `Live · ${new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Live'}
+          </div>
+        </div>
         <div style={{ ...gl('rgba(37,99,235,0.06)', 18), padding: 18, marginBottom: 14, textAlign: 'center', border: '1px solid rgba(37,99,235,0.15)' }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Total Portfolio Value</div>
           <div style={{ fontSize: 28, color: W, fontWeight: 800, letterSpacing: '-0.02em' }}>${fmtM(cryptoTotal)}</div>
         </div>
-        {CRYPTO.map((c) => {
-          const val = c.price * c.bal;
+        {(quotes.length ? quotes : []).map((c) => {
+          const bal = state.cryptoBal?.[c.id] ?? 0;
+          const val = c.price * bal;
           const pos = c.chg >= 0;
           return (
             <div key={c.id} style={{ ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8 }}>
@@ -446,15 +458,21 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
                   <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{c.name}</div>
                   <div style={{ color: S, fontSize: 11 }}>{c.sym}</div>
                 </div>
-                <div style={{ color: pos ? GN : RD, fontSize: 12, fontWeight: 700 }}>{pos ? '+' : ''}{c.chg}%</div>
+                <div style={{ color: pos ? GN : RD, fontSize: 12, fontWeight: 700 }}>{pos ? '+' : ''}{c.chg.toFixed(2)}%</div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: S }}>
                 <div><div>Price</div><div style={{ color: W, fontWeight: 600, marginTop: 2 }}>${fmtM(c.price)}</div></div>
-                <div style={{ textAlign: 'right' }}><div>Balance</div><div style={{ color: W, fontWeight: 600, marginTop: 2 }}>{c.bal.toLocaleString()} {c.sym}</div><div style={{ color: S2, fontSize: 10 }}>≈ ${fmtM(val)}</div></div>
+                <div style={{ textAlign: 'right' }}><div>Balance</div><div style={{ color: W, fontWeight: 600, marginTop: 2 }}>{bal.toLocaleString()} {c.sym}</div><div style={{ color: S2, fontSize: 10 }}>≈ ${fmtM(val)}</div></div>
               </div>
             </div>
           );
         })}
+        {loading && quotes.length === 0 && (
+          <div style={{ color: S, fontSize: 12, textAlign: 'center', padding: 16 }}>Loading live prices…</div>
+        )}
+        {error && quotes.length === 0 && (
+          <div style={{ color: RD, fontSize: 12, textAlign: 'center', padding: 16 }}>Couldn’t load live prices. Check your connection.</div>
+        )}
       </div>
     </div>
   );
