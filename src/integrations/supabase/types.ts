@@ -750,6 +750,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_state: {
+        Row: {
+          accounts: Json
+          budgets: Json
+          cards: Json
+          created_at: string
+          expense_cats: Json
+          income_cats: Json
+          settings: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accounts?: Json
+          budgets?: Json
+          cards?: Json
+          created_at?: string
+          expense_cats?: Json
+          income_cats?: Json
+          settings?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accounts?: Json
+          budgets?: Json
+          cards?: Json
+          created_at?: string
+          expense_cats?: Json
+          income_cats?: Json
+          settings?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       profiles_public: {

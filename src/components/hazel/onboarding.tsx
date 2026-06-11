@@ -8,15 +8,12 @@ const { W, S, AC, BLUE_BRIGHT } = COLORS;
 /** Splash → onboarding slides → PIN setup. Calls onDone() when complete. */
 export function WelcomeFlow({ onDone }: { onDone: () => void }) {
   const { set } = useHazelStore();
-  const [stage, setStage] = useState<'splash' | 'intro' | 'allset' | 'pin'>('splash');
+  const [stage, setStage] = useState<'splash' | 'intro' | 'allset'>('splash');
   const [slide, setSlide] = useState(0);
-  const [pin, setPin] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     if (stage !== 'splash') return;
-    const t = setTimeout(() => setStage('intro'), 4500);
+    const t = setTimeout(() => setStage('intro'), 5000);
     return () => clearTimeout(t);
   }, [stage]);
 
@@ -27,40 +24,16 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
     { ic: 'MessageCircle', title: 'Chat &\nsend money', body: 'Pay friends straight from chat. Encrypted, fast, and friendly.', color: '#c084fc' },
   ];
 
-  const enterPin = async (d: string) => {
-    if (d === 'back') {
-      confirming ? setConfirm((c) => c.slice(0, -1)) : setPin((p) => p.slice(0, -1));
-      return;
-    }
-    if (!confirming) {
-      if (pin.length >= 4) return;
-      const next = pin + d;
-      setPin(next);
-      if (next.length === 4) setTimeout(() => setConfirming(true), 200);
-    } else {
-      if (confirm.length >= 4) return;
-      const next = confirm + d;
-      setConfirm(next);
-      if (next.length === 4) {
-        if (next === pin) {
-          const { hashPin } = await import('@/lib/hazel/pin');
-          const hashed = await hashPin(pin);
-          set((s) => { s.pin = hashed; s.onboarded = true; });
-          showToast('Welcome to Lumens ✨');
-          setTimeout(onDone, 300);
-        } else {
-          showToast("PINs don't match — try again");
-          setTimeout(() => { setPin(''); setConfirm(''); setConfirming(false); }, 250);
-        }
-      }
-    }
+  const finishWelcome = () => {
+    set((s) => { s.onboarded = true; });
+    onDone();
   };
 
   // Splash
   if (stage === 'splash') {
     return (
       <Cover>
-        <HaloLogo size={340} animate sharp />
+        <HaloLogo size={360} animate sharp />
         <style>{splashCss}</style>
       </Cover>
     );
@@ -124,7 +97,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
               ))}
             </div>
           </div>
-          <T onClick={() => setStage('pin')} style={{ width: '100%', padding: '18px 22px', borderRadius: 22, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: '#fff', border: 'none', fontSize: 15, fontWeight: 700, boxShadow: '0 12px 30px rgba(37,99,235,0.5)' }}>
+          <T onClick={finishWelcome} style={{ width: '100%', padding: '18px 22px', borderRadius: 22, background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: '#fff', border: 'none', fontSize: 15, fontWeight: 700, boxShadow: '0 12px 30px rgba(37,99,235,0.5)' }}>
             Create account →
           </T>
         </div>
@@ -132,7 +105,49 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
     );
   }
 
-  // PIN setup
+  return null;
+}
+
+/** Post-signup PIN setup. Shown only after the user has signed up + verified. */
+export function PinSetup({ onDone }: { onDone: () => void }) {
+  const { set } = useHazelStore();
+  const [pin, setPin] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [confirming, setConfirming] = useState(false);
+
+  const enterPin = async (d: string) => {
+    if (d === 'back') {
+      confirming ? setConfirm((c) => c.slice(0, -1)) : setPin((p) => p.slice(0, -1));
+      return;
+    }
+    if (!confirming) {
+      if (pin.length >= 4) return;
+      const next = pin + d;
+      setPin(next);
+      if (next.length === 4) setTimeout(() => setConfirming(true), 200);
+    } else {
+      if (confirm.length >= 4) return;
+      const next = confirm + d;
+      setConfirm(next);
+      if (next.length === 4) {
+        if (next === pin) {
+          const { hashPin } = await import('@/lib/hazel/pin');
+          const hashed = await hashPin(pin);
+          set((s) => { s.pin = hashed; s.onboarded = true; });
+          try {
+            const { supabase } = await import('@/integrations/supabase/client');
+            await supabase.rpc('set_my_pin_hash', { p_hash: hashed });
+          } catch {}
+          showToast('PIN saved ✨');
+          setTimeout(onDone, 300);
+        } else {
+          showToast("PINs don't match — try again");
+          setTimeout(() => { setPin(''); setConfirm(''); setConfirming(false); }, 250);
+        }
+      }
+    }
+  };
+
   const active = confirming ? confirm : pin;
   return (
     <Cover>
@@ -230,23 +245,28 @@ function HaloLogo({ size = 220, animate = false, sharp = false }: { size?: numbe
   const halo = size * 1.6;
   return (
     <div style={{ position: 'relative', width: halo, height: halo, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%, rgba(80,150,255,0.55) 0%, rgba(0,80,255,0.25) 35%, transparent 70%)', filter: 'blur(20px)' }} />
+      <div className={animate ? 'halo-breathe' : ''} style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%, rgba(120,180,255,0.7) 0%, rgba(40,110,255,0.35) 30%, rgba(0,60,200,0.15) 55%, transparent 75%)', filter: 'blur(28px)' }} />
       <img
         src={logo}
         alt="Lumens"
         className={animate ? 'logo-reveal logo-pulse' : 'halo-pulse'}
         decoding="async"
         loading="eager"
+        width={size * 2}
+        height={size * 2}
         style={{
           width: size,
           height: 'auto',
           position: 'relative',
           zIndex: 1,
-          // Crisper render: a single tight white glow + colour bloom, no
-          // heavy multi-shadow stack that softens edges into a blur.
+          // Crisp logo: minimal drop-shadow on the image itself; the soft halo
+          // is rendered as a separate blurred radial behind it so the logo
+          // edges stay razor-sharp.
           filter: sharp
-            ? 'drop-shadow(0 0 6px rgba(255,255,255,0.55)) drop-shadow(0 0 18px rgba(100,180,255,0.45))'
-            : 'drop-shadow(0 0 18px rgba(255,255,255,0.85)) drop-shadow(0 0 40px rgba(100,180,255,0.8))',
+            ? 'drop-shadow(0 0 2px rgba(255,255,255,0.45))'
+            : 'drop-shadow(0 0 4px rgba(255,255,255,0.6)) drop-shadow(0 0 14px rgba(120,180,255,0.55))',
+          imageRendering: 'auto',
+          WebkitBackfaceVisibility: 'hidden',
           willChange: 'transform, filter',
           transform: 'translateZ(0)',
         }}
@@ -275,23 +295,20 @@ function Keypad({ onTap }: { onTap: (d: string) => void }) {
 }
 
 const splashCss = `
-  .logo-reveal { animation: logoReveal 4s cubic-bezier(0.34,1.56,0.64,1) 0.2s both; }
-  .logo-pulse  { animation: logoReveal 4s cubic-bezier(0.34,1.56,0.64,1) 0.2s both,
-                            logoPulse 4s ease-in-out 4.4s infinite; }
+  .logo-reveal { animation: logoReveal 1.8s cubic-bezier(0.34,1.56,0.64,1) 0.1s both; }
+  .logo-pulse  { animation: logoReveal 1.8s cubic-bezier(0.34,1.56,0.64,1) 0.1s both,
+                            logoPulse 2.6s ease-in-out 1.9s infinite; }
+  .halo-breathe { animation: haloBreathe 2.6s ease-in-out infinite; }
   @keyframes logoReveal {
-    from { opacity: 0; transform: scale(0.5) translateY(18px); }
+    from { opacity: 0; transform: scale(0.6) translateY(12px); }
     to   { opacity: 1; transform: scale(1) translateY(0); }
   }
   @keyframes logoPulse {
-    0%,100% {
-      filter: drop-shadow(0 0 12px rgba(255,255,255,0.5))
-              drop-shadow(0 0 28px rgba(80,150,255,0.55))
-              drop-shadow(0 0 55px rgba(0,80,255,0.3));
-    }
-    50% {
-      filter: drop-shadow(0 0 22px rgba(255,255,255,0.95))
-              drop-shadow(0 0 50px rgba(100,180,255,0.9))
-              drop-shadow(0 0 90px rgba(0,100,255,0.6));
-    }
+    0%,100% { transform: scale(1)    translateZ(0); }
+    50%     { transform: scale(1.02) translateZ(0); }
+  }
+  @keyframes haloBreathe {
+    0%,100% { opacity: 0.85; transform: scale(1); }
+    50%     { opacity: 1;    transform: scale(1.06); }
   }
 `;
