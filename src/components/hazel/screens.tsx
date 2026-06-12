@@ -4,6 +4,7 @@ import { CardComp } from './CardComp';
 import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useCryptoPrices } from '@/lib/hazel/crypto-prices';
+import { useWatchlist, usePriceAlerts, SUPPORTED_FIAT, resolveVs, notify, ensureNotifyPermission } from '@/lib/hazel/crypto-prefs';
 import { useHazelStore } from '@/lib/hazel/store';
 import { sendChatMessage, deleteChatMessage, fetchContactProfile, removeContact } from '@/lib/hazel/chat-sync';
 import { uploadChatMedia } from '@/lib/hazel/chat-media';
@@ -400,9 +401,42 @@ export function CatDetailScreen({ catId, monthKey, onBack, onPickMonth }: any) {
 export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
   const { state, set } = useHazelStore();
   const sym = getCurrencySym(state.settings.currency);
-  const { quotes, loading, error, updatedAt } = useCryptoPrices('usd');
+  const prefCur = (state.settings?.currency ?? 'USD').toUpperCase();
+  const [vsCode, setVsCode] = useState<string>(prefCur);
+  // Keep selector in sync if the user changes their preferred currency in Settings.
+  useEffect(() => { setVsCode(prefCur); }, [prefCur]);
+  const vs = resolveVs(vsCode);
+  const fiatSym = getCurrencySym(vsCode);
+  const { quotes, loading, error, updatedAt } = useCryptoPrices(vs);
+  const { isPinned, togglePin } = useWatchlist();
+  const { alerts, add: addAlert, remove: removeAlert, markTriggered, forCoin } = usePriceAlerts();
   // No on-chain wallet yet — portfolio value is 0 until balances are wired in.
   const cryptoTotal = 0;
+  const [alertOpen, setAlertOpen] = useState<null | { coinId: string; sym: string; price: number }>(null);
+
+  // Watch live prices and fire alerts when targets cross.
+  useEffect(() => {
+    if (!quotes.length || !alerts.length) return;
+    const priceMap = new Map(quotes.map((q) => [q.id, q.price]));
+    for (const a of alerts) {
+      if (a.triggered) continue;
+      const p = priceMap.get(a.coinId);
+      if (!p) continue;
+      const hit = a.direction === 'above' ? p >= a.target : p <= a.target;
+      if (hit) {
+        markTriggered(a.id);
+        const dir = a.direction === 'above' ? '↑' : '↓';
+        const msg = `${a.coinSym} ${dir} ${fiatSym}${fmtM(p)} (target ${fiatSym}${fmtM(a.target)})`;
+        showToast(`Price alert: ${msg}`);
+        notify('Price alert', msg);
+      }
+    }
+  }, [quotes, alerts, markTriggered, fiatSym]);
+
+  // Sort: pinned first, then by name order from API.
+  const ordered = useMemo(() => {
+    return [...quotes].sort((a, b) => Number(isPinned(b.id)) - Number(isPinned(a.id)));
+  }, [quotes, isPinned]);
 
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
@@ -435,33 +469,70 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: W, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7 }}>Crypto Assets</div>
-          <div style={{ fontSize: 10, color: S, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 6, height: 6, borderRadius: 3, background: error ? RD : (loading ? '#fbbf24' : GN), display: 'inline-block' }} />
-            {error ? 'Offline' : loading ? 'Loading…' : updatedAt ? `Live · ${new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Live'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select
+              aria-label="Display currency"
+              value={vsCode.toUpperCase()}
+              onChange={(e) => setVsCode(e.target.value)}
+              style={{ background: 'rgba(255,255,255,0.07)', color: W, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '4px 8px', fontSize: 11, fontWeight: 600 }}
+            >
+              {SUPPORTED_FIAT.map((c) => (
+                <option key={c} value={c} style={{ background: '#001a44', color: W }}>{c}</option>
+              ))}
+            </select>
+            <div style={{ fontSize: 10, color: S, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: 3, background: error ? RD : (loading ? '#fbbf24' : GN), display: 'inline-block' }} />
+              {error ? 'Offline' : loading ? 'Loading…' : updatedAt ? `Live · ${new Date(updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Live'}
+            </div>
           </div>
         </div>
         <div style={{ ...gl('rgba(37,99,235,0.06)', 18), padding: 18, marginBottom: 14, textAlign: 'center', border: '1px solid rgba(37,99,235,0.15)' }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>Total Portfolio Value</div>
-          <div style={{ fontSize: 28, color: W, fontWeight: 800, letterSpacing: '-0.02em' }}>${fmtM(cryptoTotal)}</div>
+          <div style={{ fontSize: 28, color: W, fontWeight: 800, letterSpacing: '-0.02em' }}>{fiatSym}{fmtM(cryptoTotal)}</div>
+          <div style={{ fontSize: 10, color: S, marginTop: 4 }}>Shown in {vsCode.toUpperCase()} · {alerts.filter((a) => !a.triggered).length} active alert{alerts.filter((a) => !a.triggered).length === 1 ? '' : 's'}</div>
         </div>
-        {(quotes.length ? quotes : []).map((c) => {
+        {(ordered.length ? ordered : []).map((c) => {
           const bal = 0;
           const val = c.price * bal;
           const pos = c.chg >= 0;
+          const pinned = isPinned(c.id);
+          const coinAlerts = forCoin(c.id);
           return (
             <div key={c.id} style={{ ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                 <CryptoIcon sym={c.sym} size={36} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{c.name}</div>
+                  <div style={{ color: W, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {c.name}
+                    {pinned && <Ic n="Star" s={12} c="#fbbf24" />}
+                  </div>
                   <div style={{ color: S, fontSize: 11 }}>{c.sym}</div>
                 </div>
+                <T onClick={() => togglePin(c.id)} aria-label={pinned ? 'Unpin' : 'Pin to watchlist'} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: pinned ? '#fbbf24' : S, width: 30, height: 30, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ic n="Star" s={14} />
+                </T>
+                <T onClick={async () => { await ensureNotifyPermission(); setAlertOpen({ coinId: c.id, sym: c.sym, price: c.price }); }} aria-label="Set price alert" style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: coinAlerts.length ? AC : S, width: 30, height: 30, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  <Ic n="Bell" s={14} />
+                  {coinAlerts.length > 0 && <span style={{ position: 'absolute', top: -2, right: -2, background: AC, color: W, fontSize: 9, fontWeight: 700, borderRadius: 8, padding: '0 4px', lineHeight: '12px' }}>{coinAlerts.length}</span>}
+                </T>
                 <div style={{ color: pos ? GN : RD, fontSize: 12, fontWeight: 700 }}>{pos ? '+' : ''}{c.chg.toFixed(2)}%</div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: S }}>
-                <div><div>Price</div><div style={{ color: W, fontWeight: 600, marginTop: 2 }}>${fmtM(c.price)}</div></div>
-                <div style={{ textAlign: 'right' }}><div>Balance</div><div style={{ color: W, fontWeight: 600, marginTop: 2 }}>{bal.toLocaleString()} {c.sym}</div><div style={{ color: S2, fontSize: 10 }}>≈ ${fmtM(val)}</div></div>
+                <div><div>Price</div><div style={{ color: W, fontWeight: 600, marginTop: 2 }}>{fiatSym}{fmtM(c.price)}</div></div>
+                <div style={{ textAlign: 'right' }}><div>Balance</div><div style={{ color: W, fontWeight: 600, marginTop: 2 }}>{bal.toLocaleString()} {c.sym}</div><div style={{ color: S2, fontSize: 10 }}>≈ {fiatSym}{fmtM(val)}</div></div>
               </div>
+              {coinAlerts.length > 0 && (
+                <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {coinAlerts.map((a) => (
+                    <span key={a.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(37,99,235,0.12)', color: AC, borderRadius: 10, padding: '4px 8px', fontSize: 11, fontWeight: 600 }}>
+                      {a.direction === 'above' ? '↑' : '↓'} {fiatSym}{fmtM(a.target)}
+                      <T onClick={() => removeAlert(a.id)} aria-label="Remove alert" style={{ background: 'transparent', border: 'none', color: AC, padding: 0, lineHeight: 0 }}>
+                        <Ic n="X" s={11} />
+                      </T>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -471,6 +542,61 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
         {error && quotes.length === 0 && (
           <div style={{ color: RD, fontSize: 12, textAlign: 'center', padding: 16 }}>Couldn’t load live prices. Check your connection.</div>
         )}
+      </div>
+      {alertOpen && (
+        <PriceAlertSheet
+          coinId={alertOpen.coinId}
+          sym={alertOpen.sym}
+          currentPrice={alertOpen.price}
+          vs={vs}
+          fiatSym={fiatSym}
+          onClose={() => setAlertOpen(null)}
+          onSave={(target, direction) => {
+            addAlert({ coinId: alertOpen.coinId, coinSym: alertOpen.sym, target, direction, vs });
+            showToast(`Alert set for ${alertOpen.sym} ${direction} ${fiatSym}${fmtM(target)}`);
+            setAlertOpen(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function PriceAlertSheet({
+  coinId, sym, currentPrice, vs, fiatSym, onClose, onSave,
+}: {
+  coinId: string; sym: string; currentPrice: number; vs: string; fiatSym: string;
+  onClose: () => void; onSave: (target: number, dir: 'above' | 'below') => void;
+}) {
+  const [target, setTarget] = useState<string>(currentPrice ? String(currentPrice.toFixed(currentPrice < 1 ? 4 : 2)) : '');
+  const [dir, setDir] = useState<'above' | 'below'>('above');
+  return (
+    <div className="afi" style={{ position: 'fixed', inset: 0, zIndex: 220, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: 480, background: '#001a44', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: '18px 20px 28px', border: '1px solid rgba(255,255,255,0.12)' }}>
+        <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)', margin: '0 auto 14px' }} />
+        <h2 style={{ color: W, fontSize: 18, fontWeight: 700, marginBottom: 4 }}>Set price alert · {sym}</h2>
+        <div style={{ fontSize: 12, color: S, marginBottom: 14 }}>Current: {fiatSym}{fmtM(currentPrice)} ({vs.toUpperCase()})</div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+          {(['above','below'] as const).map((d) => (
+            <T key={d} onClick={() => setDir(d)} style={{ flex: 1, padding: '10px 12px', borderRadius: 12, background: dir === d ? AC : 'rgba(255,255,255,0.06)', color: W, border: 'none', fontWeight: 700, fontSize: 13 }}>
+              {d === 'above' ? '↑ Above' : '↓ Below'}
+            </T>
+          ))}
+        </div>
+        <label style={{ fontSize: 11, color: S, fontWeight: 600 }}>Target price ({vs.toUpperCase()})</label>
+        <input
+          autoFocus
+          inputMode="decimal"
+          value={target}
+          onChange={(e) => setTarget(e.target.value)}
+          placeholder="0.00"
+          style={{ width: '100%', marginTop: 6, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: W, fontSize: 16, fontWeight: 600 }}
+        />
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <T onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: W, border: 'none', fontWeight: 700 }}>Cancel</T>
+          <T onClick={() => { const n = parseFloat(target); if (!isFinite(n) || n <= 0) { showToast('Enter a valid price'); return; } onSave(n, dir); }} style={{ flex: 1, padding: '12px', borderRadius: 12, background: AC, color: W, border: 'none', fontWeight: 700 }}>Save alert</T>
+        </div>
       </div>
     </div>
   );
