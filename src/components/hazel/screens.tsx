@@ -4,6 +4,7 @@ import { CardComp } from './CardComp';
 import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useCryptoPrices } from '@/lib/hazel/crypto-prices';
+import { useWatchlist, usePriceAlerts, SUPPORTED_FIAT, resolveVs, notify, ensureNotifyPermission } from '@/lib/hazel/crypto-prefs';
 import { useHazelStore } from '@/lib/hazel/store';
 import { sendChatMessage, deleteChatMessage, fetchContactProfile, removeContact } from '@/lib/hazel/chat-sync';
 import { uploadChatMedia } from '@/lib/hazel/chat-media';
