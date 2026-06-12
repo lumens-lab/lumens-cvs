@@ -101,7 +101,7 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
   if (!open) return null;
   return (
     <div className="afi" style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }} />
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
       <div className="asu no-scrollbar" style={{
         position: 'relative', width: '100%', maxWidth: 480, maxHeight: '92vh', overflow: 'auto',
         background: '#001a44', borderTop: '1px solid rgba(255,255,255,0.12)',
