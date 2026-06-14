@@ -168,6 +168,16 @@
   }
   body.theme-light input::placeholder, body.theme-light textarea::placeholder { color: rgba(11,31,68,0.45); }
   body.theme-light #hazel-toast { color: #fff; background: rgba(37,99,235,0.95); border-color: rgba(37,99,235,0.4); }
+  /* White & Brilliant Blue — recolour default white text/icons to brilliant blue */
+  body.theme-light {
+    --lm-w: #2563eb;
+    --lm-s: rgba(37,99,235,0.65);
+    --lm-s2: rgba(37,99,235,0.4);
+  }
+  body.theme-light [style*="border: 1px solid rgba(255, 255, 255"],
+  body.theme-light [style*="border: 1px solid rgba(255,255,255"] {
+    border-color: #87ceeb !important;
+  }
   /* Dark theme — splash of brilliant blue on navy */
   body.theme-dark {
     background:
@@ -203,6 +213,16 @@
     box-shadow: 0 10px 30px rgba(58,42,34,0.10), inset 0 1px 0 rgba(255,255,255,0.7);
   }
   body.theme-peach #hazel-toast { background: rgba(255,140,90,0.95); color:#fff; border-color: rgba(255,140,90,0.4); }
+  /* Peach & White — recolour default white text/icons to page-title color, outlines to peach */
+  body.theme-peach {
+    --lm-w: #3a2a22;
+    --lm-s: rgba(58,42,34,0.65);
+    --lm-s2: rgba(58,42,34,0.4);
+  }
+  body.theme-peach [style*="border: 1px solid rgba(255, 255, 255"],
+  body.theme-peach [style*="border: 1px solid rgba(255,255,255"] {
+    border-color: rgba(255,140,90,0.55) !important;
+  }
 
   /* Graphite — premium charcoal with soft amber accent */
   body.theme-graphite {
