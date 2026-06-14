@@ -138,10 +138,10 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
 
       <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="What are you adding?">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 4 }}>
-          <T onClick={() => { setPickerOpen(false); openAdd('expense'); }} style={{ ...gl('rgba(248,113,113,0.1)', 16, { border: '1px solid rgba(248,113,113,0.25)', boxShadow: 'none' }), padding: 18, color: RD, fontSize: 14, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <T onClick={() => { setPickerOpen(false); setTimeout(() => openAdd('expense'), 60); }} style={{ ...gl('rgba(248,113,113,0.1)', 16, { border: '1px solid rgba(248,113,113,0.25)', boxShadow: 'none' }), padding: 18, color: RD, fontSize: 14, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <Ic n="TrendingDown" s={28} /> Expense
           </T>
-          <T onClick={() => { setPickerOpen(false); openAdd('income'); }} style={{ ...gl('rgba(52,211,153,0.1)', 16, { border: '1px solid rgba(52,211,153,0.25)', boxShadow: 'none' }), padding: 18, color: GN, fontSize: 14, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <T onClick={() => { setPickerOpen(false); setTimeout(() => openAdd('income'), 60); }} style={{ ...gl('rgba(52,211,153,0.1)', 16, { border: '1px solid rgba(52,211,153,0.25)', boxShadow: 'none' }), padding: 18, color: GN, fontSize: 14, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <Ic n="TrendingUp" s={28} /> Income
           </T>
         </div>
