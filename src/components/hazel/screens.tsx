@@ -202,18 +202,34 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
       .sort((a, b) => b.spent - a.spent);
   }, [monthTxs, state.expenseCats]);
 
-  // Last 7 days
+  // Last 7 days — net rolls up from the START of the current month so the chart
+  // shows whether the user is still profitable on monthly income through each day.
   const week = useMemo(() => {
     const today = new Date();
-    const arr: { d: string; spent: number; income: number; net: number }[] = [];
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    // Seed running with month-to-date net up to (but not including) the first day shown.
+    const firstShown = new Date(today);
+    firstShown.setDate(firstShown.getDate() - 6);
     let running = 0;
+    if (firstShown > monthStart) {
+      const cur = new Date(monthStart);
+      while (cur < firstShown) {
+        const key = cur.toISOString().slice(0, 10);
+        const spent = state.txs.filter((t) => t.date === key && t.amt < 0).reduce((s, t) => s + Math.abs(t.amt), 0);
+        const income = state.txs.filter((t) => t.date === key && t.amt > 0).reduce((s, t) => s + t.amt, 0);
+        running += income - spent;
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+    const arr: { d: string; spent: number; income: number; net: number }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
       const key = d.toISOString().slice(0, 10);
       const spent = state.txs.filter((t) => t.date === key && t.amt < 0).reduce((s, t) => s + Math.abs(t.amt), 0);
       const income = state.txs.filter((t) => t.date === key && t.amt > 0).reduce((s, t) => s + t.amt, 0);
-      running += income - spent;
+      // Only count this day toward the monthly net if it's in the current month.
+      if (d >= monthStart) running += income - spent;
       arr.push({ d: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()], spent, income, net: running });
     }
     return arr;
@@ -277,12 +293,12 @@ export function BudgetScreen({ openSheet, openCatDetail }: any) {
         </div>
         <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(52,211,153,0.06)', 18), padding: 18, border: '1px solid rgba(52,211,153,0.18)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: W }}>Last 7 Days · Income (net)</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: W }}>Last 7 Days · Net Monthly Income</div>
             <div style={{ fontSize: 10, color: (week[week.length-1]?.net ?? 0) >= 0 ? GN : RD, fontWeight: 700 }}>
               {sym}{(week[week.length-1]?.net ?? 0).toFixed(0)} today
             </div>
           </div>
-          <div style={{ fontSize: 10, color: S, marginBottom: 10 }}>Running balance — income earned minus expenses spent per day.</div>
+          <div style={{ fontSize: 10, color: S, marginBottom: 10 }}>Running balance</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, gap: 8 }}>
             {week.map((d, i) => {
               const h = Math.max(6, (Math.abs(d.net) / maxNet) * 90);
