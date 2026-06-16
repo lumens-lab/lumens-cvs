@@ -277,6 +277,7 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
   const [amt, setAmt] = useState('');
   const [cat, setCat] = useState(state.expenseCats[0]?.id ?? '');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [accountId, setAccountId] = useState<string>(state.accounts[0]?.id != null ? String(state.accounts[0].id) : '');
   const [merchant, setMerchant] = useState('');
   const [note, setNote] = useState('');
   const [receipt, setReceipt] = useState<string>('');
@@ -286,7 +287,7 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
   const photoRef = useRef<HTMLInputElement>(null);
   const runOcr = useServerFn(scanReceipt);
 
-  const reset = () => { setName(''); setAmt(''); setCat(state.expenseCats[0]?.id ?? ''); setDate(new Date().toISOString().slice(0, 10)); setMerchant(''); setNote(''); setReceipt(''); setItems([]); };
+  const reset = () => { setName(''); setAmt(''); setCat(state.expenseCats[0]?.id ?? ''); setDate(new Date().toISOString().slice(0, 10)); setAccountId(state.accounts[0]?.id != null ? String(state.accounts[0].id) : ''); setMerchant(''); setNote(''); setReceipt(''); setItems([]); };
 
   const readFile = (file: File, cb: (dataUrl: string) => void) => {
     if (file.size > 6 * 1024 * 1024) return showToast('Image too large (max 6MB)');
@@ -363,6 +364,7 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
       note: note.trim() || undefined,
       receipt: receipt || undefined,
       items: items.filter((i) => i.name.trim()).length ? items.filter((i) => i.name.trim()) : undefined,
+      accountId: accountId || undefined,
     };
     set((s) => { s.txs = [tx, ...s.txs]; });
     reset(); onClose(); showToast('Expense saved');
@@ -395,9 +397,17 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
 
       <Field label="What was it?"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Groceries at Pick n Pay" style={inp} /></Field>
 
+      <Field label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} /></Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <Field label={`Amount (${sym})`}><input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" style={{ ...inp, fontSize: 20, fontWeight: 700 }} /></Field>
-        <Field label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} /></Field>
+        <Field label="Account">
+          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} style={{ ...inp, appearance: 'none' }}>
+            <option value="" style={{ color: '#000' }}>{state.accounts.length ? 'None' : 'Add an account in Settings'}</option>
+            {state.accounts.map((a) => (
+              <option key={a.id} value={String(a.id)} style={{ color: '#000' }}>{a.name}{a.number ? ` · ${a.number}` : ''}</option>
+            ))}
+          </select>
+        </Field>
       </div>
 
       <Field label="Merchant (optional)"><input value={merchant} onChange={(e) => setMerchant(e.target.value)} placeholder="Store name" style={inp} /></Field>
