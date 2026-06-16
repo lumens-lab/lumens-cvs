@@ -198,7 +198,8 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
   const sym = getCurrencySym(state.settings.currency);
   const tx = state.txs.find((t) => t.id === id);
   if (!tx) return null;
-  const isIncome = tx.amt > 0;
+  const transfer = isTransfer(tx);
+  const isIncome = !transfer && tx.amt > 0;
   const catList = isIncome ? state.incomeCats : state.expenseCats;
   const cat = catList.find((c) => c.id === tx.cat);
   const [editOpen, setEditOpen] = useState(false);
@@ -209,10 +210,12 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
         <T onClick={onBack} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="ChevronLeft" s={20} />
         </T>
-        <h1 style={{ color: W, fontSize: 20, fontWeight: 800, flex: 1 }}>{isIncome ? 'Income' : 'Expense'}</h1>
-        <T onClick={() => setEditOpen(true)} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Ic n="Pencil" s={18} />
-        </T>
+        <h1 style={{ color: W, fontSize: 20, fontWeight: 800, flex: 1 }}>{transfer ? 'Transfer' : isIncome ? 'Income' : 'Expense'}</h1>
+        {!transfer && (
+          <T onClick={() => setEditOpen(true)} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Ic n="Pencil" s={18} />
+          </T>
+        )}
         <T onClick={() => { set((s) => { s.txs = s.txs.filter((t) => t.id !== id); }); showToast('Deleted'); onBack(); }} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.25)', color: RD, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="Trash2" s={18} />
         </T>
@@ -228,7 +231,7 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
       </div>
 
       <div style={{ ...gl('rgba(255,255,255,0.04)', 18), padding: 16, marginBottom: 16 }}>
-        <Row label="Category" value={cat?.name ?? tx.cat} />
+        <Row label={transfer ? 'Type' : 'Category'} value={transfer ? 'Transfer' : (cat?.name ?? tx.cat)} />
         {tx.merchant && <Row label="Merchant" value={tx.merchant} />}
         {tx.note && <Row label="Note" value={tx.note} />}
       </div>
