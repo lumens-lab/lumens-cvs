@@ -6,6 +6,8 @@ import { useHazelStore, exportState, importState, resetState } from '@/lib/hazel
 import type { Cat } from '@/lib/hazel/store';
 import { encodeMmbak, restoreFromFile } from '@/lib/hazel/restore';
 import { getRate, round2 } from '@/lib/hazel/fx';
+import { accountBalance } from '@/lib/hazel/account-balance';
+import { getCurrencySym } from './screens';
 
 const { W, S, S2, AC, GN, RD, BL } = COLORS;
 
@@ -234,18 +236,48 @@ export function BackupScreen({ onBack }: { onBack: () => void }) {
 export function AccountsScreen({ onBack }: { onBack: () => void }) {
   const { state, set } = useHazelStore();
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [name, setName] = useState('');
   const [type, setType] = useState('Cheque');
   const [number, setNumber] = useState('');
+  const [balance, setBalance] = useState('');
+  const sym = getCurrencySym(state.settings.currency);
+  const resetForm = () => { setName(''); setNumber(''); setType('Cheque'); setBalance(''); };
+  const startEdit = (a: any) => {
+    setEditingId(a.id);
+    setAdding(true);
+    setName(a.name);
+    setType(a.type);
+    setNumber('');
+    setBalance(a.balance != null ? String(a.balance) : '');
+  };
+  const cancel = () => { setAdding(false); setEditingId(null); resetForm(); };
   const save = () => {
-    if (!name.trim() || !number.trim()) return showToast('All fields required');
-    set((s) => { s.accounts = [...s.accounts, { id: Date.now(), name: name.trim(), type, number: '••••' + number.slice(-4) }]; });
-    setName(''); setNumber(''); setAdding(false); showToast('Account added');
+    if (!name.trim()) return showToast('Name required');
+    const bal = balance.trim() ? parseFloat(balance) : undefined;
+    if (balance.trim() && (bal == null || !isFinite(bal))) return showToast('Enter a valid balance');
+    if (editingId != null) {
+      set((s) => {
+        s.accounts = s.accounts.map((a) =>
+          a.id === editingId ? { ...a, name: name.trim(), type, balance: bal } : a,
+        );
+      });
+      cancel(); showToast('Account updated');
+      return;
+    }
+    if (!number.trim()) return showToast('Account number required');
+    set((s) => {
+      s.accounts = [
+        ...s.accounts,
+        { id: Date.now(), name: name.trim(), type, number: '••••' + number.slice(-4), balance: bal },
+      ];
+    });
+    cancel(); showToast('Account added');
   };
   return (
     <div className="afi" style={{ padding: '0 20px 140px' }}>
       <PageHeader title="Account Settings" onBack={onBack} right={
-        <T onClick={() => setAdding(!adding)} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', color: AC, fontSize: 12, fontWeight: 700 }}>{adding ? 'Cancel' : '+ Add'}</T>
+        <T onClick={() => { adding ? cancel() : setAdding(true); }} style={{ padding: '8px 12px', borderRadius: 12, background: 'rgba(37,99,235,0.15)', border: '1px solid rgba(37,99,235,0.3)', color: AC, fontSize: 12, fontWeight: 700 }}>{adding ? 'Cancel' : '+ Add'}</T>
       } />
       {adding && (
         <div style={{ ...gl('rgba(255,255,255,0.05)', 16), padding: 14, marginBottom: 12 }}>
@@ -255,8 +287,13 @@ export function AccountsScreen({ onBack }: { onBack: () => void }) {
               <option>Cheque</option><option>Savings</option><option>Credit</option><option>Business</option>
             </select>
           </Field>
-          <Field label="Account Number"><input value={number} onChange={(e) => setNumber(e.target.value.replace(/\D/g, ''))} placeholder="0000000000" style={inp} /></Field>
-          <T onClick={save} style={{ width: '100%', padding: 12, borderRadius: 14, background: AC, color: '#001535', border: 'none', fontSize: 14, fontWeight: 800 }}>Save Account</T>
+          {editingId == null && (
+            <Field label="Account Number"><input value={number} onChange={(e) => setNumber(e.target.value.replace(/\D/g, ''))} placeholder="0000000000" style={inp} /></Field>
+          )}
+          <Field label={`Opening Balance (${sym}) — optional`}>
+            <input inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value.replace(/[^\d.-]/g, ''))} placeholder="0.00" style={inp} />
+          </Field>
+          <T onClick={save} style={{ width: '100%', padding: 12, borderRadius: 14, background: AC, color: '#001535', border: 'none', fontSize: 14, fontWeight: 800 }}>{editingId != null ? 'Save Changes' : 'Save Account'}</T>
         </div>
       )}
       {state.accounts.map((a) => (
@@ -265,7 +302,14 @@ export function AccountsScreen({ onBack }: { onBack: () => void }) {
           <div style={{ flex: 1 }}>
             <div style={{ color: W, fontSize: 14, fontWeight: 700 }}>{a.name}</div>
             <div style={{ color: S, fontSize: 11 }}>{a.type} · {a.number}</div>
+            <div style={{ color: GN, fontSize: 12, fontWeight: 700, marginTop: 2 }}>
+              Balance: {sym}{accountBalance(a, state.txs).toFixed(2)}
+              {a.balance != null && <span style={{ color: S, fontWeight: 500, marginLeft: 6 }}>· opening {sym}{(a.balance ?? 0).toFixed(2)}</span>}
+            </div>
           </div>
+          <T onClick={() => startEdit(a)} style={{ padding: 8, background: 'none', border: 'none', color: AC }}>
+            <Ic n="Pencil" s={16} />
+          </T>
           <T onClick={() => { set((s) => { s.accounts = s.accounts.filter((x) => x.id !== a.id); }); showToast('Account removed'); }} style={{ padding: 8, background: 'none', border: 'none', color: RD }}>
             <Ic n="Trash2" s={16} />
           </T>
