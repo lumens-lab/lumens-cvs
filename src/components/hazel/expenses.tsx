@@ -557,6 +557,7 @@ function EditTxSheet({ open, onClose, tx }: { open: boolean; onClose: () => void
   const [amt, setAmt] = useState(String(Math.abs(tx.amt)));
   const [cat, setCat] = useState(tx.cat);
   const [date, setDate] = useState(tx.date.slice(0, 10));
+  const [accountId, setAccountId] = useState<string>(tx.accountId ?? (state.accounts[0]?.id != null ? String(state.accounts[0].id) : ''));
   const [merchant, setMerchant] = useState(tx.merchant ?? '');
   const [note, setNote] = useState(tx.note ?? '');
 
@@ -581,6 +582,7 @@ function EditTxSheet({ open, onClose, tx }: { open: boolean; onClose: () => void
               amt: isIncome ? Math.abs(n) : -Math.abs(n),
               merchant: merchant.trim() || undefined,
               note: note.trim() || undefined,
+              accountId: accountId || undefined,
             }
           : t,
       );
@@ -596,9 +598,17 @@ function EditTxSheet({ open, onClose, tx }: { open: boolean; onClose: () => void
         <T onClick={() => { if (!isIncome) { setIsIncome(true); setCat(state.incomeCats[0]?.id || ''); } }} style={{ flex: 1, padding: 10, borderRadius: 10, background: isIncome ? 'rgba(52,211,153,0.18)' : 'transparent', color: isIncome ? GN : W, fontSize: 12, fontWeight: 700, border: 'none' }}>Income</T>
       </div>
       <Field label="What was it?"><input value={name} onChange={(e) => setName(e.target.value)} style={inp} /></Field>
+      <Field label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} /></Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <Field label={`Amount (${sym})`}><input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d.]/g, ''))} style={{ ...inp, fontSize: 20, fontWeight: 700 }} /></Field>
-        <Field label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} /></Field>
+        <Field label="Account">
+          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} style={{ ...inp, appearance: 'none' }}>
+            <option value="" style={{ color: '#000' }}>None</option>
+            {state.accounts.map((a) => (
+              <option key={a.id} value={String(a.id)} style={{ color: '#000' }}>{a.name}{a.number ? ` · ${a.number}` : ''}</option>
+            ))}
+          </select>
+        </Field>
       </div>
       <Field label={isIncome ? 'Source (optional)' : 'Merchant (optional)'}><input value={merchant} onChange={(e) => setMerchant(e.target.value)} style={inp} /></Field>
       <div style={{ marginBottom: 12 }}>
