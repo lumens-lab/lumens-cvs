@@ -26,7 +26,7 @@ export function useTxSync(userId: string | null) {
   const pullRemote = async (uid: string) => {
     const { data, error } = await supabase
       .from('txs')
-      .select('id, name, cat, icon, ibg, ic, date, amt, merchant, note, receipt, items')
+      .select('id, name, cat, icon, ibg, ic, date, amt, merchant, note, receipt, items, account_id, to_account_id')
       .eq('user_id', uid)
       .order('date', { ascending: false })
       .order('created_at', { ascending: false });
@@ -45,6 +45,8 @@ export function useTxSync(userId: string | null) {
       note: r.note ?? undefined,
       receipt: r.receipt ?? undefined,
       items: r.items ?? undefined,
+      accountId: r.account_id ?? undefined,
+      toAccountId: r.to_account_id ?? undefined,
     }));
     const snap = new Map<string, string>();
     remote.forEach((t) => { if (t.serverId) snap.set(t.serverId, JSON.stringify(rowOf(t))); });
@@ -158,5 +160,7 @@ function rowOf(t: Tx) {
     note: t.note ?? null,
     receipt: t.receipt ?? null,
     items: t.items ?? null,
+    account_id: t.accountId ?? null,
+    to_account_id: t.toAccountId ?? null,
   };
 }

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { DEFAULT_EXPENSE_CATS, DEFAULT_INCOME_CATS } from './data';
 
 export type Card = { id: number; num: string; holder: string; exp: string; theme: number };
-export type Account = { id: number; name: string; type: string; number: string; icon?: string; color?: string };
+export type Account = { id: number; name: string; type: string; number: string; icon?: string; color?: string; /** Opening balance set when the account was added. */ balance?: number };
 export type Cat = { id: string; name: string; icon: string; color: string; budget?: number };
 export type Tx = {
   id?: number;
@@ -21,6 +21,10 @@ export type Tx = {
   receipt?: string;
   /** Itemized receipt lines */
   items?: { name: string; amt: number }[];
+  /** Account this entry is drawn from (expense) or paid into (income / transfer source). */
+  accountId?: string;
+  /** Destination account for transfers. */
+  toAccountId?: string;
   /** Supabase row id (set after remote sync). */
   serverId?: string;
 };
@@ -241,6 +245,8 @@ function sanitizeTx(t: any): Tx | null {
           .slice(0, 200)
           .map((i: any) => ({ name: escStr(i.name).slice(0, 200), amt: i.amt }))
       : undefined,
+    accountId: t.accountId != null ? escStr(t.accountId).slice(0, 40) : undefined,
+    toAccountId: t.toAccountId != null ? escStr(t.toAccountId).slice(0, 40) : undefined,
   };
 }
 

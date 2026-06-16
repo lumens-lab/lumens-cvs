@@ -1,0 +1,1 @@
+ALTER TABLE public.txs ADD COLUMN IF NOT EXISTS account_id text, ADD COLUMN IF NOT EXISTS to_account_id text;

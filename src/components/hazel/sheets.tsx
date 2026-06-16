@@ -51,6 +51,8 @@ export function AddTransferSheet({ open, onClose }: { open: boolean; onClose: ()
           amt: n,
           merchant: `${from.name} → ${to.name}`,
           note: note.trim() || undefined,
+          accountId: String(from.id),
+          toAccountId: String(to.id),
         },
         ...s.txs,
       ];

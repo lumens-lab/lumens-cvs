@@ -698,6 +698,7 @@ export type Database = {
       }
       txs: {
         Row: {
+          account_id: string | null
           amt: number
           cat: string
           created_at: string
@@ -711,10 +712,12 @@ export type Database = {
           name: string
           note: string | null
           receipt: string | null
+          to_account_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          account_id?: string | null
           amt: number
           cat: string
           created_at?: string
@@ -728,10 +731,12 @@ export type Database = {
           name: string
           note?: string | null
           receipt?: string | null
+          to_account_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          account_id?: string | null
           amt?: number
           cat?: string
           created_at?: string
@@ -745,6 +750,7 @@ export type Database = {
           name?: string
           note?: string | null
           receipt?: string | null
+          to_account_id?: string | null
           updated_at?: string
           user_id?: string
         }
