@@ -8,6 +8,8 @@ import { useHazelStore, getStateSnapshot } from './store';
  *
  * - On sign-in: pulls the remote row (if any) and merges it into the store.
  * - On change: debounced upsert of the affected slices for the signed-in user.
+ * - Realtime: subscribes to the user's `user_state` row so updates from
+ *   another device propagate to this one without a re-sign-in.
  */
 export function useUserStateSync(userId: string | null) {
   const { state, set } = useHazelStore();
@@ -15,24 +17,12 @@ export function useUserStateSync(userId: string | null) {
   const lastSnap = useRef<string>('');
   const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Pull remote state on sign-in.
-  useEffect(() => {
-    if (!userId) { seededFor.current = null; lastSnap.current = ''; return; }
-    if (seededFor.current === userId) return;
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
+  const pullRemote = async (uid: string, isInitial: boolean) => {
+    const { data } = await supabase
         .from('user_state' as any)
         .select('income_cats, expense_cats, budgets, accounts, cards, settings')
-        .eq('user_id', userId)
+      .eq('user_id', uid)
         .maybeSingle();
-      if (cancelled) return;
-      // A non-empty cat array on the remote row is the authoritative truth —
-      // that's how adds / edits / deletes flow across devices. An EMPTY
-      // array means "this user has deleted everything", which we also honour.
-      // A NULL field (no array at all) means the row was bootstrapped without
-      // categories yet; in that case we keep local defaults and push them up
-      // so future devices see something.
       const hasRemoteCats =
         !!data && (Array.isArray((data as any).income_cats) || Array.isArray((data as any).expense_cats));
       if (data) {
@@ -54,14 +44,14 @@ export function useUserStateSync(userId: string | null) {
           }
         });
       }
-      seededFor.current = userId;
+    seededFor.current = uid;
       const live = getStateSnapshot();
       lastSnap.current = snapshot(live);
-      if (!hasRemoteCats) {
+    if (isInitial && !hasRemoteCats) {
         // Bootstrap the row with current local state so other devices that
         // sign in next can pull a meaningful snapshot immediately.
         await supabase.from('user_state' as any).upsert({
-          user_id: userId,
+        user_id: uid,
           income_cats: live.incomeCats,
           expense_cats: live.expenseCats,
           budgets: live.budgets,
@@ -70,9 +60,40 @@ export function useUserStateSync(userId: string | null) {
           settings: live.settings,
         }, { onConflict: 'user_id' });
       }
-    })();
+  };
+
+  // Initial pull on sign-in.
+  useEffect(() => {
+    if (!userId) { seededFor.current = null; lastSnap.current = ''; return; }
+    if (seededFor.current === userId) return;
+    let cancelled = false;
+    (async () => { if (!cancelled) await pullRemote(userId, true); })();
     return () => { cancelled = true; };
-  }, [userId, set]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // Realtime + focus/online refresh.
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`user_state:${userId}`)
+      .on(
+        'postgres_changes' as any,
+        { event: '*', schema: 'public', table: 'user_state', filter: `user_id=eq.${userId}` },
+        () => { pullRemote(userId, false); },
+      )
+      .subscribe();
+    const onFocus = () => { if (document.visibilityState === 'visible') pullRemote(userId, false); };
+    const onOnline = () => pullRemote(userId, false);
+    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('online', onOnline);
+    return () => {
+      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('online', onOnline);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   // Debounced push on relevant state changes.
   useEffect(() => {
