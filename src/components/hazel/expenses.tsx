@@ -456,10 +456,11 @@ export function AddIncomeSheet({ open, onClose }: { open: boolean; onClose: () =
   const [amt, setAmt] = useState('');
   const [cat, setCat] = useState(state.incomeCats[0]?.id ?? '');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [accountId, setAccountId] = useState<string>(state.accounts[0]?.id != null ? String(state.accounts[0].id) : '');
   const [source, setSource] = useState('');
   const [note, setNote] = useState('');
 
-  const reset = () => { setName(''); setAmt(''); setCat(state.incomeCats[0]?.id ?? ''); setDate(new Date().toISOString().slice(0, 10)); setSource(''); setNote(''); };
+  const reset = () => { setName(''); setAmt(''); setCat(state.incomeCats[0]?.id ?? ''); setDate(new Date().toISOString().slice(0, 10)); setAccountId(state.accounts[0]?.id != null ? String(state.accounts[0].id) : ''); setSource(''); setNote(''); };
 
   const save = () => {
     const n = parseFloat(amt);
@@ -478,6 +479,7 @@ export function AddIncomeSheet({ open, onClose }: { open: boolean; onClose: () =
       amt: Math.abs(n),
       merchant: source.trim() || undefined,
       note: note.trim() || undefined,
+      accountId: accountId || undefined,
     };
     set((s) => { s.txs = [tx, ...s.txs]; });
     reset(); onClose(); showToast('Income saved');
@@ -486,9 +488,17 @@ export function AddIncomeSheet({ open, onClose }: { open: boolean; onClose: () =
   return (
     <Sheet open={open} onClose={() => { reset(); onClose(); }} title="Add Income">
       <Field label="What was it?"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Salary, freelance, refund" style={inp} /></Field>
+      <Field label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} /></Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <Field label={`Amount (${sym})`}><input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" style={{ ...inp, fontSize: 20, fontWeight: 700 }} /></Field>
-        <Field label="Date"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} /></Field>
+        <Field label="Account">
+          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} style={{ ...inp, appearance: 'none' }}>
+            <option value="" style={{ color: '#000' }}>{state.accounts.length ? 'None' : 'Add an account in Settings'}</option>
+            {state.accounts.map((a) => (
+              <option key={a.id} value={String(a.id)} style={{ color: '#000' }}>{a.name}{a.number ? ` · ${a.number}` : ''}</option>
+            ))}
+          </select>
+        </Field>
       </div>
       <Field label="Source (optional)"><input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Employer, client, person" style={inp} /></Field>
       <div style={{ marginBottom: 12 }}>
