@@ -10,6 +10,105 @@ import { createDebitOrder, updateDebitOrder, deleteDebitOrder, type DebitOrder }
 
 const { W, S, S2, AC, GN, RD, BL, PP } = COLORS;
 
+/* ── Add Transfer (between user's own accounts) ── */
+export function AddTransferSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { state, set } = useHazelStore();
+  const accounts = state.accounts;
+  const [fromId, setFromId] = useState<string>('');
+  const [toId, setToId] = useState<string>('');
+  const [amt, setAmt] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [note, setNote] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    setFromId(accounts[0]?.id ? String(accounts[0].id) : '');
+    setToId(accounts[1]?.id ? String(accounts[1].id) : '');
+    setAmt('');
+    setDate(new Date().toISOString().slice(0, 10));
+    setNote('');
+  }, [open, accounts]);
+
+  const save = () => {
+    if (accounts.length < 2) return showToast('Add at least 2 accounts in Settings first');
+    if (!fromId || !toId) return showToast('Pick both accounts');
+    if (fromId === toId) return showToast('Pick two different accounts');
+    const n = parseFloat(amt);
+    if (!n || n <= 0) return showToast('Enter a valid amount');
+    const from = accounts.find((a) => String(a.id) === fromId);
+    const to = accounts.find((a) => String(a.id) === toId);
+    if (!from || !to) return showToast('Account not found');
+    set((s) => {
+      s.txs = [
+        {
+          id: Date.now(),
+          name: `Transfer · ${from.name} → ${to.name}`,
+          cat: '__transfer__',
+          icon: 'ArrowLeftRight',
+          ibg: 'rgba(37,99,235,0.18)',
+          ic: AC,
+          date,
+          amt: n,
+          merchant: `${from.name} → ${to.name}`,
+          note: note.trim() || undefined,
+        },
+        ...s.txs,
+      ];
+    });
+    onClose();
+    showToast('Transfer recorded');
+  };
+
+  return (
+    <Sheet open={open} onClose={onClose} title="Transfer">
+      {accounts.length < 2 ? (
+        <div style={{ ...gl('rgba(255,255,255,0.04)', 14), padding: 18, fontSize: 13, color: S, textAlign: 'center', lineHeight: 1.5 }}>
+          You need at least 2 accounts to transfer between them.
+          <br />
+          Add accounts under <strong style={{ color: W }}>Settings → Accounts</strong>.
+        </div>
+      ) : (
+        <>
+          <Field label="From account">
+            <select value={fromId} onChange={(e) => setFromId(e.target.value)} style={{ ...inp, appearance: 'none' }}>
+              {accounts.map((a) => (
+                <option key={a.id} value={String(a.id)} style={{ color: '#000' }}>{a.name}{a.number ? ` · ${a.number}` : ''}</option>
+              ))}
+            </select>
+          </Field>
+          <div style={{ textAlign: 'center', color: AC, margin: '4px 0 8px' }}>
+            <Ic n="ArrowDown" s={20} />
+          </div>
+          <Field label="To account">
+            <select value={toId} onChange={(e) => setToId(e.target.value)} style={{ ...inp, appearance: 'none' }}>
+              {accounts.filter((a) => String(a.id) !== fromId).map((a) => (
+                <option key={a.id} value={String(a.id)} style={{ color: '#000' }}>{a.name}{a.number ? ` · ${a.number}` : ''}</option>
+              ))}
+            </select>
+          </Field>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Field label="Amount">
+              <input inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" style={{ ...inp, fontSize: 18, fontWeight: 700 }} />
+            </Field>
+            <Field label="Date">
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} />
+            </Field>
+          </div>
+          <Field label="Note (optional)">
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. moving savings" style={inp} />
+          </Field>
+          <div style={{ fontSize: 11, color: S, margin: '4px 2px 10px', lineHeight: 1.4 }}>
+            Transfers don't count as income or expenses — they just move money between your accounts.
+          </div>
+          <T onClick={save} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'linear-gradient(135deg,#2563eb,#34d399)', border: 'none', color: '#001535', fontSize: 15, fontWeight: 800, marginTop: 4 }}>
+            Record Transfer
+          </T>
+        </>
+      )}
+    </Sheet>
+  );
+}
+
 /* ── Add Card ── */
 export function AddCardSheet({ open, onClose }: any) {
   const { set } = useHazelStore();
