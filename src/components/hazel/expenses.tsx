@@ -232,7 +232,7 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
 
       <div style={{ ...gl('rgba(255,255,255,0.04)', 18), padding: 16, marginBottom: 16 }}>
         <Row label={transfer ? 'Type' : 'Category'} value={transfer ? 'Transfer' : (cat?.name ?? tx.cat)} />
-        {tx.merchant && <Row label="Merchant" value={tx.merchant} />}
+        {tx.merchant && <Row label={transfer ? 'Accounts' : 'Merchant'} value={tx.merchant} />}
         {tx.note && <Row label="Note" value={tx.note} />}
       </div>
 
