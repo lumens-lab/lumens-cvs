@@ -10,6 +10,8 @@ import { useHazelStore, type Tx } from './store';
  *  - Records are per-account: sign in on any device and see your CashFlow.
  *  - Signing out / switching accounts on the same device shows that other
  *    user's records, not the previous user's.
+ *  - Realtime: changes made on Device A appear on Device B within seconds,
+ *    without requiring a fresh sign-in or app reload.
  */
 export function useTxSync(userId: string | null) {
   const { state, set } = useHazelStore();
@@ -18,41 +20,79 @@ export function useTxSync(userId: string | null) {
   // Snapshot of last-pushed txs (by serverId) so we can diff on changes.
   const lastSnap = useRef<Map<string, string>>(new Map());
 
+  // Pull-from-server helper (initial seed + realtime refresh + tab focus).
+  // Merges remote rows with any locally-added rows that haven't been pushed
+  // yet (no serverId) so we never lose an in-flight insert.
+  const pullRemote = async (uid: string) => {
+    const { data, error } = await supabase
+      .from('txs')
+      .select('id, name, cat, icon, ibg, ic, date, amt, merchant, note, receipt, items')
+      .eq('user_id', uid)
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false });
+    if (error || !data) return;
+    const remote: Tx[] = data.map((r: any, i: number) => ({
+      id: Date.now() + i,
+      serverId: r.id,
+      name: r.name,
+      cat: r.cat,
+      icon: r.icon,
+      ibg: r.ibg,
+      ic: r.ic,
+      date: typeof r.date === 'string' ? r.date : new Date(r.date).toISOString().slice(0, 10),
+      amt: Number(r.amt),
+      merchant: r.merchant ?? undefined,
+      note: r.note ?? undefined,
+      receipt: r.receipt ?? undefined,
+      items: r.items ?? undefined,
+    }));
+    const snap = new Map<string, string>();
+    remote.forEach((t) => { if (t.serverId) snap.set(t.serverId, JSON.stringify(rowOf(t))); });
+    lastSnap.current = snap;
+    seededFor.current = uid;
+    set((s) => {
+      // Preserve un-synced local rows (no serverId yet) so an entry the user
+      // just added doesn't vanish if a realtime tick races the push.
+      const localUnsynced = s.txs.filter((t) => !t.serverId);
+      s.txs = [...localUnsynced, ...remote];
+    });
+  };
+
   // Initial load: replace local txs with server txs for this user.
   useEffect(() => {
     if (!userId) { seededFor.current = null; lastSnap.current = new Map(); return; }
     if (seededFor.current === userId) return;
     let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase
-        .from('txs')
-        .select('id, name, cat, icon, ibg, ic, date, amt, merchant, note, receipt, items')
-        .order('date', { ascending: false })
-        .order('created_at', { ascending: false });
-      if (cancelled || error || !data) return;
-      const remote: Tx[] = data.map((r: any, i: number) => ({
-        id: Date.now() + i,
-        serverId: r.id,
-        name: r.name,
-        cat: r.cat,
-        icon: r.icon,
-        ibg: r.ibg,
-        ic: r.ic,
-        date: typeof r.date === 'string' ? r.date : new Date(r.date).toISOString().slice(0, 10),
-        amt: Number(r.amt),
-        merchant: r.merchant ?? undefined,
-        note: r.note ?? undefined,
-        receipt: r.receipt ?? undefined,
-        items: r.items ?? undefined,
-      }));
-      const snap = new Map<string, string>();
-      remote.forEach((t) => { if (t.serverId) snap.set(t.serverId, JSON.stringify(rowOf(t))); });
-      lastSnap.current = snap;
-      seededFor.current = userId;
-      set((s) => { s.txs = remote; });
-    })();
+    (async () => { if (!cancelled) await pullRemote(userId); })();
     return () => { cancelled = true; };
-  }, [userId, set]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // Realtime: any insert/update/delete on this user's rows from any device
+  // triggers a re-pull. Also refetch when the tab regains focus or the
+  // browser comes back online — both common "I just signed in on another
+  // device" recovery moments.
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`txs:${userId}`)
+      .on(
+        'postgres_changes' as any,
+        { event: '*', schema: 'public', table: 'txs', filter: `user_id=eq.${userId}` },
+        () => { pullRemote(userId); },
+      )
+      .subscribe();
+    const onFocus = () => { if (document.visibilityState === 'visible') pullRemote(userId); };
+    const onOnline = () => pullRemote(userId);
+    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('online', onOnline);
+    return () => {
+      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('online', onOnline);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   // Diff-and-push on every store change once seeded.
   useEffect(() => {

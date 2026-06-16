@@ -4,15 +4,26 @@ import { useHazelStore, type Tx } from '@/lib/hazel/store';
 import { getCurrencySym } from './screens';
 import { useServerFn } from '@tanstack/react-start';
 import { scanReceipt } from '@/lib/hazel/ocr.functions';
+import { MonthPickerSheet } from './sheets';
+import { MONTHS } from '@/lib/hazel/data';
 
 const { W, S, S2, AC, GN, RD } = COLORS;
 
+/** Cat sentinel for transfer transactions. They have amt > 0 but are
+ *  excluded from income/expense totals via this check. */
+export const TRANSFER_CAT = '__transfer__';
+export const isTransfer = (t: Tx) => t.cat === TRANSFER_CAT;
+
 /* ── EXPENSES LIST ── */
-export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expense' | 'income') => void; openDetail: (id: number) => void }) {
+export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expense' | 'income' | 'transfer') => void; openDetail: (id: number) => void }) {
   const { state } = useHazelStore();
   const sym = getCurrencySym(state.settings.currency);
   const [q, setQ] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [monthKey, setMonthKey] = useState(() => new Date().toISOString().slice(0, 7));
+  const [my, mm] = monthKey.split('-').map(Number);
+  const monthLabel = `${MONTHS[mm - 1]} ${my}`;
   const [view, setView] = useState<'expense' | 'income'>('expense');
   const swipeRef = useRef<HTMLDivElement>(null);
   const onSwipe = (e: React.UIEvent<HTMLDivElement>) => {
@@ -20,46 +31,55 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
     const idx = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
     setView(idx === 0 ? 'expense' : 'income');
   };
+  // Filter all lists/totals by the selected month.
+  const monthTxs = useMemo(
+    () => state.txs.filter((t) => t.date.startsWith(monthKey)),
+    [state.txs, monthKey],
+  );
+  const transfersInMonth = useMemo(
+    () => monthTxs.filter(isTransfer).sort((a, b) => b.date.localeCompare(a.date)),
+    [monthTxs],
+  );
   const expenses = useMemo(
     () =>
-      state.txs
-        .filter((t) => t.amt < 0 && t.name.toLowerCase().includes(q.toLowerCase()))
+      monthTxs
+        .filter((t) => !isTransfer(t) && t.amt < 0 && t.name.toLowerCase().includes(q.toLowerCase()))
         .sort((a, b) => b.date.localeCompare(a.date)),
-    [state.txs, q],
+    [monthTxs, q],
   );
   const incomes = useMemo(
     () =>
-      state.txs
-        .filter((t) => t.amt > 0 && t.name.toLowerCase().includes(q.toLowerCase()))
+      monthTxs
+        .filter((t) => !isTransfer(t) && t.amt > 0 && t.name.toLowerCase().includes(q.toLowerCase()))
         .sort((a, b) => b.date.localeCompare(a.date)),
-    [state.txs, q],
+    [monthTxs, q],
   );
-  const today = new Date().toISOString().slice(0, 10).slice(0, 7);
   const monthTotal = useMemo(
-    () => state.txs.filter((t) => t.amt < 0 && t.date.startsWith(today)).reduce((s, t) => s + Math.abs(t.amt), 0),
-    [state.txs, today],
+    () => monthTxs.filter((t) => !isTransfer(t) && t.amt < 0).reduce((s, t) => s + Math.abs(t.amt), 0),
+    [monthTxs],
   );
   const monthIncome = useMemo(
-    () =>
-      state.txs
-        .filter((t) => t.amt > 0 && t.date.startsWith(today))
-        .reduce((s, t) => s + t.amt, 0),
-    [state.txs, today],
+    () => monthTxs.filter((t) => !isTransfer(t) && t.amt > 0).reduce((s, t) => s + t.amt, 0),
+    [monthTxs],
   );
   const incomeCount = useMemo(
-    () => state.txs.filter((t) => t.amt > 0).length,
-    [state.txs],
+    () => monthTxs.filter((t) => !isTransfer(t) && t.amt > 0).length,
+    [monthTxs],
   );
   const expenseCount = useMemo(
-    () => state.txs.filter((t) => t.amt < 0).length,
-    [state.txs],
+    () => monthTxs.filter((t) => !isTransfer(t) && t.amt < 0).length,
+    [monthTxs],
   );
   const isIncome = view === 'income';
-  const list = isIncome ? incomes : expenses;
+  // Show transfers alongside both views so users can see balance movements.
+  const list = useMemo(
+    () => [...(isIncome ? incomes : expenses), ...transfersInMonth].sort((a, b) => b.date.localeCompare(a.date)),
+    [isIncome, incomes, expenses, transfersInMonth],
+  );
 
   const searching = q.trim().length > 0;
   const searchTotal = useMemo(
-    () => list.reduce((s, t) => s + Math.abs(t.amt), 0),
+    () => list.filter((t) => !isTransfer(t)).reduce((s, t) => s + Math.abs(t.amt), 0),
     [list],
   );
 
@@ -67,15 +87,20 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>{isIncome ? 'Income' : 'CashFlow'}</h1>
-        <T onClick={() => setPickerOpen(true)} style={{ ...gl('rgba(37,99,235,0.12)', 14, { boxShadow: 'none', border: '1px solid rgba(37,99,235,0.3)' }), padding: '8px 14px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Ic n="Plus" s={16} /> Add
-        </T>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <T onClick={() => setMonthPickerOpen(true)} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', color: S, fontSize: 12, fontWeight: 600 }}>
+            <Ic n="Calendar" s={14} /> {monthLabel}
+          </T>
+          <T onClick={() => setPickerOpen(true)} style={{ ...gl('rgba(37,99,235,0.12)', 14, { boxShadow: 'none', border: '1px solid rgba(37,99,235,0.3)' }), padding: '8px 14px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Ic n="Plus" s={16} /> Add
+          </T>
+        </div>
       </div>
 
       <div ref={swipeRef} onScroll={onSwipe} className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', gap: 12, marginBottom: 16, paddingBottom: 4 }}>
         <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(248,113,113,0.06)', 20), padding: 18, textAlign: 'center', border: '1px solid rgba(248,113,113,0.18)' }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>
-            {searching && !isIncome ? `Matching "${q.trim()}"` : 'Spent this month'}
+            {searching && !isIncome ? `Matching "${q.trim()}"` : `Spent in ${monthLabel}`}
           </div>
           <div style={{ fontSize: 28, color: RD, fontWeight: 800, letterSpacing: '-0.02em' }}>
             {sym}{(searching && !isIncome ? searchTotal : monthTotal).toFixed(2)}
@@ -83,12 +108,12 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
           <div style={{ fontSize: 11, color: S, marginTop: 4 }}>
             {searching && !isIncome
               ? `${expenses.length} ${expenses.length === 1 ? 'match' : 'matches'}`
-              : `${expenseCount} ${expenseCount === 1 ? 'expense' : 'expenses'} total`}
+              : `${expenseCount} ${expenseCount === 1 ? 'expense' : 'expenses'}`}
           </div>
         </div>
         <div style={{ flex: '0 0 100%', scrollSnapAlign: 'center', ...gl('rgba(52,211,153,0.06)', 20), padding: 18, textAlign: 'center', border: '1px solid rgba(52,211,153,0.18)' }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 4 }}>
-            {searching && isIncome ? `Matching "${q.trim()}"` : 'Earned this month'}
+            {searching && isIncome ? `Matching "${q.trim()}"` : `Earned in ${monthLabel}`}
           </div>
           <div style={{ fontSize: 28, color: GN, fontWeight: 800, letterSpacing: '-0.02em' }}>
             {sym}{(searching && isIncome ? searchTotal : monthIncome).toFixed(2)}
@@ -96,7 +121,7 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
           <div style={{ fontSize: 11, color: S, marginTop: 4 }}>
             {searching && isIncome
               ? `${incomes.length} ${incomes.length === 1 ? 'match' : 'matches'}`
-              : `${incomeCount} income ${incomeCount === 1 ? 'entry' : 'entries'} total`}
+              : `${incomeCount} income ${incomeCount === 1 ? 'entry' : 'entries'}`}
           </div>
         </div>
       </div>
@@ -115,7 +140,7 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
 
       {list.length === 0 ? (
         <div style={{ ...gl(), padding: 24, textAlign: 'center', color: S }}>
-          {isIncome ? 'No income yet. Tap “+ Add” to record one.' : 'No expenses yet. Tap “+ Add” to record one.'}
+          {isIncome ? `No income in ${monthLabel}.` : `No expenses in ${monthLabel}.`}
         </div>
       ) : (
         list.map((t) => (
@@ -127,25 +152,42 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ color: W, fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
               <div style={{ color: S, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {t.merchant ? `${t.merchant} • ` : ''}{new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                {t.note ? ` • ${t.note}` : ''}
+                {isTransfer(t) ? (t.merchant ?? 'Transfer') : (t.merchant ? `${t.merchant}` : (t.note ?? ''))}
+              </div>
+              <div style={{ color: S2, fontSize: 10, marginTop: 2 }}>
+                {new Date(t.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
             </div>
-            <div style={{ color: isIncome ? GN : W, fontSize: 14, fontWeight: 700 }}>{isIncome ? '+' : ''}{sym}{Math.abs(t.amt).toFixed(2)}</div>
+            <div style={{ color: isTransfer(t) ? AC : (t.amt > 0 ? GN : W), fontSize: 14, fontWeight: 700 }}>
+              {isTransfer(t) ? '↔ ' : (t.amt > 0 ? '+' : '')}{sym}{Math.abs(t.amt).toFixed(2)}
+            </div>
           </T>
         ))
       )}
 
       <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="What are you adding?">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 4 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 4 }}>
           <T onClick={() => { setPickerOpen(false); setTimeout(() => openAdd('expense'), 60); }} style={{ ...gl('rgba(248,113,113,0.1)', 16, { border: '1px solid rgba(248,113,113,0.25)', boxShadow: 'none' }), padding: 18, color: RD, fontSize: 14, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <Ic n="TrendingDown" s={28} /> Expense
+            <Ic n="TrendingDown" s={26} /> Expense
           </T>
           <T onClick={() => { setPickerOpen(false); setTimeout(() => openAdd('income'), 60); }} style={{ ...gl('rgba(52,211,153,0.1)', 16, { border: '1px solid rgba(52,211,153,0.25)', boxShadow: 'none' }), padding: 18, color: GN, fontSize: 14, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <Ic n="TrendingUp" s={28} /> Income
+            <Ic n="TrendingUp" s={26} /> Income
+          </T>
+          <T onClick={() => { setPickerOpen(false); setTimeout(() => openAdd('transfer'), 60); }} style={{ ...gl('rgba(37,99,235,0.1)', 16, { border: '1px solid rgba(37,99,235,0.25)', boxShadow: 'none' }), padding: 18, color: AC, fontSize: 14, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <Ic n="ArrowLeftRight" s={26} /> Transfer
           </T>
         </div>
+        <div style={{ fontSize: 11, color: S, marginTop: 12, textAlign: 'center', lineHeight: 1.5 }}>
+          Transfers move money between your accounts and don't affect income or expense totals.
+        </div>
       </Sheet>
+
+      <MonthPickerSheet
+        open={monthPickerOpen}
+        onClose={() => setMonthPickerOpen(false)}
+        monthKey={monthKey}
+        onPick={(k: string) => setMonthKey(k)}
+      />
     </div>
   );
 }
@@ -156,7 +198,8 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
   const sym = getCurrencySym(state.settings.currency);
   const tx = state.txs.find((t) => t.id === id);
   if (!tx) return null;
-  const isIncome = tx.amt > 0;
+  const transfer = isTransfer(tx);
+  const isIncome = !transfer && tx.amt > 0;
   const catList = isIncome ? state.incomeCats : state.expenseCats;
   const cat = catList.find((c) => c.id === tx.cat);
   const [editOpen, setEditOpen] = useState(false);
@@ -167,10 +210,12 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
         <T onClick={onBack} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.06)', border: 'none', color: W, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="ChevronLeft" s={20} />
         </T>
-        <h1 style={{ color: W, fontSize: 20, fontWeight: 800, flex: 1 }}>{isIncome ? 'Income' : 'Expense'}</h1>
-        <T onClick={() => setEditOpen(true)} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Ic n="Pencil" s={18} />
-        </T>
+        <h1 style={{ color: W, fontSize: 20, fontWeight: 800, flex: 1 }}>{transfer ? 'Transfer' : isIncome ? 'Income' : 'Expense'}</h1>
+        {!transfer && (
+          <T onClick={() => setEditOpen(true)} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.25)', color: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Ic n="Pencil" s={18} />
+          </T>
+        )}
         <T onClick={() => { set((s) => { s.txs = s.txs.filter((t) => t.id !== id); }); showToast('Deleted'); onBack(); }} style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.25)', color: RD, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="Trash2" s={18} />
         </T>
@@ -186,8 +231,8 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
       </div>
 
       <div style={{ ...gl('rgba(255,255,255,0.04)', 18), padding: 16, marginBottom: 16 }}>
-        <Row label="Category" value={cat?.name ?? tx.cat} />
-        {tx.merchant && <Row label="Merchant" value={tx.merchant} />}
+        <Row label={transfer ? 'Type' : 'Category'} value={transfer ? 'Transfer' : (cat?.name ?? tx.cat)} />
+        {tx.merchant && <Row label={transfer ? 'Accounts' : 'Merchant'} value={tx.merchant} />}
         {tx.note && <Row label="Note" value={tx.note} />}
       </div>
 
