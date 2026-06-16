@@ -20,6 +20,7 @@ import {
   FindPeopleScreen,
   EditProfileScreen,
   AddDebitOrderSheet,
+  AddTransferSheet,
 } from "@/components/hazel/sheets";
 import {
   SettingsRoot,
@@ -327,7 +328,9 @@ function HazelApp() {
       )}
       {tab === "expenses" && (
         <ExpensesScreen
-          openAdd={(kind?: "expense" | "income") => openSheet(kind === "income" ? "add-income" : "add-expense")}
+          openAdd={(kind?: "expense" | "income" | "transfer") =>
+            openSheet(kind === "income" ? "add-income" : kind === "transfer" ? "add-transfer" : "add-expense")
+          }
           openDetail={(id) => { setExpenseId(id); setSub("expense-detail"); }}
         />
       )}
@@ -637,6 +640,7 @@ function Sheets({ sheet, sheetData, closeSheet, chatId, requirePin }: any) {
       <AddCatSheet open={sheet === "add-expense-cat"} onClose={closeSheet} kind="expense" />
       <AddExpenseSheet open={sheet === "add-expense"} onClose={closeSheet} />
       <AddIncomeSheet open={sheet === "add-income"} onClose={closeSheet} />
+      <AddTransferSheet open={sheet === "add-transfer"} onClose={closeSheet} />
       <SwapSheet open={sheet === "swap"} onClose={closeSheet} />
       <ReceiveSheet open={sheet === "receive"} onClose={closeSheet} />
       <PaySheet open={sheet === "pay"} onClose={closeSheet} />
