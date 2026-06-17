@@ -1375,7 +1375,7 @@ function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; s
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Domicile Wallet</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Wallet</div>
           <div style={{ fontSize: 26, color: '#fff', fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
             {sym}{Number(wallet?.balance ?? 0).toFixed(2)}
           </div>
