@@ -645,6 +645,67 @@ function PriceAlertSheet({
   );
 }
 
+function CryptoActionSheet({
+  mode, sym, name, price, fiatSym, fiatCode, onClose,
+}: {
+  mode: 'deposit' | 'withdraw';
+  sym: string; name: string; price: number;
+  fiatSym: string; fiatCode: string;
+  onClose: () => void;
+}) {
+  const [amount, setAmount] = useState('');
+  const isDeposit = mode === 'deposit';
+  const title = isDeposit ? `Deposit ${sym}` : `Withdraw ${sym}`;
+  const fiatVal = (() => { const n = parseFloat(amount); return isFinite(n) ? n * price : 0; })();
+  const submit = () => {
+    const n = parseFloat(amount);
+    if (!isFinite(n) || n <= 0) { showToast('Enter a valid amount'); return; }
+    if (isDeposit) {
+      showToast(`PayFast checkout coming soon — ${fiatSym}${fmtM(fiatVal)} → ${sym}`);
+    } else {
+      showToast(`Withdraw queued — ${n} ${sym} → Wallet (${fiatCode})`);
+    }
+    onClose();
+  };
+  return (
+    <div className="afi" style={{ position: 'fixed', inset: 0, zIndex: 220, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: 480, background: '#001a44', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: '18px 20px 28px', border: '1px solid rgba(255,255,255,0.12)' }}>
+        <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)', margin: '0 auto 14px' }} />
+        <h2 style={{ color: W, fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{title}</h2>
+        <div style={{ fontSize: 12, color: S, marginBottom: 14 }}>
+          {isDeposit
+            ? `Buy ${name} with ${fiatCode} via card (PayFast). Funds settle to your ${sym} balance.`
+            : `Sell ${name} and credit your Wallet in ${fiatCode}.`}
+        </div>
+        <label style={{ fontSize: 11, color: S, fontWeight: 600 }}>
+          {isDeposit ? `Amount (${fiatCode})` : `Amount (${sym})`}
+        </label>
+        <input
+          autoFocus inputMode="decimal" value={amount}
+          onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
+          placeholder="0.00"
+          style={{ width: '100%', marginTop: 6, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: W, fontSize: 16, fontWeight: 600 }}
+        />
+        <div style={{ fontSize: 11, color: S, marginTop: 8 }}>
+          {isDeposit
+            ? `≈ ${amount ? (parseFloat(amount) / price).toFixed(6) : '0.000000'} ${sym} at ${fiatSym}${fmtM(price)}`
+            : `≈ ${fiatSym}${fmtM(fiatVal)} at ${fiatSym}${fmtM(price)}`}
+        </div>
+        <div style={{ marginTop: 12, padding: 10, borderRadius: 10, background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.25)', color: '#fbbf24', fontSize: 11 }}>
+          {isDeposit ? 'PayFast integration pending — this is a scaffolded flow.' : 'On-chain custody pending — withdrawals will route through your Wallet.'}
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <T onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: W, border: 'none', fontWeight: 700 }}>Cancel</T>
+          <T onClick={submit} style={{ flex: 1, padding: '12px', borderRadius: 12, background: isDeposit ? GN : '#fbbf24', color: '#001a44', border: 'none', fontWeight: 800 }}>
+            {isDeposit ? 'Continue to PayFast' : 'Confirm withdraw'}
+          </T>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── CHAT LIST ── */
 export function ChatScreen({ openSub, openChat, openGroup, openNewGroup }: any) {
   const { state, set } = useHazelStore();
