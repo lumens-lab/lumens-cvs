@@ -429,6 +429,8 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
   // No on-chain wallet yet — portfolio value is 0 until balances are wired in.
   const cryptoTotal = 0;
   const [alertOpen, setAlertOpen] = useState<null | { coinId: string; sym: string; price: number }>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [actionOpen, setActionOpen] = useState<null | { mode: 'deposit' | 'withdraw'; coinId: string; sym: string; name: string; price: number }>(null);
 
   // Watch live prices and fire alerts when targets cross.
   useEffect(() => {
@@ -513,9 +515,10 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
           const pos = c.chg >= 0;
           const pinned = isPinned(c.id);
           const coinAlerts = forCoin(c.id);
+          const isOpen = expanded === c.id;
           return (
             <div key={c.id} style={{ ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <T onClick={() => setExpanded(isOpen ? null : c.id)} style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', padding: 0, color: 'inherit', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                 <CryptoIcon sym={c.sym} size={36} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: W, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -524,15 +527,15 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
                   </div>
                   <div style={{ color: S, fontSize: 11 }}>{c.sym}</div>
                 </div>
-                <T onClick={() => togglePin(c.id)} aria-label={pinned ? 'Unpin' : 'Pin to watchlist'} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: pinned ? '#fbbf24' : S, width: 30, height: 30, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <T onClick={(e: any) => { e.stopPropagation?.(); togglePin(c.id); }} aria-label={pinned ? 'Unpin' : 'Pin to watchlist'} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: pinned ? '#fbbf24' : S, width: 30, height: 30, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Ic n="Star" s={14} />
                 </T>
-                <T onClick={async () => { await ensureNotifyPermission(); setAlertOpen({ coinId: c.id, sym: c.sym, price: c.price }); }} aria-label="Set price alert" style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: coinAlerts.length ? AC : S, width: 30, height: 30, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                <T onClick={async (e: any) => { e.stopPropagation?.(); await ensureNotifyPermission(); setAlertOpen({ coinId: c.id, sym: c.sym, price: c.price }); }} aria-label="Set price alert" style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: coinAlerts.length ? AC : S, width: 30, height: 30, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                   <Ic n="Bell" s={14} />
                   {coinAlerts.length > 0 && <span style={{ position: 'absolute', top: -2, right: -2, background: AC, color: W, fontSize: 9, fontWeight: 700, borderRadius: 8, padding: '0 4px', lineHeight: '12px' }}>{coinAlerts.length}</span>}
                 </T>
                 <div style={{ color: pos ? GN : RD, fontSize: 12, fontWeight: 700 }}>{pos ? '+' : ''}{c.chg.toFixed(2)}%</div>
-              </div>
+              </T>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: S }}>
                 <div><div>Price</div><div style={{ color: W, fontWeight: 600, marginTop: 2 }}>{fiatSym}{fmtM(c.price)}</div></div>
                 <div style={{ textAlign: 'right' }}><div>Balance</div><div style={{ color: W, fontWeight: 600, marginTop: 2 }}>{bal.toLocaleString()} {c.sym}</div><div style={{ color: S2, fontSize: 10 }}>≈ {fiatSym}{fmtM(val)}</div></div>
@@ -547,6 +550,19 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
                       </T>
                     </span>
                   ))}
+                </div>
+              )}
+              {isOpen && (
+                <div className="afi" style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                  <T onClick={() => setActionOpen({ mode: 'deposit', coinId: c.id, sym: c.sym, name: c.name, price: c.price })} style={{ padding: '12px 8px', borderRadius: 14, background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.25)', color: GN, fontSize: 12, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <Ic n="ArrowDownToLine" s={16} /> Deposit
+                  </T>
+                  <T onClick={() => openSheet('swap')} style={{ padding: '12px 8px', borderRadius: 14, background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.25)', color: COLORS.BL, fontSize: 12, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <Ic n="ArrowLeftRight" s={16} /> Swap
+                  </T>
+                  <T onClick={() => setActionOpen({ mode: 'withdraw', coinId: c.id, sym: c.sym, name: c.name, price: c.price })} style={{ padding: '12px 8px', borderRadius: 14, background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.25)', color: '#fbbf24', fontSize: 12, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <Ic n="ArrowUpFromLine" s={16} /> Withdraw
+                  </T>
                 </div>
               )}
             </div>
@@ -572,6 +588,17 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
             showToast(`Alert set for ${alertOpen.sym} ${direction} ${fiatSym}${fmtM(target)}`);
             setAlertOpen(null);
           }}
+        />
+      )}
+      {actionOpen && (
+        <CryptoActionSheet
+          mode={actionOpen.mode}
+          sym={actionOpen.sym}
+          name={actionOpen.name}
+          price={actionOpen.price}
+          fiatSym={fiatSym}
+          fiatCode={vsCode.toUpperCase()}
+          onClose={() => setActionOpen(null)}
         />
       )}
     </div>
@@ -612,6 +639,67 @@ function PriceAlertSheet({
         <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
           <T onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: W, border: 'none', fontWeight: 700 }}>Cancel</T>
           <T onClick={() => { const n = parseFloat(target); if (!isFinite(n) || n <= 0) { showToast('Enter a valid price'); return; } onSave(n, dir); }} style={{ flex: 1, padding: '12px', borderRadius: 12, background: AC, color: W, border: 'none', fontWeight: 700 }}>Save alert</T>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CryptoActionSheet({
+  mode, sym, name, price, fiatSym, fiatCode, onClose,
+}: {
+  mode: 'deposit' | 'withdraw';
+  sym: string; name: string; price: number;
+  fiatSym: string; fiatCode: string;
+  onClose: () => void;
+}) {
+  const [amount, setAmount] = useState('');
+  const isDeposit = mode === 'deposit';
+  const title = isDeposit ? `Deposit ${sym}` : `Withdraw ${sym}`;
+  const fiatVal = (() => { const n = parseFloat(amount); return isFinite(n) ? n * price : 0; })();
+  const submit = () => {
+    const n = parseFloat(amount);
+    if (!isFinite(n) || n <= 0) { showToast('Enter a valid amount'); return; }
+    if (isDeposit) {
+      showToast(`PayFast checkout coming soon — ${fiatSym}${fmtM(fiatVal)} → ${sym}`);
+    } else {
+      showToast(`Withdraw queued — ${n} ${sym} → Wallet (${fiatCode})`);
+    }
+    onClose();
+  };
+  return (
+    <div className="afi" style={{ position: 'fixed', inset: 0, zIndex: 220, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
+      <div style={{ position: 'relative', width: '100%', maxWidth: 480, background: '#001a44', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: '18px 20px 28px', border: '1px solid rgba(255,255,255,0.12)' }}>
+        <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)', margin: '0 auto 14px' }} />
+        <h2 style={{ color: W, fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{title}</h2>
+        <div style={{ fontSize: 12, color: S, marginBottom: 14 }}>
+          {isDeposit
+            ? `Buy ${name} with ${fiatCode} via card (PayFast). Funds settle to your ${sym} balance.`
+            : `Sell ${name} and credit your Wallet in ${fiatCode}.`}
+        </div>
+        <label style={{ fontSize: 11, color: S, fontWeight: 600 }}>
+          {isDeposit ? `Amount (${fiatCode})` : `Amount (${sym})`}
+        </label>
+        <input
+          autoFocus inputMode="decimal" value={amount}
+          onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
+          placeholder="0.00"
+          style={{ width: '100%', marginTop: 6, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: W, fontSize: 16, fontWeight: 600 }}
+        />
+        <div style={{ fontSize: 11, color: S, marginTop: 8 }}>
+          {isDeposit
+            ? `≈ ${amount ? (parseFloat(amount) / price).toFixed(6) : '0.000000'} ${sym} at ${fiatSym}${fmtM(price)}`
+            : `≈ ${fiatSym}${fmtM(fiatVal)} at ${fiatSym}${fmtM(price)}`}
+        </div>
+        <div style={{ marginTop: 12, padding: 10, borderRadius: 10, background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.25)', color: '#fbbf24', fontSize: 11 }}>
+          {isDeposit ? 'PayFast integration pending — this is a scaffolded flow.' : 'On-chain custody pending — withdrawals will route through your Wallet.'}
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <T onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: W, border: 'none', fontWeight: 700 }}>Cancel</T>
+          <T onClick={submit} style={{ flex: 1, padding: '12px', borderRadius: 12, background: isDeposit ? GN : '#fbbf24', color: '#001a44', border: 'none', fontWeight: 800 }}>
+            {isDeposit ? 'Continue to PayFast' : 'Confirm withdraw'}
+          </T>
         </div>
       </div>
     </div>
@@ -1375,7 +1463,7 @@ function DomicileWalletTile({ wallet, sym, onSend, onDeposit }: { wallet: any; s
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Domicile Wallet</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Wallet</div>
           <div style={{ fontSize: 26, color: '#fff', fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
             {sym}{Number(wallet?.balance ?? 0).toFixed(2)}
           </div>
