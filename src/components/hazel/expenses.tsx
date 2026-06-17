@@ -6,6 +6,7 @@ import { useServerFn } from '@tanstack/react-start';
 import { scanReceipt } from '@/lib/hazel/ocr.functions';
 import { MonthPickerSheet } from './sheets';
 import { MONTHS } from '@/lib/hazel/data';
+import { toBWReceipt } from '@/lib/hazel/img-preprocess';
 
 const { W, S, S2, AC, GN, RD } = COLORS;
 
@@ -284,6 +285,7 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
   const [items, setItems] = useState<{ name: string; amt: number }[]>([]);
   const [scanning, setScanning] = useState(false);
   const scanRef = useRef<HTMLInputElement>(null);
+  const scanGalleryRef = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
   const runOcr = useServerFn(scanReceipt);
 
@@ -301,15 +303,16 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
    * (Lovable AI Gateway / Gemini vision), and pre-fill the form fields.
    * Falls back gracefully if the call fails.
    */
-  const onScan = () => {
-    const f = scanRef.current?.files?.[0];
-    if (!f) return;
-    readFile(f, async (img) => {
-      setReceipt(img);
+  const runScan = (file: File) => {
+    readFile(file, async (img) => {
+      // Preprocess to high-contrast B&W for better OCR accuracy.
+      let processed = img;
+      try { processed = await toBWReceipt(img); } catch { /* fall back to original */ }
+      setReceipt(processed);
       setScanning(true);
       showToast('Reading receipt…');
       try {
-        const r = await runOcr({ data: { imageDataUrl: img } });
+        const r = await runOcr({ data: { imageDataUrl: processed } });
         const next = {
           name: r.merchant || name || 'Receipt purchase',
           merchant: r.merchant || merchant,
@@ -329,7 +332,20 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
         setScanning(false);
       }
     });
+  };
+
+  const onScan = () => {
+    const f = scanRef.current?.files?.[0];
+    if (!f) { return; }
+    runScan(f);
     if (scanRef.current) scanRef.current.value = '';
+  };
+
+  const onScanGallery = () => {
+    const f = scanGalleryRef.current?.files?.[0];
+    if (!f) return;
+    runScan(f);
+    if (scanGalleryRef.current) scanGalleryRef.current.value = '';
   };
 
   const onPhoto = () => {
@@ -374,15 +390,25 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
     <Sheet open={open} onClose={() => { reset(); onClose(); }} title="Add Expense">
       {/* Scan & Photo actions */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 4, marginBottom: 14 }}>
-        <T onClick={() => scanRef.current?.click()} style={{ ...gl('rgba(37,99,235,0.1)', 14, { border: '1px solid rgba(37,99,235,0.25)', boxShadow: 'none' }), padding: '14px 8px', color: AC, fontSize: 13, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic n="ScanLine" s={18} /> Scan &amp; autofill</div>
-          <div style={{ fontSize: 10, fontWeight: 500, color: S, opacity: 0.85 }}>Detect fields from receipt</div>
-        </T>
+        <div style={{ ...gl('rgba(37,99,235,0.1)', 14, { border: '1px solid rgba(37,99,235,0.25)', boxShadow: 'none' }), padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: AC, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <Ic n="ScanLine" s={14} /> Scan &amp; autofill
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <T onClick={() => scanRef.current?.click()} style={{ flex: 1, padding: '8px 4px', borderRadius: 10, background: 'rgba(37,99,235,0.18)', border: 'none', color: AC, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+              <Ic n="Camera" s={12} /> Camera
+            </T>
+            <T onClick={() => scanGalleryRef.current?.click()} style={{ flex: 1, padding: '8px 4px', borderRadius: 10, background: 'rgba(37,99,235,0.18)', border: 'none', color: AC, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+              <Ic n="Image" s={12} /> Gallery
+            </T>
+          </div>
+        </div>
         <T onClick={() => photoRef.current?.click()} style={{ ...gl('rgba(96,165,250,0.1)', 14, { border: '1px solid rgba(96,165,250,0.25)', boxShadow: 'none' }), padding: '14px 8px', color: COLORS.BL, fontSize: 13, fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Ic n="Paperclip" s={18} /> Attach for records</div>
           <div style={{ fontSize: 10, fontWeight: 500, color: S, opacity: 0.85 }}>Save receipt only</div>
         </T>
         <input ref={scanRef} type="file" accept="image/*" capture="environment" onChange={onScan} style={{ display: 'none' }} />
+        <input ref={scanGalleryRef} type="file" accept="image/*" onChange={onScanGallery} style={{ display: 'none' }} />
         <input ref={photoRef} type="file" accept="image/*" capture="environment" onChange={onPhoto} style={{ display: 'none' }} />
       </div>
 
