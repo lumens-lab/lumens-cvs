@@ -93,6 +93,21 @@ type Sub =
 const { W, S, AC } = COLORS;
 
 function HazelApp() {
+  // Marketing site vs app: lumens.money serves the marketing landing page,
+  // app.lumens.money (and previews/localhost) serves the PWA.
+  if (typeof window !== "undefined") {
+    const h = window.location.hostname.toLowerCase();
+    const isMarketingHost = h === "lumens.money" || h === "www.lumens.money";
+    if (isMarketingHost) {
+      return (
+        <iframe
+          src="/marketing.html"
+          title="Lumens"
+          style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", border: 0, background: "#0a0a0b" }}
+        />
+      );
+    }
+  }
   const { state, set } = useHazelStore();
   const { user, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
