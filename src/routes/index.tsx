@@ -57,8 +57,31 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Lumens: send money, budget your month and chat with friends. South African Rand by default." },
     ],
   }),
-  component: HazelApp,
+  component: RootRouteComponent,
 });
+
+/**
+ * Host-based root: `lumens.money` shows the marketing landing page
+ * (static `public/marketing.html`), everything else (app.lumens.money,
+ * preview URLs, localhost) shows the PWA. Client-only check to avoid
+ * SSR hydration mismatch.
+ */
+function RootRouteComponent() {
+  const [host, setHost] = useState<string | null>(null);
+  useEffect(() => { setHost(window.location.hostname.toLowerCase()); }, []);
+  if (host === null) return null;
+  const isMarketing = host === "lumens.money" || host === "www.lumens.money";
+  if (isMarketing) {
+    return (
+      <iframe
+        src="/marketing.html"
+        title="Lumens"
+        style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", border: 0, background: "#0a0a0b" }}
+      />
+    );
+  }
+  return <HazelApp />;
+}
 
 /** Wallet phase = wallet (home), assets, budget, expenses, settings.
  *  Chat phase = chat, find, profile. */
