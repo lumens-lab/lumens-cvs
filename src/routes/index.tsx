@@ -70,8 +70,15 @@ function RootRouteComponent() {
   const [host, setHost] = useState<string | null>(null);
   useEffect(() => { setHost(window.location.hostname.toLowerCase()); }, []);
   if (host === null) return null;
-  const isMarketing = host === "lumens.money" || host === "www.lumens.money";
-  if (isMarketing) {
+  // App runs on `app.*` subdomains, localhost, and Lovable preview/published hosts.
+  // Every other host (root domain, www, custom marketing hosts) serves the landing page.
+  const isAppHost =
+    host.startsWith("app.") ||
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host.endsWith(".lovable.app") ||
+    host.endsWith(".lovableproject.com");
+  if (!isAppHost) {
     return (
       <iframe
         src="/marketing.html"
