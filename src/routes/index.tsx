@@ -67,14 +67,10 @@ export const Route = createFileRoute("/")({
  * SSR hydration mismatch.
  */
 function RootRouteComponent() {
-  const [host, setHost] = useState<string | null>(null);
-  useEffect(() => { setHost(window.location.hostname.toLowerCase()); }, []);
-  if (host === null) return null;
-  // `app.*` subdomains serve the PWA at the root path for backwards compatibility.
-  // Every other host (including localhost and Lovable previews) shows the
-  // marketing landing page at `/`; the PWA lives at `/app`.
-  const isAppHost = host.startsWith("app.");
-  if (isAppHost) return <HazelApp />;
+  // `/` always serves the marketing landing page. The PWA lives at `/app`.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
   return (
     <iframe
       src="/marketing.html"
