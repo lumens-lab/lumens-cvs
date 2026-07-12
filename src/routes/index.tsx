@@ -70,24 +70,18 @@ function RootRouteComponent() {
   const [host, setHost] = useState<string | null>(null);
   useEffect(() => { setHost(window.location.hostname.toLowerCase()); }, []);
   if (host === null) return null;
-  // App runs on `app.*` subdomains, localhost, and Lovable preview/published hosts.
-  // Every other host (root domain, www, custom marketing hosts) serves the landing page.
-  const isAppHost =
-    host.startsWith("app.") ||
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    host.endsWith(".lovable.app") ||
-    host.endsWith(".lovableproject.com");
-  if (!isAppHost) {
-    return (
-      <iframe
-        src="/marketing.html"
-        title="Lumens"
-        style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", border: 0, background: "#0a0a0b" }}
-      />
-    );
-  }
-  return <HazelApp />;
+  // `app.*` subdomains serve the PWA at the root path for backwards compatibility.
+  // Every other host (including localhost and Lovable previews) shows the
+  // marketing landing page at `/`; the PWA lives at `/app`.
+  const isAppHost = host.startsWith("app.");
+  if (isAppHost) return <HazelApp />;
+  return (
+    <iframe
+      src="/marketing.html"
+      title="Lumens"
+      style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", border: 0, background: "#0a0a0b" }}
+    />
+  );
 }
 
 /** Wallet phase = wallet (home), assets, budget, expenses, settings.
@@ -122,7 +116,7 @@ type Sub =
 
 const { W, S, AC } = COLORS;
 
-function HazelApp() {
+export function HazelApp() {
   const { state, set } = useHazelStore();
   const { user, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false);
