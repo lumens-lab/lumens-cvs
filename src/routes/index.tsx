@@ -60,18 +60,34 @@ export const Route = createFileRoute("/")({
   component: RootRouteComponent,
 });
 
+/**
+ * Host-based root: `lumens.money` shows the marketing landing page
+ * (static `public/marketing.html`), everything else (app.lumens.money,
+ * preview URLs, localhost) shows the PWA. Client-only check to avoid
+ * SSR hydration mismatch.
+ */
 function RootRouteComponent() {
-  // `/` always serves the marketing landing page. The PWA lives at `/app`.
-  // Keep this SSR-safe so the published root never renders a blank page while
-  // waiting for client hydration.
-  return (
-    <iframe
-      src="/marketing.html"
-      title="Lumens"
-      data-health-route="landing"
-      style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", border: 0, background: "#0a0a0b" }}
-    />
-  );
+  const [host, setHost] = useState<string | null>(null);
+  useEffect(() => { setHost(window.location.hostname.toLowerCase()); }, []);
+  if (host === null) return null;
+  // App runs on `app.*` subdomains, localhost, and Lovable preview/published hosts.
+  // Every other host (root domain, www, custom marketing hosts) serves the landing page.
+  const isAppHost =
+    host.startsWith("app.") ||
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host.endsWith(".lovable.app") ||
+    host.endsWith(".lovableproject.com");
+  if (!isAppHost) {
+    return (
+      <iframe
+        src="/marketing.html"
+        title="Lumens"
+        style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", border: 0, background: "#0a0a0b" }}
+      />
+    );
+  }
+  return <HazelApp />;
 }
 
 /** Wallet phase = wallet (home), assets, budget, expenses, settings.
@@ -106,7 +122,7 @@ type Sub =
 
 const { W, S, AC } = COLORS;
 
-export function HazelApp() {
+function HazelApp() {
   const { state, set } = useHazelStore();
   const { user, loading: authLoading } = useAuth();
   const [mounted, setMounted] = useState(false);

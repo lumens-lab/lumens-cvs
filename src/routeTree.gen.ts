@@ -10,10 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as HealthRouteImport } from './routes/health'
-import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiPublicPushOnMessageRouteImport } from './routes/api/public/push-on-message'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -21,24 +18,9 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HealthRoute = HealthRouteImport.update({
-  id: '/health',
-  path: '/health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiHealthRoute = ApiHealthRouteImport.update({
-  id: '/api/health',
-  path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicPushOnMessageRoute = ApiPublicPushOnMessageRouteImport.update({
@@ -49,62 +31,31 @@ const ApiPublicPushOnMessageRoute = ApiPublicPushOnMessageRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
-  '/health': typeof HealthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/api/health': typeof ApiHealthRoute
   '/api/public/push-on-message': typeof ApiPublicPushOnMessageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
-  '/health': typeof HealthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/api/health': typeof ApiHealthRoute
   '/api/public/push-on-message': typeof ApiPublicPushOnMessageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
-  '/health': typeof HealthRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/api/health': typeof ApiHealthRoute
   '/api/public/push-on-message': typeof ApiPublicPushOnMessageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/app'
-    | '/health'
-    | '/reset-password'
-    | '/api/health'
-    | '/api/public/push-on-message'
+  fullPaths: '/' | '/reset-password' | '/api/public/push-on-message'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/app'
-    | '/health'
-    | '/reset-password'
-    | '/api/health'
-    | '/api/public/push-on-message'
-  id:
-    | '__root__'
-    | '/'
-    | '/app'
-    | '/health'
-    | '/reset-password'
-    | '/api/health'
-    | '/api/public/push-on-message'
+  to: '/' | '/reset-password' | '/api/public/push-on-message'
+  id: '__root__' | '/' | '/reset-password' | '/api/public/push-on-message'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRoute
-  HealthRoute: typeof HealthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  ApiHealthRoute: typeof ApiHealthRoute
   ApiPublicPushOnMessageRoute: typeof ApiPublicPushOnMessageRoute
 }
 
@@ -117,32 +68,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/health': {
-      id: '/health'
-      path: '/health'
-      fullPath: '/health'
-      preLoaderRoute: typeof HealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/health': {
-      id: '/api/health'
-      path: '/api/health'
-      fullPath: '/api/health'
-      preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/push-on-message': {
@@ -157,10 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRoute,
-  HealthRoute: HealthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  ApiHealthRoute: ApiHealthRoute,
   ApiPublicPushOnMessageRoute: ApiPublicPushOnMessageRoute,
 }
 export const routeTree = rootRouteImport
