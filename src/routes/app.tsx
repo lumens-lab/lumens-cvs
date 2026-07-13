@@ -17,6 +17,20 @@ export const Route = createFileRoute("/app")({
 function AppRouteComponent() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
-  if (!mounted) return null;
+  if (!mounted) return <AppBootFallback />;
   return <HazelApp />;
+}
+
+function AppBootFallback() {
+  return (
+    <main data-health-route="app" className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
+      <div className="w-full max-w-sm text-center">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Lumens app</p>
+        <h1 className="mt-3 text-2xl font-semibold">Loading your wallet</h1>
+        <div className="mx-auto mt-6 h-1.5 w-32 overflow-hidden rounded-full bg-muted">
+          <div className="h-full w-1/2 animate-pulse rounded-full bg-primary" />
+        </div>
+      </div>
+    </main>
+  );
 }

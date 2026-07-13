@@ -60,21 +60,15 @@ export const Route = createFileRoute("/")({
   component: RootRouteComponent,
 });
 
-/**
- * Host-based root: `lumens.money` shows the marketing landing page
- * (static `public/marketing.html`), everything else (app.lumens.money,
- * preview URLs, localhost) shows the PWA. Client-only check to avoid
- * SSR hydration mismatch.
- */
 function RootRouteComponent() {
   // `/` always serves the marketing landing page. The PWA lives at `/app`.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  if (!mounted) return null;
+  // Keep this SSR-safe so the published root never renders a blank page while
+  // waiting for client hydration.
   return (
     <iframe
       src="/marketing.html"
       title="Lumens"
+      data-health-route="landing"
       style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", border: 0, background: "#0a0a0b" }}
     />
   );
