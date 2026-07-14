@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppRouteImport } from './routes/app'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicPushOnMessageRouteImport } from './routes/api/public/push-on-message'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -23,6 +24,11 @@ const AppRoute = AppRouteImport.update({
   path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPushOnMessageRoute = ApiPublicPushOnMessageRouteImport.update({
   id: '/api/public/push-on-message',
   path: '/api/public/push-on-message',
@@ -30,30 +36,39 @@ const ApiPublicPushOnMessageRoute = ApiPublicPushOnMessageRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/reset-password': typeof ResetPasswordRoute
   '/api/public/push-on-message': typeof ApiPublicPushOnMessageRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/reset-password': typeof ResetPasswordRoute
   '/api/public/push-on-message': typeof ApiPublicPushOnMessageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/app': typeof AppRoute
   '/reset-password': typeof ResetPasswordRoute
   '/api/public/push-on-message': typeof ApiPublicPushOnMessageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/app' | '/reset-password' | '/api/public/push-on-message'
+  fullPaths: '/' | '/app' | '/reset-password' | '/api/public/push-on-message'
   fileRoutesByTo: FileRoutesByTo
-  to: '/app' | '/reset-password' | '/api/public/push-on-message'
-  id: '__root__' | '/app' | '/reset-password' | '/api/public/push-on-message'
+  to: '/' | '/app' | '/reset-password' | '/api/public/push-on-message'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/reset-password'
+    | '/api/public/push-on-message'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicPushOnMessageRoute: typeof ApiPublicPushOnMessageRoute
@@ -75,6 +90,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/push-on-message': {
       id: '/api/public/push-on-message'
       path: '/api/public/push-on-message'
@@ -86,6 +108,7 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AppRoute: AppRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicPushOnMessageRoute: ApiPublicPushOnMessageRoute,
