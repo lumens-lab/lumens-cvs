@@ -60,33 +60,11 @@ export const Route = createFileRoute("/app")({
   component: RootRouteComponent,
 });
 
-/**
- * Host-based root: `lumens.money` shows the marketing landing page
- * (static `public/marketing.html`), everything else (app.lumens.money,
- * preview URLs, localhost) shows the PWA. Client-only check to avoid
- * SSR hydration mismatch.
- */
+/** App is mounted at `/app`. The root `/` route serves the marketing site. */
 function RootRouteComponent() {
-  const [host, setHost] = useState<string | null>(null);
-  useEffect(() => { setHost(window.location.hostname.toLowerCase()); }, []);
-  if (host === null) return null;
-  // App runs on `app.*` subdomains, localhost, and Lovable preview/published hosts.
-  // Every other host (root domain, www, custom marketing hosts) serves the landing page.
-  const isAppHost =
-    host.startsWith("app.") ||
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    host.endsWith(".lovable.app") ||
-    host.endsWith(".lovableproject.com");
-  if (!isAppHost) {
-    return (
-      <iframe
-        src="/marketing.html"
-        title="Lumens"
-        style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", border: 0, background: "#0a0a0b" }}
-      />
-    );
-  }
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
   return <HazelApp />;
 }
 
