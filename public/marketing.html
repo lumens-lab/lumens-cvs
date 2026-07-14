@@ -30,8 +30,11 @@
         .glass-subtle { background: rgba(255,255,255,0.015); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.04); }
         /* Sticky Nav */
         #navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 50; padding: 16px 24px; transition: all 0.4s cubic-bezier(0.16,1,0.3,1); }
-        #navbar.scrolled .nav-inner { background: rgba(10,10,11,0.75); border-color: rgba(255,255,255,0.12); backdrop-filter: blur(40px) saturate(1.8); -webkit-backdrop-filter: blur(40px) saturate(1.8); box-shadow: 0 4px 24px rgba(0,0,0,0.15); }
-        [data-theme="light"] #navbar.scrolled .nav-inner { background: rgba(255,255,255,0.6) !important; border-color: rgba(0,0,0,0.08) !important; backdrop-filter: blur(40px) saturate(1.8) !important; -webkit-backdrop-filter: blur(40px) saturate(1.8) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.06) !important; }
+        /* Always-frosty navbar */
+        #navbar .nav-inner { background: rgba(10,10,11,0.55); border-color: rgba(255,255,255,0.14); backdrop-filter: blur(28px) saturate(1.6); -webkit-backdrop-filter: blur(28px) saturate(1.6); box-shadow: 0 4px 24px rgba(0,0,0,0.18); }
+        #navbar.scrolled .nav-inner { background: rgba(10,10,11,0.72); }
+        [data-theme="light"] #navbar .nav-inner { background: rgba(255,255,255,0.55) !important; border-color: rgba(0,0,0,0.08) !important; backdrop-filter: blur(28px) saturate(1.6) !important; -webkit-backdrop-filter: blur(28px) saturate(1.6) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.06) !important; }
+        [data-theme="light"] #navbar.scrolled .nav-inner { background: rgba(255,255,255,0.72) !important; }
         .nav-inner { transition: all 0.3s cubic-bezier(0.16,1,0.3,1); }
         .marquee { display: flex; gap: 4rem; animation: marquee 40s linear infinite; }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -42,8 +45,8 @@
         .nav-link { position: relative; padding: 4px 0; }
         .nav-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 1px; background: rgba(255,255,255,0.6); transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .nav-link:hover::after { width: 100%; }
-        .btn-primary { background: #fafafa; color: #0a0a0b; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        .btn-primary:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 8px 24px -8px rgba(255,255,255,0.25); }
+        .btn-primary { background: #2563eb; color: #ffffff; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 4px 20px -4px rgba(37,99,235,0.45); }
+        .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 10px 30px -6px rgba(37,99,235,0.6); }
         .btn-ghost { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #fafafa; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         .btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.14); }
         .page { display: none; }
@@ -108,8 +111,12 @@
         [data-theme="light"] h1, [data-theme="light"] h2, [data-theme="light"] h3 { color: #222222 !important; }
         [data-theme="light"] .bg-black { background: #ffffff !important; }
         [data-theme="light"] .bg-white { background: #f8f9fa !important; }
-        [data-theme="light"] .btn-primary { background: #0052FF !important; color: #ffffff !important; box-shadow: 0 4px 20px -4px rgba(0,82,255,0.4) !important; }
-        [data-theme="light"] .btn-primary:hover { background: #0041cc !important; box-shadow: 0 8px 30px -4px rgba(0,82,255,0.6) !important; }
+        [data-theme="light"] .btn-primary { background: #2563eb !important; color: #ffffff !important; box-shadow: 0 4px 20px -4px rgba(37,99,235,0.4) !important; }
+        [data-theme="light"] .btn-primary:hover { background: #1d4ed8 !important; box-shadow: 0 8px 30px -4px rgba(37,99,235,0.6) !important; }
+        /* Link colors per theme */
+        [data-theme="light"] a:not(.btn-primary):not(.btn-ghost):not(.nav-link) { color: #2563eb !important; }
+        [data-theme="light"] a:not(.btn-primary):not(.btn-ghost):not(.nav-link):hover { color: #1d4ed8 !important; }
+        html:not([data-theme="light"]) a:not(.btn-primary):not(.btn-ghost):not(.nav-link) { color: #ffffff; }
         [data-theme="light"] .btn-ghost { background: rgba(0,0,0,0.04) !important; border-color: rgba(0,0,0,0.1) !important; color: #333333 !important; }
         [data-theme="light"] .feat-card { background: rgba(0,0,0,0.02) !important; border-color: rgba(0,0,0,0.08) !important; }
         [data-theme="light"] .feat-card:hover { background: rgba(0,0,0,0.04) !important; border-color: rgba(0,0,0,0.14) !important; }
@@ -118,9 +125,10 @@
         [data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12) !important; border-color: #f0f0f0 !important; }
         [data-theme="light"] ::selection { background: #34d399; color: #fff; }
         [data-theme="light"] .nav-inner.minimized { background: rgba(255,255,255,0.6) !important; border-color: rgba(0,0,0,0.08) !important; backdrop-filter: blur(40px) saturate(1.8) !important; -webkit-backdrop-filter: blur(40px) saturate(1.8) !important; }
-        [data-theme="light"] #navbar .nav-inner > a:first-child img { filter: brightness(0) saturate(100%) invert(60%) !important; }
-        #navbar .nav-inner > a:first-child img { filter: brightness(0) saturate(100%) invert(60%); transition: filter 0.3s ease; }
-        footer img[src^="data:image/png"] { filter: brightness(0) saturate(100%) invert(60%); transition: filter 0.3s ease; }
+        #navbar .nav-inner > a:first-child img,
+        footer img[src^="data:image/png"] { filter: brightness(0) saturate(100%) invert(18%); transition: filter 0.3s ease; }
+        [data-theme="light"] #navbar .nav-inner > a:first-child img,
+        [data-theme="light"] footer img[src^="data:image/png"] { filter: brightness(0) saturate(100%) invert(18%) !important; }
         [data-theme="light"] .job-card:hover { background: rgba(0,0,0,0.03) !important; border-color: rgba(0,0,0,0.1) !important; }
         [data-theme="light"] .roadmap-dot { background: #ffffff !important; border-color: rgba(0,0,0,0.2) !important; }
         [data-theme="light"] .roadmap-phase::before { background: rgba(0,0,0,0.08) !important; }
@@ -130,16 +138,15 @@
         [data-theme="light"] .tx-item { border-color: rgba(0,0,0,0.06) !important; }
         [data-theme="light"] .tx-icon { background: rgba(0,0,0,0.04) !important; }
 
-        /* Theme toggle button */
-        .theme-toggle {
-            width: 36px; height: 36px; border-radius: 10px; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.3s ease; font-size: 16px;
-        }
-        .theme-toggle-dark { background: rgba(255,255,255,0.06); color: #fbbf24; border: 1px solid rgba(255,255,255,0.08); }
-        .theme-toggle-dark:hover { background: rgba(255,255,255,0.1); }
-        .theme-toggle-light { background: rgba(0,0,0,0.06); color: #6366f1; border: 1px solid rgba(0,0,0,0.1); }
-        .theme-toggle-light:hover { background: rgba(0,0,0,0.1); }
+        /* Theme toggle — iconify.design style */
+        .theme-toggle { width: 36px; height: 36px; border-radius: 10px; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all .25s ease; background: transparent; border: 1px solid transparent; color: inherit; }
+        .theme-toggle:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.14); }
+        [data-theme="light"] .theme-toggle:hover { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1); }
+        .theme-toggle .iconify { font-size: 20px; display: block; }
+        .theme-toggle-dark { color: #fafafa; }
+        .theme-toggle-light { color: #0a0a0b; }
     </style>
 </head>
 <body class="overflow-x-hidden relative">
@@ -159,7 +166,7 @@
         </div>
         <div class="flex items-center gap-3">
             <a href="https://lumensmoney.lovable.app/app" target="_top"  class="btn-primary text-[13px] font-medium px-4 py-2 rounded-xl hidden sm:block">Get App</a>
-            <button id="theme-toggle" class="theme-toggle theme-toggle-dark" onclick="toggleTheme()" aria-label="Toggle theme"><span id="theme-icon">☀️</span></button>
+            <button id="theme-toggle" class="theme-toggle theme-toggle-dark" onclick="toggleTheme()" aria-label="Toggle theme"><span id="theme-icon" class="iconify" data-icon="ph:sun-bold"></span></button>
             <button id="mobile-toggle" class="md:hidden w-9 h-9 rounded-xl glass flex items-center justify-center" onclick="toggleMobileMenu()">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
             </button>
@@ -915,11 +922,14 @@
         const icon = document.getElementById('theme-icon');
         if (theme === 'light') {
             btn.className = 'theme-toggle theme-toggle-light';
-            icon.textContent = '🌙';
+            icon.setAttribute('data-icon', 'ph:moon-bold');
         } else {
             btn.className = 'theme-toggle theme-toggle-dark';
-            icon.textContent = '☀️';
+            icon.setAttribute('data-icon', 'ph:sun-bold');
         }
+        icon.textContent = '';
+        icon.className = 'iconify';
+        if (window.Iconify && window.Iconify.scan) window.Iconify.scan(icon.parentElement);
     }
     (function() {
         const saved = localStorage.getItem('lumens-theme');
