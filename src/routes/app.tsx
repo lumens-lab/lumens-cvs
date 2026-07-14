@@ -50,7 +50,7 @@ import { useCalls } from "@/lib/hazel/calls";
 import { subscribeToPush } from "@/lib/hazel/push";
 import { InstallPrompt } from "@/components/hazel/install-prompt";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/app")({
   head: () => ({
     meta: [
       { title: "Lumens — Pay, budget, chat" },
