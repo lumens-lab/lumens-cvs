@@ -45,7 +45,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
     const isLast = slide === slides.length - 1;
     return (
       <Cover>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px 36px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px calc(72px + env(safe-area-inset-bottom))' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <img src={logo} alt="Lumens" style={{ height: 126, maxWidth: '70vw', objectFit: 'contain' }} />
             <T onClick={() => setStage('allset')} style={{ color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', fontSize: 13, fontWeight: 600 }}>Skip</T>
@@ -81,7 +81,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
     ];
     return (
       <Cover>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '32px 28px max(24px, env(safe-area-inset-bottom))' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '32px 28px calc(72px + env(safe-area-inset-bottom))' }}>
           <div />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <HaloLogo size={220} sharp />
