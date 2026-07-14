@@ -45,7 +45,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
     const isLast = slide === slides.length - 1;
     return (
       <Cover>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px 36px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '60px 28px calc(72px + env(safe-area-inset-bottom))' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <img src={logo} alt="Lumens" style={{ height: 126, maxWidth: '70vw', objectFit: 'contain' }} />
             <T onClick={() => setStage('allset')} style={{ color: 'rgba(255,255,255,0.7)', background: 'none', border: 'none', fontSize: 13, fontWeight: 600 }}>Skip</T>
@@ -81,7 +81,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
     ];
     return (
       <Cover>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '32px 28px max(24px, env(safe-area-inset-bottom))' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%', maxWidth: 420, padding: '32px 28px calc(72px + env(safe-area-inset-bottom))' }}>
           <div />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <HaloLogo size={220} sharp />
@@ -151,7 +151,7 @@ export function PinSetup({ onDone }: { onDone: () => void }) {
   const active = confirming ? confirm : pin;
   return (
     <Cover>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: '40px 28px', maxWidth: 420, width: '100%' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: '40px 28px calc(80px + env(safe-area-inset-bottom))', maxWidth: 420, width: '100%' }}>
         <div style={{ width: 64, height: 64, borderRadius: 20, background: 'rgba(37,99,235,0.18)', border: '1px solid rgba(37,99,235,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Ic n="ShieldCheck" s={30} c={BLUE_BRIGHT} />
         </div>
@@ -189,7 +189,7 @@ export function PinLock({ onUnlock, onCancel, title, subtitle }: { onUnlock: () 
 
   return (
     <Cover>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: '40px 28px', maxWidth: 420, width: '100%' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: '40px 28px calc(80px + env(safe-area-inset-bottom))', maxWidth: 420, width: '100%' }}>
         {onCancel && (
           <T onClick={onCancel} style={{ position: 'absolute', top: 22, left: 22, width: 40, height: 40, borderRadius: 20, background: 'rgba(255,255,255,0.08)', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Ic n="ChevronLeft" s={20} />

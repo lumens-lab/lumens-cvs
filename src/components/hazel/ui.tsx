@@ -100,15 +100,15 @@ export function showToast(msg: string) {
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode }) {
   if (!open) return null;
   return (
-    <div className="afi" style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+    <div className="afi" style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
       <div className="asu no-scrollbar" style={{
-        position: 'relative', width: '100%', maxWidth: 480, maxHeight: '92vh', overflow: 'auto',
-        background: '#001a44', borderTop: '1px solid rgba(255,255,255,0.12)',
-        borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: 32,
+        position: 'relative', width: '100%', maxWidth: 480, maxHeight: '100vh', minHeight: '92vh', overflow: 'auto',
+        background: '#001a44', borderBottom: '1px solid rgba(255,255,255,0.12)',
+        borderBottomLeftRadius: 28, borderBottomRightRadius: 28, paddingBottom: 40, paddingTop: 'env(safe-area-inset-top)',
       }}>
         <div style={{ position: 'sticky', top: 0, background: 'linear-gradient(180deg,#001a44,#001a44 70%,transparent)', zIndex: 2, padding: '14px 20px 8px' }}>
-          <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)', margin: '0 auto 14px' }} />
+          <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)', margin: '0 auto 14px', opacity: 0 }} />
           {title && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700 }}>{title}</h2>
             <T onClick={onClose} style={{ ...gl('rgba(255,255,255,0.07)', '50%' as any, { boxShadow: 'none' }), width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.7)' }}>
