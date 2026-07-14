@@ -62,8 +62,8 @@ export function AppearanceScreen({ onBack }: { onBack: () => void }) {
   };
 
   const options: { id: Theme; label: string; desc: string; bg: string; ic: string; lightTxt?: boolean }[] = [
-    { id: 'dark', label: 'Navy & Blue', desc: 'Deep navy with brilliant blue', bg: 'linear-gradient(135deg,#001535,#052250)', ic: 'Moon' },
-    { id: 'light', label: 'White & Blue', desc: 'Crisp white with brilliant blue', bg: 'linear-gradient(135deg,#ffffff,#dceaff)', ic: 'Sun', lightTxt: true },
+    { id: 'dark', label: 'Navy & Blue', desc: 'Deep navy with brilliant blue', bg: 'linear-gradient(135deg,#001535,#052250)', ic: 'MoonStar' },
+    { id: 'light', label: 'White & Blue', desc: 'Crisp white with brilliant blue', bg: 'linear-gradient(135deg,#ffffff,#dceaff)', ic: 'SunMedium', lightTxt: true },
     { id: 'hazel', label: 'Hazel & Teal', desc: '70% black with hazel + teal', bg: 'linear-gradient(135deg,#0a0a0a,#1a1a1a 60%,#2d1f17)', ic: 'Coffee' },
     { id: 'peach', label: 'Peach & White', desc: 'Soft gray with peach accents', bg: 'linear-gradient(135deg,#f5f5f5,#ffd2be)', ic: 'Sunrise', lightTxt: true },
     { id: 'graphite', label: 'Graphite', desc: 'Premium charcoal with amber', bg: 'linear-gradient(135deg,#16181d,#1f2228 60%,#2a2418)', ic: 'Square' },
