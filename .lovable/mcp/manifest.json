@@ -1,0 +1,154 @@
+{
+  "version": 1,
+  "sdk_version": "0.22.2",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://hoyhuluaqarzrikgmbpm.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "lumens-mcp",
+      "version": "0.1.0",
+      "title": "Lumens"
+    },
+    "tools": [
+      {
+        "name": "list_transactions",
+        "title": "List CashFlow transactions",
+        "description": "List the signed-in user's recent Lumens CashFlow transactions (income and expenses). Positive amt is income, negative amt is an expense.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 50,
+              "description": "Max rows to return.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "type": {
+              "default": "all",
+              "description": "Filter by transaction direction.",
+              "type": "string",
+              "enum": [
+                "all",
+                "income",
+                "expense"
+              ]
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_transaction",
+        "title": "Create CashFlow transaction",
+        "description": "Record a new income or expense in the signed-in user's Lumens CashFlow. Amount is always positive; direction chooses income vs expense.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Short label, e.g. 'Groceries'."
+            },
+            "amount": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Positive amount in the user's currency."
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "income",
+                "expense"
+              ],
+              "description": "income or expense"
+            },
+            "cat": {
+              "default": "Other",
+              "description": "Category name.",
+              "type": "string"
+            },
+            "date": {
+              "type": "string",
+              "description": "ISO date, e.g. 2026-07-16. Defaults to today."
+            },
+            "note": {
+              "type": "string"
+            },
+            "merchant": {
+              "type": "string"
+            },
+            "account_id": {
+              "description": "Wallet/account UUID.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": [
+            "name",
+            "amount",
+            "direction"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "monthly_summary",
+        "title": "Monthly CashFlow summary",
+        "description": "Return total income, total expenses, and net for the signed-in user for a given YYYY-MM month (defaults to current month).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "month": {
+              "description": "Month in YYYY-MM. Defaults to current month.",
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}$"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_accounts",
+        "title": "List wallets & accounts",
+        "description": "List the signed-in user's Lumens wallets/accounts with their configured opening balances.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
