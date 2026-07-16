@@ -57,6 +57,9 @@ export const Route = createFileRoute("/app")({
       { name: "description", content: "Lumens: send money, budget your month and chat with friends. South African Rand by default." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
+  }),
   component: RootRouteComponent,
 });
 
@@ -103,8 +106,16 @@ const { W, S, AC } = COLORS;
 function HazelApp() {
   const { state, set } = useHazelStore();
   const { user, loading: authLoading } = useAuth();
+  const search = Route.useSearch();
   const [mounted, setMounted] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
+  // Once the user is authenticated and unlocked, honor ?next= (OAuth consent return).
+  useEffect(() => {
+    if (!user || !unlocked || !search.next) return;
+    const target = search.next;
+    // Clear before navigation so a re-mount doesn't loop.
+    window.location.replace(target);
+  }, [user, unlocked, search.next]);
   const [pendingPhase, setPendingPhase] = useState<"wallet" | null>(null);
   const [pinChallenge, setPinChallenge] = useState<null | { onOk: () => void; title?: string; subtitle?: string }>(null);
   useEffect(() => { setMounted(true); }, []);
