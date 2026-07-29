@@ -114,7 +114,7 @@
       {
         "name": "monthly_summary",
         "title": "Monthly CashFlow summary",
-        "description": "Return total income, total expenses, and net for the signed-in user for a given YYYY-MM month (defaults to current month).",
+        "description": "Return total income, total expenses, net, a per-category breakdown, and cashflow per wallet/account for the signed-in user for a given YYYY-MM month (defaults to current month).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
