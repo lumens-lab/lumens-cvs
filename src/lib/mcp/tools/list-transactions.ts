@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser, unauth } from "../supabase";
+import { auditToolCall } from "../audit";
 
 export default defineTool({
   name: "list_transactions",
@@ -26,8 +27,11 @@ export default defineTool({
     if (type === "income") q = q.gt("amt", 0);
     if (type === "expense") q = q.lt("amt", 0);
     const { data, error } = await q;
-    if (error)
+    if (error) {
+      await auditToolCall(ctx, "list_transactions", { limit, type }, { success: false, detail: error.message });
       return { content: [{ type: "text", text: error.message }], isError: true };
+    }
+    await auditToolCall(ctx, "list_transactions", { limit, type }, { success: true });
     return {
       content: [{ type: "text", text: JSON.stringify(data) }],
       structuredContent: { transactions: data ?? [] },
