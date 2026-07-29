@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser, unauth } from "../supabase";
+import { auditToolCall } from "../audit";
 
 export default defineTool({
   name: "create_transaction",
@@ -37,8 +38,11 @@ export default defineTool({
       account_id: input.account_id ?? null,
     };
     const { data, error } = await sb.from("txs").insert(row).select().single();
-    if (error)
+    if (error) {
+      await auditToolCall(ctx, "create_transaction", input, { success: false, detail: error.message });
       return { content: [{ type: "text", text: error.message }], isError: true };
+    }
+    await auditToolCall(ctx, "create_transaction", input, { success: true });
     return {
       content: [{ type: "text", text: `Created transaction ${data.id}` }],
       structuredContent: { transaction: data },

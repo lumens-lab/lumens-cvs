@@ -112,9 +112,99 @@
         "outputSchema": null
       },
       {
+        "name": "update_transaction",
+        "title": "Update CashFlow transaction",
+        "description": "Update fields (amount, direction, date, category, note, merchant, name) on one of the signed-in user's Lumens CashFlow transactions. Only the provided fields change.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "UUID of the transaction to update."
+            },
+            "amount": {
+              "description": "New positive amount; combine with direction.",
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "direction": {
+              "description": "Direction for the amount. Defaults to the transaction's current direction.",
+              "type": "string",
+              "enum": [
+                "income",
+                "expense"
+              ]
+            },
+            "date": {
+              "description": "New ISO date (YYYY-MM-DD).",
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "cat": {
+              "description": "New category name.",
+              "type": "string",
+              "minLength": 1
+            },
+            "note": {
+              "description": "New note text.",
+              "type": "string"
+            },
+            "merchant": {
+              "description": "New merchant name.",
+              "type": "string"
+            },
+            "name": {
+              "description": "New short label.",
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "delete_transaction",
+        "title": "Delete CashFlow transaction",
+        "description": "Permanently delete one of the signed-in user's Lumens CashFlow transactions by its id. Row-level security ensures only the owner's transactions can be deleted.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "UUID of the transaction to delete."
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
         "name": "monthly_summary",
         "title": "Monthly CashFlow summary",
-        "description": "Return total income, total expenses, and net for the signed-in user for a given YYYY-MM month (defaults to current month).",
+        "description": "Return total income, total expenses, net, a per-category breakdown, and cashflow per wallet/account for the signed-in user for a given YYYY-MM month (defaults to current month).",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
