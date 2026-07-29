@@ -34,10 +34,7 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
     if (!data.session) {
       // Send to the app; it reads ?next= after auth and returns here.
       const next = safeNext(location);
-      throw redirect({
-        to: "/app",
-        search: { next } as Record<string, string>,
-      });
+      throw redirect({ to: "/app", search: { next } });
     }
   },
   loader: async ({ location }) => {
