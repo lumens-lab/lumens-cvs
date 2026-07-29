@@ -1,5 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { supabaseForUser, unauth } from "../supabase";
+import { auditToolCall } from "../audit";
 
 export default defineTool({
   name: "list_accounts",
@@ -11,8 +12,11 @@ export default defineTool({
     if (!ctx.isAuthenticated()) return unauth();
     const sb = supabaseForUser(ctx);
     const { data, error } = await sb.from("accounts").select("*").order("created_at", { ascending: true });
-    if (error)
+    if (error) {
+      await auditToolCall(ctx, "list_accounts", {}, { success: false, detail: error.message });
       return { content: [{ type: "text", text: error.message }], isError: true };
+    }
+    await auditToolCall(ctx, "list_accounts", {}, { success: true });
     return {
       content: [{ type: "text", text: JSON.stringify(data) }],
       structuredContent: { accounts: data ?? [] },
