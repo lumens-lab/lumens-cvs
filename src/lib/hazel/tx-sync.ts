@@ -24,21 +24,25 @@ export function useTxSync(userId: string | null) {
   // Merges remote rows with any locally-added rows that haven't been pushed
   // yet (no serverId) so we never lose an in-flight insert.
   const pullRemote = async (uid: string) => {
-    // Cap the initial pull on a new device: last 90 days, 200 most-recent rows.
-    // Realtime + focus refresh backfills anything else the user actually opens.
-    const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
-    const { data, error } = await supabase
-      .from('txs')
-      .select('id, name, cat, icon, ibg, ic, date, amt, merchant, note, receipt, items, account_id, to_account_id')
-      .eq('user_id', uid)
-      .gte('date', since)
-      .order('date', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(200);
-    if (error || !data) return;
-    const remote: Tx[] = data.map((r: any, i: number) => ({
+    // Pull the user's FULL history — no date window, no row cap. Anything less
+    // makes older CashFlow entries silently disappear on a fresh device.
+    // PostgREST caps a single response at 1000 rows, so page through.
+    const PAGE = 1000;
+    const rows: any[] = [];
+    for (let page = 0; ; page++) {
+      const { data, error } = await supabase
+        .from('txs')
+        .select('id, name, cat, icon, ibg, ic, date, amt, merchant, note, receipt, items, account_id, to_account_id')
+        .eq('user_id', uid)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false })
+        .range(page * PAGE, page * PAGE + PAGE - 1);
+      if (error) return; // never seed from a partial/failed read
+      if (!data || data.length === 0) break;
+      rows.push(...data);
+      if (data.length < PAGE) break;
+    }
+    const remote: Tx[] = rows.map((r: any, i: number) => ({
       id: Date.now() + i,
       serverId: r.id,
       name: r.name,

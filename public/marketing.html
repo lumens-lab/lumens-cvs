@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,6 +35,8 @@
         #navbar.scrolled .nav-inner { background: rgba(10,10,11,0.72); }
         [data-theme="light"] #navbar .nav-inner { background: rgba(255,255,255,0.55) !important; border-color: rgba(0,0,0,0.08) !important; backdrop-filter: blur(28px) saturate(1.6) !important; -webkit-backdrop-filter: blur(28px) saturate(1.6) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.06) !important; }
         [data-theme="light"] #navbar.scrolled .nav-inner { background: rgba(255,255,255,0.72) !important; }
+        .hero-visuals { transform: scale(0.82); transform-origin: top center; margin-bottom: -100px; }
+        @media (max-width: 1023px) { .hero-visuals { transform: scale(0.9); margin-bottom: -60px; } }
         .nav-inner { transition: all 0.3s cubic-bezier(0.16,1,0.3,1); }
         .marquee { display: flex; gap: 4rem; animation: marquee 40s linear infinite; }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -117,6 +119,15 @@
         [data-theme="light"] a:not(.btn-primary):not(.btn-ghost):not(.nav-link) { color: #2563eb !important; }
         [data-theme="light"] a:not(.btn-primary):not(.btn-ghost):not(.nav-link):hover { color: #1d4ed8 !important; }
         html:not([data-theme="light"]) a:not(.btn-primary):not(.btn-ghost):not(.nav-link) { color: #ffffff; }
+        [data-theme="light"] footer a:not(.btn-primary):not(.btn-ghost):not(.nav-link) { color: rgba(0,0,0,0.8) !important; }
+        [data-theme="light"] footer a:not(.btn-primary):not(.btn-ghost):not(.nav-link):hover { color: rgba(0,0,0,1) !important; }
+        /* Notice bar */
+        .notice-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 60; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 9px 44px 9px 16px; font-size: 12px; background: linear-gradient(90deg,#2563eb,#1d4ed8); color: #fff; }
+        .notice-bar a, [data-theme="light"] .notice-bar a { color: #ffffff !important; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+        .notice-bar .notice-close { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.14); color: #fff; cursor: pointer; border: 0; }
+        .notice-bar .notice-close:hover { background: rgba(255,255,255,0.26); }
+        body.notice-open #navbar { padding-top: 52px; }
+        @media (max-width: 640px) { .notice-bar { font-size: 11px; padding: 8px 40px 8px 12px; } body.notice-open #navbar { padding-top: 58px; } }
         [data-theme="light"] .btn-ghost { background: rgba(0,0,0,0.04) !important; border-color: rgba(0,0,0,0.1) !important; color: #333333 !important; }
         [data-theme="light"] .feat-card { background: rgba(0,0,0,0.02) !important; border-color: rgba(0,0,0,0.08) !important; }
         [data-theme="light"] .feat-card:hover { background: rgba(0,0,0,0.04) !important; border-color: rgba(0,0,0,0.14) !important; }
@@ -126,7 +137,7 @@
         [data-theme="light"] ::selection { background: #34d399; color: #fff; }
         [data-theme="light"] .nav-inner.minimized { background: rgba(255,255,255,0.6) !important; border-color: rgba(0,0,0,0.08) !important; backdrop-filter: blur(40px) saturate(1.8) !important; -webkit-backdrop-filter: blur(40px) saturate(1.8) !important; }
         #navbar .nav-inner > a:first-child img,
-        footer img[src^="data:image/png"] { filter: brightness(0) saturate(100%) invert(18%); transition: filter 0.3s ease; }
+        footer img[src^="data:image/png"] { filter: brightness(0) invert(1); transition: filter 0.3s ease; }
         [data-theme="light"] #navbar .nav-inner > a:first-child img,
         [data-theme="light"] footer img[src^="data:image/png"] { filter: brightness(0) saturate(100%) invert(18%) !important; }
         [data-theme="light"] .job-card:hover { background: rgba(0,0,0,0.03) !important; border-color: rgba(0,0,0,0.1) !important; }
@@ -149,7 +160,14 @@
         .theme-toggle-light { color: #0a0a0b; }
     </style>
 </head>
-<body class="overflow-x-hidden relative">
+<body class="overflow-x-hidden relative notice-open">
+
+<!-- TOP NOTICE -->
+<div class="notice-bar" id="notice-bar">
+    <span class="iconify" data-icon="ph:megaphone-bold" style="font-size:15px"></span>
+    <span>lumens is in <strong>private beta</strong> — features, fees and limits may change. <a href="https://lumens.money/app" target="_top">Get the app</a></span>
+    <button class="notice-close" onclick="dismissNotice()" aria-label="Dismiss notice"><span class="iconify" data-icon="ph:x-bold" style="font-size:13px"></span></button>
+</div>
 
 <!-- NAV -->
 <nav id="navbar">
@@ -165,7 +183,7 @@
             <a href="#" onclick="showPage('contact'); return false;" class="nav-link text-[13px] text-neutral-400 hover:text-white transition-colors">Contact Us</a>
         </div>
         <div class="flex items-center gap-3">
-            <a href="https://lumensmoney.lovable.app/app" target="_top"  class="btn-primary text-[13px] font-medium px-4 py-2 rounded-xl hidden sm:block">Get App</a>
+            <a href="https://lumens.money/app" target="_top"  class="btn-primary text-[13px] font-medium px-4 py-2 rounded-xl hidden sm:block">Get App</a>
             <button id="theme-toggle" class="theme-toggle theme-toggle-dark" onclick="toggleTheme()" aria-label="Toggle theme"><span id="theme-icon" class="iconify" data-icon="ph:sun-bold"></span></button>
             <button id="mobile-toggle" class="md:hidden w-9 h-9 rounded-xl glass flex items-center justify-center" onclick="toggleMobileMenu()">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
@@ -179,7 +197,7 @@
             <a href="#" onclick="showPage('pricing'); toggleMobileMenu(); return false;" class="text-sm text-neutral-300 hover:text-white py-1">Pricing</a>
             <a href="#" onclick="showPage('about'); toggleMobileMenu(); return false;" class="text-sm text-neutral-300 hover:text-white py-1">About Us</a>
             <a href="#" onclick="showPage('contact'); toggleMobileMenu(); return false;" class="text-sm text-neutral-300 hover:text-white py-1">Contact Us</a>
-            <a href="https://lumensmoney.lovable.app/app" target="_top"  class="btn-primary text-sm font-medium px-5 py-2.5 rounded-xl mt-2 text-center block">Get App</a>
+            <a href="https://lumens.money/app" target="_top"  class="btn-primary text-sm font-medium px-5 py-2.5 rounded-xl mt-2 text-center block">Get App</a>
         </div>
     </div>
 </nav>
@@ -202,7 +220,7 @@
                     <h1 class="font-medium text-[56px] md:text-[68px] lg:text-[76px] leading-[0.95] tracking-[-0.035em]">Money,<br><span class="text-neutral-500">reimagined.</span></h1>
                     <p class="text-neutral-400 text-[16px] font-light leading-relaxed max-w-md">One app for chat, wallet, virtual card and cross-border crypto. Record expenses, save in fiat, hold and send DeFi — without the friction.</p>
                     <div class="flex flex-wrap gap-3">
-                        <a href="https://lumensmoney.lovable.app/app" target="_top"  class="btn-primary text-[13px] font-medium px-6 py-3.5 rounded-xl flex items-center gap-2">Get App <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+                        <a href="https://lumens.money/app" target="_top"  class="btn-primary text-[13px] font-medium px-6 py-3.5 rounded-xl flex items-center gap-2">Get App <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
                         <button onclick="showPage('how')" class="btn-ghost text-[13px] font-medium px-6 py-3.5 rounded-xl flex items-center gap-2"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>How it works</button>
                     </div>
                     <div class="flex items-center gap-5 pt-2">
@@ -218,7 +236,7 @@
 
                 <!-- Right: Animated phone + side panels -->
                 <div class="lg:col-span-7 relative fade-in" style="animation-delay:0.15s;">
-                    <div class="flex items-start justify-center gap-5 lg:gap-6">
+                    <div class="flex items-start justify-center gap-5 lg:gap-6 hero-visuals">
 
                         <!-- Left panel: Cross-border corridors -->
                         <div class="hidden lg:block glass rounded-2xl p-4 w-44 space-y-3 animate-float" style="animation-delay:1s;flex-shrink:0;margin-top:60px;">
@@ -515,9 +533,9 @@
         <div class="max-w-6xl mx-auto px-6">
             <div class="max-w-xl mb-20"><p class="text-[11px] text-neutral-500 uppercase tracking-[0.25em] mb-5">Testimonials</p><h2 class="font-medium text-4xl md:text-5xl tracking-[-0.025em] leading-[1.05]">Loved by people<br><span class="text-neutral-500">just like you.</span></h2></div>
             <div class="grid md:grid-cols-3 gap-4">
-                <div class="glass rounded-2xl p-7 feature-card"><p class="text-[14px] text-neutral-300 font-light leading-relaxed mb-8">"Cross-border payments are a game changer. I send money to family in Ghana and it arrives in seconds. No crazy fees."</p><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full bg-gradient-to-br from-neutral-600 to-neutral-800"></div><div><div class="text-[13px] font-medium">Ama Osei</div><div class="text-[11px] text-neutral-500">Freelance designer · Accra</div></div></div></div>
-                <div class="glass rounded-2xl p-7 feature-card"><p class="text-[14px] text-neutral-300 font-light leading-relaxed mb-8">"Fiat and DeFi in one app is brilliant. Swap XLM, track spending, chat with my accountant — all from one place."</p><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full bg-gradient-to-br from-neutral-500 to-neutral-700"></div><div><div class="text-[13px] font-medium">Kojo Ayim</div><div class="text-[11px] text-neutral-500">Crypto trader · Johannesburg</div></div></div></div>
-                <div class="glass rounded-2xl p-7 feature-card"><p class="text-[14px] text-neutral-300 font-light leading-relaxed mb-8">"Budget tracking with category breakdowns helped me save in my first month. The SA–Ghana corridor fee is unbeatable."</p><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full bg-gradient-to-br from-neutral-700 to-neutral-900"></div><div><div class="text-[13px] font-medium">Thandi Mkhize</div><div class="text-[11px] text-neutral-500">Software engineer · Cape Town</div></div></div></div>
+                <div class="glass rounded-2xl p-7 feature-card"><p class="text-[14px] text-neutral-300 font-light leading-relaxed mb-8">"Cross-border payments are a game changer. I send money to family in Ghana and it arrives in seconds. No crazy fees."</p><div class="flex items-center gap-3"><img src="/testimonials/ama.jpg" alt="" loading="lazy" width="36" height="36" class="w-9 h-9 rounded-full object-cover flex-shrink-0"><div><div class="text-[13px] font-medium">Ama Osei</div><div class="text-[11px] text-neutral-500">Freelance designer · Accra</div></div></div></div>
+                <div class="glass rounded-2xl p-7 feature-card"><p class="text-[14px] text-neutral-300 font-light leading-relaxed mb-8">"Fiat and DeFi in one app is brilliant. Swap XLM, track spending, chat with my accountant — all from one place."</p><div class="flex items-center gap-3"><img src="/testimonials/kojo.jpg" alt="" loading="lazy" width="36" height="36" class="w-9 h-9 rounded-full object-cover flex-shrink-0"><div><div class="text-[13px] font-medium">Kojo Ayim</div><div class="text-[11px] text-neutral-500">Crypto trader · Johannesburg</div></div></div></div>
+                <div class="glass rounded-2xl p-7 feature-card"><p class="text-[14px] text-neutral-300 font-light leading-relaxed mb-8">"Budget tracking with category breakdowns helped me save in my first month. The SA–Ghana corridor fee is unbeatable."</p><div class="flex items-center gap-3"><img src="/testimonials/thandi.jpg" alt="" loading="lazy" width="36" height="36" class="w-9 h-9 rounded-full object-cover flex-shrink-0"><div><div class="text-[13px] font-medium">Thandi Mkhize</div><div class="text-[11px] text-neutral-500">Software engineer · Cape Town</div></div></div></div>
             </div>
         </div>
     </section>
@@ -529,7 +547,7 @@
                 <h2 class="font-medium text-4xl md:text-5xl tracking-[-0.025em] leading-[1.05] mb-5">Ready to take control<br><span class="text-neutral-500">of your money?</span></h2>
                 <p class="text-neutral-400 text-[15px] font-light leading-relaxed mb-10 max-w-md mx-auto">Join beta users already transforming their financial life with lumens. Africa-first. Privacy-native.</p>
                 <div class="flex flex-wrap gap-3 justify-center">
-                    <a href="https://lumensmoney.lovable.app/app" target="_top"  class="btn-primary text-[13px] font-medium px-7 py-3.5 rounded-xl flex items-center gap-2">Get App <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+                    <a href="https://lumens.money/app" target="_top"  class="btn-primary text-[13px] font-medium px-7 py-3.5 rounded-xl flex items-center gap-2">Get App <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
                     <button onclick="showPage('how')" class="btn-ghost text-[13px] font-medium px-7 py-3.5 rounded-xl">How it works</button>
                 </div>
             </div>
@@ -540,7 +558,7 @@
     <section class="py-12 border-y border-white/[0.04]">
         <div class="max-w-screen-2xl mx-auto px-6">
             <p class="text-center text-[10px] text-white uppercase tracking-[0.25em] mb-8">Built with Africa's leading infrastructure</p>
-            <div class="overflow-hidden"><div class="marquee text-white gap-8"><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:stellar"></span><span class="font-medium text-sm tracking-tight">Stellar</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:paystack"></span><span class="font-medium text-sm tracking-tight">Paystack</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:bitcoin"></span><span class="font-medium text-sm tracking-tight">VALR B2B</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:zeepay"></span><span class="font-medium text-sm tracking-tight">Zeepay</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:supabase"></span><span class="font-medium text-sm tracking-tight">Supabase</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:cloudflare"></span><span class="font-medium text-sm tracking-tight">Cloudflare</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="lucide:landmark"></span><span class="font-medium text-sm tracking-tight">GHIPSS</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:smile"></span><span class="font-medium text-sm tracking-tight">Smile Identity</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:stellar"></span><span class="font-medium text-sm tracking-tight">Stellar</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:paystack"></span><span class="font-medium text-sm tracking-tight">Paystack</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:bitcoin"></span><span class="font-medium text-sm tracking-tight">VALR B2B</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:zeepay"></span><span class="font-medium text-sm tracking-tight">Zeepay</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:supabase"></span><span class="font-medium text-sm tracking-tight">Supabase</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:cloudflare"></span><span class="font-medium text-sm tracking-tight">Cloudflare</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="lucide:landmark"></span><span class="font-medium text-sm tracking-tight">GHIPSS</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:smile"></span><span class="font-medium text-sm tracking-tight">Smile Identity</span></div></div></div>
+            <div class="overflow-hidden"><div class="marquee text-white gap-8"><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:stellar"></span><span class="font-medium text-sm tracking-tight">Stellar</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:paystack"></span><span class="font-medium text-sm tracking-tight">Paystack</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:bitcoin"></span><span class="font-medium text-sm tracking-tight">VALR B2B</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:zeepay"></span><span class="font-medium text-sm tracking-tight">Zeepay</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:supabase"></span><span class="font-medium text-sm tracking-tight">Supabase</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:cloudflare"></span><span class="font-medium text-sm tracking-tight">Cloudflare</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="lucide:landmark"></span><span class="font-medium text-sm tracking-tight">GHIPSS</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:smile"></span><span class="font-medium text-sm tracking-tight">Smile Identity</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:stellar"></span><span class="font-medium text-sm tracking-tight">Stellar</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:paystack"></span><span class="font-medium text-sm tracking-tight">Paystack</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:bitcoin"></span><span class="font-medium text-sm tracking-tight">VALR B2B</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:zeepay"></span><span class="font-medium text-sm tracking-tight">Zeepay</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:supabase"></span><span class="font-medium text-sm tracking-tight">Supabase</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:cloudflare"></span><span class="font-medium text-sm tracking-tight">Cloudflare</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="lucide:landmark"></span><span class="font-medium text-sm tracking-tight">GHIPSS</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:smile"></span><span class="font-medium text-sm tracking-tight">Smile Identity</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:stellar"></span><span class="font-medium text-sm tracking-tight">Stellar</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:paystack"></span><span class="font-medium text-sm tracking-tight">Paystack</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:bitcoin"></span><span class="font-medium text-sm tracking-tight">VALR B2B</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:zeepay"></span><span class="font-medium text-sm tracking-tight">Zeepay</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:supabase"></span><span class="font-medium text-sm tracking-tight">Supabase</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:cloudflare"></span><span class="font-medium text-sm tracking-tight">Cloudflare</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="lucide:landmark"></span><span class="font-medium text-sm tracking-tight">GHIPSS</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:smile"></span><span class="font-medium text-sm tracking-tight">Smile Identity</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:stellar"></span><span class="font-medium text-sm tracking-tight">Stellar</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:paystack"></span><span class="font-medium text-sm tracking-tight">Paystack</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:bitcoin"></span><span class="font-medium text-sm tracking-tight">VALR B2B</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:zeepay"></span><span class="font-medium text-sm tracking-tight">Zeepay</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:supabase"></span><span class="font-medium text-sm tracking-tight">Supabase</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:cloudflare"></span><span class="font-medium text-sm tracking-tight">Cloudflare</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="lucide:landmark"></span><span class="font-medium text-sm tracking-tight">GHIPSS</span></div><div class="flex items-center gap-3 flex-shrink-0"><span class="iconify text-xl" data-icon="simple-icons:smile"></span><span class="font-medium text-sm tracking-tight">Smile Identity</span></div></div></div></div>
         </div>
     </section>
 
@@ -565,7 +583,7 @@
             <div><div class="text-3xl font-bold text-white mb-1">1–2%</div><div class="text-[13px] text-neutral-400">All-in corridor fee</div></div>
             <div><div class="text-3xl font-bold mb-1" style="color:#3437f3">$0.00001</div><div class="text-[13px] text-neutral-400">Per Stellar transaction</div></div>
         </div>
-        <div class="mt-8 text-center"><a href="https://lumensmoney.lovable.app/app" target="_top"  class="btn-primary text-[13px] font-medium px-8 py-3.5 rounded-xl inline-flex items-center gap-2">Get App <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a></div>
+        <div class="mt-8 text-center"><a href="https://lumens.money/app" target="_top"  class="btn-primary text-[13px] font-medium px-8 py-3.5 rounded-xl inline-flex items-center gap-2">Get App <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a></div>
     </div>
 </div>
 
@@ -686,7 +704,7 @@
                     <li class="flex items-center gap-2"><svg class="w-3.5 h-3.5 text-accent flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Budget tracking</li>
                     <li class="flex items-center gap-2 text-neutral-500"><svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Cross-border (1.5% fee)</li>
                 </ul>
-                <a href="https://lumensmoney.lovable.app/app" target="_top"  class="w-full block text-center btn-ghost text-[13px] font-medium px-6 py-3 rounded-xl">Get started free</a>
+                <a href="https://lumens.money/app" target="_top"  class="w-full block text-center btn-ghost text-[13px] font-medium px-6 py-3 rounded-xl">Get started free</a>
             </div>
             <div class="glass-strong rounded-2xl p-8" style="border-color:rgba(52,211,153,0.2);">
                 <div class="flex items-center justify-between mb-3"><div class="text-[11px] text-accent uppercase tracking-wider">Pro</div><div class="text-[10px] text-neutral-500 glass-subtle rounded-full px-2 py-0.5">Coming soon</div></div>
@@ -932,11 +950,20 @@
         if (window.Iconify && window.Iconify.scan) window.Iconify.scan(icon.parentElement);
     }
     (function() {
-        const saved = localStorage.getItem('lumens-theme');
-        if (saved) {
-            document.documentElement.setAttribute('data-theme', saved);
-            updateToggleUI(saved);
-        }
+        const saved = localStorage.getItem('lumens-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', saved);
+        updateToggleUI(saved);
+    })();
+
+    // Top notice bar
+    function dismissNotice() {
+        const bar = document.getElementById('notice-bar');
+        if (bar) bar.remove();
+        document.body.classList.remove('notice-open');
+        try { sessionStorage.setItem('lumens-notice', 'dismissed'); } catch (e) {}
+    }
+    (function() {
+        try { if (sessionStorage.getItem('lumens-notice') === 'dismissed') dismissNotice(); } catch (e) {}
     })();
 
     // Subtle crypto price flicker
