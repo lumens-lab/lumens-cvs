@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useDebitOrders, deleteDebitOrder, daysUntil, isDue, type DebitOrder } from '@/lib/hazel/debit-orders';
 import { useAuth } from '@/hooks/use-auth';
 import { useDomicileWallet, depositToWallet, formatWalletUid } from '@/lib/hazel/wallet';
+import { accountBalance } from '@/lib/hazel/account-balance';
 import lumensLogo from '@/assets/lumens-logo.png';
 
 /** Compact app logo shown on Wallet/Chat headers (matches the onboarding splash logo). */
@@ -55,6 +56,15 @@ export function HomeScreen({
   const { wallet, refresh: refreshWallet } = useDomicileWallet(user?.id ?? null, state.settings?.currency);
   const sym = getCurrencySym(state.settings?.currency ?? 'ZAR');
   const pName = state.profile?.name ?? 'Welcome';
+  const monthKey = new Date().toISOString().slice(0, 7);
+  const monthlyTotals = useMemo(() => {
+    return (state.txs ?? []).reduce((totals, tx) => {
+      if (!tx.date.startsWith(monthKey) || tx.cat === '__transfer__') return totals;
+      if (tx.amt > 0) totals.income += tx.amt;
+      if (tx.amt < 0) totals.expenses += Math.abs(tx.amt);
+      return totals;
+    }, { income: 0, expenses: 0 });
+  }, [monthKey, state.txs]);
   const filteredTx = useMemo(() => {
     const f = txFilter.toLowerCase();
     return (state.txs ?? []).filter((t) => (t?.name ?? '').toLowerCase().includes(f)).slice(0, 10);
@@ -62,10 +72,6 @@ export function HomeScreen({
 
   return (
     <div className="afu" style={{ padding: '14px 20px 140px' }}>
-      {/* Brand mark */}
-      <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-start' }}>
-        <LumensWordmark height={112} />
-      </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
@@ -127,6 +133,17 @@ export function HomeScreen({
             <span style={{ fontSize: 11, fontWeight: 600 }}>{a.label}</span>
           </T>
         ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 10, marginBottom: 18 }}>
+        <div style={{ ...gl('rgba(52,211,153,0.08)', 16, { boxShadow: 'none', border: '1px solid rgba(52,211,153,0.16)' }), padding: 14, minWidth: 0 }}>
+          <div style={{ color: S, fontSize: 10, marginBottom: 6 }}>Monthly Income</div>
+          <div style={{ color: GN, fontSize: 17, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis' }}>+{sym}{fmtM(monthlyTotals.income)}</div>
+        </div>
+        <div style={{ ...gl('rgba(248,113,113,0.08)', 16, { boxShadow: 'none', border: '1px solid rgba(248,113,113,0.16)' }), padding: 14, minWidth: 0 }}>
+          <div style={{ color: S, fontSize: 10, marginBottom: 6 }}>Monthly Expenses</div>
+          <div style={{ color: RD, fontSize: 17, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis' }}>−{sym}{fmtM(monthlyTotals.expenses)}</div>
+        </div>
       </div>
 
       {/* Transactions */}
@@ -416,6 +433,8 @@ export function CatDetailScreen({ catId, monthKey, onBack, onPickMonth }: any) {
 /* ── WALLET (cards + crypto merged) ── */
 export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
   const { state, set } = useHazelStore();
+  const { user } = useAuth();
+  const { wallet } = useDomicileWallet(user?.id ?? null, state.settings?.currency);
   const sym = getCurrencySym(state.settings.currency);
   const prefCur = (state.settings?.currency ?? 'USD').toUpperCase();
   const [vsCode, setVsCode] = useState<string>(prefCur);
@@ -428,6 +447,11 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
   const { alerts, add: addAlert, remove: removeAlert, markTriggered, forCoin } = usePriceAlerts();
   // No on-chain wallet yet — portfolio value is 0 until balances are wired in.
   const cryptoTotal = 0;
+  const cardTotal = useMemo(() => state.accounts
+    .filter((account) => account.type.toLowerCase().includes('card'))
+    .reduce((sum, account) => sum + accountBalance(account, state.txs), 0), [state.accounts, state.txs]);
+  const walletBalance = Number(wallet?.balance ?? 0);
+  const netWorth = walletBalance + cryptoTotal + cardTotal;
   const [alertOpen, setAlertOpen] = useState<null | { coinId: string; sym: string; price: number }>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [actionOpen, setActionOpen] = useState<null | { mode: 'deposit' | 'withdraw'; coinId: string; sym: string; name: string; price: number }>(null);
@@ -465,21 +489,16 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
         </T>
       </div>
 
-      {/* Cards section — centered */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: W, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7 }}>Cards</div>
-        <div className="no-scrollbar" style={{ display: 'flex', overflowX: 'auto', gap: 14, scrollSnapType: 'x mandatory', padding: '4px 4px 8px', margin: '0 -20px 0', paddingLeft: 20, paddingRight: 20 }}>
-          {state.cards.map((c) => (
-            <div key={c.id} style={{ position: 'relative', flex: '0 0 auto', scrollSnapAlign: 'center' }}>
-              <CardComp card={c} visible={cardVis} w={340} />
-              <T onClick={() => { set((s) => { s.cards = s.cards.filter((x) => x.id !== c.id); }); showToast('Card removed'); }} style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 14, background: 'rgba(0,0,0,0.4)', color: '#fff', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Ic n="X" s={14} />
-              </T>
-            </div>
-          ))}
-          <T onClick={() => openSheet('add-card')} style={{ flex: '0 0 auto', scrollSnapAlign: 'center', width: 340, ...gl('rgba(37,99,235,0.08)', 18, { border: '1px solid rgba(37,99,235,0.2)' }), padding: 14, color: AC, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 200 }}>
-            <Ic n="Plus" s={16} /> Add New Card
-          </T>
+      <div style={{ ...gl('rgba(37,99,235,0.08)', 18, { border: '1px solid rgba(37,99,235,0.18)' }), padding: 18, marginBottom: 10 }}>
+        <div style={{ color: S, fontSize: 11, marginBottom: 5 }}>Total Net Worth</div>
+        <div style={{ color: W, fontSize: 30, fontWeight: 800 }}>{cardVis ? `${sym}${fmtM(netWorth)}` : '••••••'}</div>
+        <div style={{ color: S2, fontSize: 10, marginTop: 5 }}>Wallet + crypto + card balances</div>
+      </div>
+      <div style={{ ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 16, marginBottom: 28, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(52,211,153,0.1)', color: GN, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="Wallet" s={19} /></div>
+        <div style={{ flex: 1 }}>
+          <div style={{ color: S, fontSize: 11 }}>Wallet Balance</div>
+          <div style={{ color: W, fontSize: 18, fontWeight: 800, marginTop: 2 }}>{cardVis ? `${sym}${fmtM(walletBalance)}` : '••••••'}</div>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useHazelStore, type Tx } from './store';
 
@@ -17,6 +17,8 @@ export function useTxSync(userId: string | null) {
   const { state, set } = useHazelStore();
   const seededFor = useRef<string | null>(null);
   const syncing = useRef(false);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [retryTick, setRetryTick] = useState(0);
   // Snapshot of last-pushed txs (by serverId) so we can diff on changes.
   const lastSnap = useRef<Map<string, string>>(new Map());
 
@@ -120,7 +122,8 @@ export function useTxSync(userId: string | null) {
         const toDelete: string[] = [];
         lastSnap.current.forEach((_v, id) => { if (!currentServerIds.has(id)) toDelete.push(id); });
         if (toDelete.length) {
-          await supabase.from('txs').delete().in('id', toDelete);
+          const { error } = await supabase.from('txs').delete().in('id', toDelete);
+          if (error) throw error;
           toDelete.forEach((id) => lastSnap.current.delete(id));
         }
 
@@ -128,7 +131,8 @@ export function useTxSync(userId: string | null) {
         const toInsert = current.filter((t) => !t.serverId);
         if (toInsert.length) {
           const rows = toInsert.map((t) => ({ user_id: userId, ...rowOf(t) }));
-          const { data: inserted } = await supabase.from('txs').insert(rows).select('id');
+          const { data: inserted, error } = await supabase.from('txs').insert(rows).select('id');
+          if (error) throw error;
           if (inserted && inserted.length === toInsert.length) {
             set((s) => {
               for (let i = 0; i < toInsert.length; i++) {
@@ -146,8 +150,20 @@ export function useTxSync(userId: string | null) {
         const toUpdate = current.filter((t) => t.serverId && lastSnap.current.get(t.serverId) !== JSON.stringify(rowOf(t)));
         for (const t of toUpdate) {
           const row = rowOf(t);
-          await supabase.from('txs').update(row).eq('id', t.serverId!);
+          const { error } = await supabase.from('txs').update(row).eq('id', t.serverId!);
+          if (error) throw error;
           lastSnap.current.set(t.serverId!, JSON.stringify(row));
+        }
+        if (retryTimer.current) {
+          clearTimeout(retryTimer.current);
+          retryTimer.current = null;
+        }
+      } catch {
+        if (!retryTimer.current) {
+          retryTimer.current = setTimeout(() => {
+            retryTimer.current = null;
+            setRetryTick((tick) => tick + 1);
+          }, 5_000);
         }
       } finally {
         syncing.current = false;
@@ -155,7 +171,11 @@ export function useTxSync(userId: string | null) {
     })();
     // We intentionally only depend on state.txs identity changes here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.txs, userId]);
+  }, [state.txs, userId, retryTick]);
+
+  useEffect(() => () => {
+    if (retryTimer.current) clearTimeout(retryTimer.current);
+  }, []);
 }
 
 function rowOf(t: Tx) {
