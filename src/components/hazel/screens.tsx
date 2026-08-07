@@ -432,7 +432,7 @@ export function CatDetailScreen({ catId, monthKey, onBack, onPickMonth }: any) {
 
 /* ── WALLET (cards + crypto merged) ── */
 export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
-  const { state, set } = useHazelStore();
+  const { state } = useHazelStore();
   const { user } = useAuth();
   const { wallet } = useDomicileWallet(user?.id ?? null, state.settings?.currency);
   const sym = getCurrencySym(state.settings.currency);

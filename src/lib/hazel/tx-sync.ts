@@ -149,10 +149,12 @@ export function useTxSync(userId: string | null) {
         // Updates: serverId present and row JSON changed since last push.
         const toUpdate = current.filter((t) => t.serverId && lastSnap.current.get(t.serverId) !== JSON.stringify(rowOf(t)));
         for (const t of toUpdate) {
+          const serverId = t.serverId;
+          if (!serverId) continue;
           const row = rowOf(t);
-          const { error } = await supabase.from('txs').update(row).eq('id', t.serverId!);
+          const { error } = await supabase.from('txs').update(row).eq('id', serverId);
           if (error) throw error;
-          lastSnap.current.set(t.serverId!, JSON.stringify(row));
+          lastSnap.current.set(serverId, JSON.stringify(row));
         }
         if (retryTimer.current) {
           clearTimeout(retryTimer.current);
