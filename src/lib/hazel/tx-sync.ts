@@ -220,21 +220,3 @@ function rowOf(t: Tx) {
 export function sigOf(t: Tx) {
   return `${t.date}|${t.amt}|${t.name}|${t.cat}`;
 }
-
-function _unusedRowOf(t: Tx) {
-  return {
-    name: t.name,
-    cat: t.cat,
-    icon: t.icon,
-    ibg: t.ibg,
-    ic: t.ic,
-    date: t.date,
-    amt: t.amt,
-    merchant: t.merchant ?? null,
-    note: t.note ?? null,
-    receipt: t.receipt ?? null,
-    items: t.items ?? null,
-    account_id: t.accountId ?? null,
-    to_account_id: t.toAccountId ?? null,
-  };
-}
