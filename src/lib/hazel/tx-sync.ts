@@ -42,8 +42,15 @@ export function useTxSync(userId: string | null) {
       if (error) return; // never seed from a partial/failed read
       if (!data || data.length === 0) break;
       rows.push(...data);
+      // Render what we have as soon as the first page lands so the list shows
+      // immediately on sign-in instead of waiting for the whole history.
+      if (page === 0 && data.length === PAGE) applyRows(uid, rows);
       if (data.length < PAGE) break;
     }
+    applyRows(uid, rows);
+  };
+
+  const applyRows = (uid: string, rows: any[]) => {
     const remote: Tx[] = rows.map((r: any, i: number) => ({
       id: Date.now() + i,
       serverId: r.id,
@@ -67,8 +74,25 @@ export function useTxSync(userId: string | null) {
     seededFor.current = uid;
     set((s) => {
       // Preserve un-synced local rows (no serverId yet) so an entry the user
-      // just added doesn't vanish if a realtime tick races the push.
-      const localUnsynced = s.txs.filter((t) => !t.serverId);
+      // just added doesn't vanish if a realtime tick races the push — but drop
+      // the ones the server already has, otherwise a realtime tick that lands
+      // between insert and serverId attachment leaves a phantom "new" row that
+      // gets inserted again on the next push (the duplicate-rows bug).
+      const remaining = new Map<string, number>();
+      remote.forEach((t) => remaining.set(sigOf(t), (remaining.get(sigOf(t)) ?? 0) + 1));
+      // Rows already synced locally account for their remote copies first.
+      s.txs.filter((t) => t.serverId).forEach((t) => {
+        const k = sigOf(t);
+        const n = remaining.get(k);
+        if (n) remaining.set(k, n - 1);
+      });
+      const localUnsynced = s.txs.filter((t) => {
+        if (t.serverId) return false;
+        const k = sigOf(t);
+        const n = remaining.get(k) ?? 0;
+        if (n > 0) { remaining.set(k, n - 1); return false; } // already on the server
+        return true;
+      });
       s.txs = [...localUnsynced, ...remote];
     });
   };
@@ -196,4 +220,10 @@ function rowOf(t: Tx) {
     account_id: t.accountId ?? null,
     to_account_id: t.toAccountId ?? null,
   };
+}
+
+/** Identity of a CashFlow entry independent of its row id — used to detect
+ *  rows that already exist server-side. */
+export function sigOf(t: Tx) {
+  return `${t.date}|${t.amt}|${t.name}|${t.cat}`;
 }

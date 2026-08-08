@@ -452,6 +452,32 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
     .reduce((sum, account) => sum + accountBalance(account, state.txs), 0), [state.accounts, state.txs]);
   const walletBalance = Number(wallet?.balance ?? 0);
   const netWorth = walletBalance + cryptoTotal + cardTotal;
+  // 12-month net-worth trend: walk backwards from today's net worth, undoing
+  // each month's cash movements to get the closing value of prior months.
+  const trend = useMemo(() => {
+    const now = new Date();
+    const keys: string[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    }
+    const flow = new Map<string, number>();
+    for (const t of state.txs) {
+      if (t.cat === '__transfer__') continue;
+      const k = t.date.slice(0, 7);
+      flow.set(k, (flow.get(k) ?? 0) + t.amt);
+    }
+    const values: number[] = new Array(12).fill(0);
+    let running = netWorth;
+    for (let i = 11; i >= 0; i--) {
+      values[i] = running;
+      running -= flow.get(keys[i]) ?? 0;
+    }
+    return keys.map((k, i) => ({ key: k, label: MONTHS[Number(k.slice(5, 7)) - 1].slice(0, 1), value: values[i] }));
+  }, [state.txs, netWorth]);
+  const trendMin = Math.min(...trend.map((p) => p.value), 0);
+  const trendMax = Math.max(...trend.map((p) => p.value), 1);
+  const trendChange = trend.length ? trend[trend.length - 1].value - trend[0].value : 0;
   const [alertOpen, setAlertOpen] = useState<null | { coinId: string; sym: string; price: number }>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [actionOpen, setActionOpen] = useState<null | { mode: 'deposit' | 'withdraw'; coinId: string; sym: string; name: string; price: number }>(null);
@@ -493,6 +519,31 @@ export function WalletScreen({ openSheet, cardVis, setCardVis }: any) {
         <div style={{ color: S, fontSize: 11, marginBottom: 5 }}>Total Net Worth</div>
         <div style={{ color: W, fontSize: 30, fontWeight: 800 }}>{cardVis ? `${sym}${fmtM(netWorth)}` : '••••••'}</div>
         <div style={{ color: S2, fontSize: 10, marginTop: 5 }}>Wallet + crypto + card balances</div>
+        {cardVis && (
+          <div style={{ marginTop: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ color: S, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Last 12 months</span>
+              <span style={{ color: trendChange >= 0 ? GN : RD, fontSize: 11, fontWeight: 700 }}>
+                {trendChange >= 0 ? '+' : '−'}{sym}{fmtM(Math.abs(trendChange))}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 64 }}>
+              {trend.map((p) => {
+                const h = Math.max(3, ((p.value - trendMin) / Math.max(1, trendMax - trendMin)) * 60);
+                return (
+                  <div key={p.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }} title={`${p.key}: ${sym}${fmtM(p.value)}`}>
+                    <div style={{ width: '100%', height: h, borderRadius: 5, background: p.value >= 0 ? 'rgba(37,99,235,0.75)' : 'rgba(248,113,113,0.7)' }} />
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', gap: 4, marginTop: 5 }}>
+              {trend.map((p) => (
+                <div key={p.key} style={{ flex: 1, textAlign: 'center', color: S2, fontSize: 9 }}>{p.label}</div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       <div style={{ ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 16, marginBottom: 28, display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(52,211,153,0.1)', color: GN, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="Wallet" s={19} /></div>

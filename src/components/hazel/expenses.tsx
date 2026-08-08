@@ -7,6 +7,7 @@ import { scanReceipt } from '@/lib/hazel/ocr.functions';
 import { MonthPickerSheet } from './sheets';
 import { MONTHS } from '@/lib/hazel/data';
 import { toBWReceipt } from '@/lib/hazel/img-preprocess';
+import { VerifySheet } from './verify-cashflow';
 
 const { W, S, S2, AC, GN, RD } = COLORS;
 
@@ -22,6 +23,7 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
   const [q, setQ] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
   const [monthKey, setMonthKey] = useState(() => new Date().toISOString().slice(0, 7));
   const [my, mm] = monthKey.split('-').map(Number);
   const monthLabel = `${MONTHS[mm - 1]} ${my}`;
@@ -89,6 +91,9 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 style={{ color: W, fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>{isIncome ? 'Income' : 'CashFlow'}</h1>
         <div style={{ display: 'flex', gap: 8 }}>
+          <T onClick={() => setVerifyOpen(true)} aria-label="Verify records" style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), padding: '8px 10px', color: S, display: 'flex', alignItems: 'center' }}>
+            <Ic n="ShieldCheck" s={15} />
+          </T>
           <T onClick={() => setMonthPickerOpen(true)} style={{ ...gl('rgba(255,255,255,0.07)', 14, { boxShadow: 'none' }), display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', color: S, fontSize: 12, fontWeight: 600 }}>
             <Ic n="Calendar" s={14} /> {monthLabel}
           </T>
@@ -189,6 +194,7 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
         monthKey={monthKey}
         onPick={(k: string) => setMonthKey(k)}
       />
+      <VerifySheet open={verifyOpen} onClose={() => setVerifyOpen(false)} />
     </div>
   );
 }
