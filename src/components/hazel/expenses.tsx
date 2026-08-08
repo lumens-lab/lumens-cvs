@@ -194,6 +194,7 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
         monthKey={monthKey}
         onPick={(k: string) => setMonthKey(k)}
       />
+      <VerifySheet open={verifyOpen} onClose={() => setVerifyOpen(false)} />
     </div>
   );
 }
