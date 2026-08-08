@@ -42,8 +42,15 @@ export function useTxSync(userId: string | null) {
       if (error) return; // never seed from a partial/failed read
       if (!data || data.length === 0) break;
       rows.push(...data);
+      // Render what we have as soon as the first page lands so the list shows
+      // immediately on sign-in instead of waiting for the whole history.
+      if (page === 0 && data.length === PAGE) applyRows(uid, rows);
       if (data.length < PAGE) break;
     }
+    applyRows(uid, rows);
+  };
+
+  const applyRows = (uid: string, rows: any[]) => {
     const remote: Tx[] = rows.map((r: any, i: number) => ({
       id: Date.now() + i,
       serverId: r.id,
