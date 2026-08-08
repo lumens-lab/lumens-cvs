@@ -67,8 +67,25 @@ export function useTxSync(userId: string | null) {
     seededFor.current = uid;
     set((s) => {
       // Preserve un-synced local rows (no serverId yet) so an entry the user
-      // just added doesn't vanish if a realtime tick races the push.
-      const localUnsynced = s.txs.filter((t) => !t.serverId);
+      // just added doesn't vanish if a realtime tick races the push — but drop
+      // the ones the server already has, otherwise a realtime tick that lands
+      // between insert and serverId attachment leaves a phantom "new" row that
+      // gets inserted again on the next push (the duplicate-rows bug).
+      const remaining = new Map<string, number>();
+      remote.forEach((t) => remaining.set(sigOf(t), (remaining.get(sigOf(t)) ?? 0) + 1));
+      // Rows already synced locally account for their remote copies first.
+      s.txs.filter((t) => t.serverId).forEach((t) => {
+        const k = sigOf(t);
+        const n = remaining.get(k);
+        if (n) remaining.set(k, n - 1);
+      });
+      const localUnsynced = s.txs.filter((t) => {
+        if (t.serverId) return false;
+        const k = sigOf(t);
+        const n = remaining.get(k) ?? 0;
+        if (n > 0) { remaining.set(k, n - 1); return false; } // already on the server
+        return true;
+      });
       s.txs = [...localUnsynced, ...remote];
     });
   };
@@ -181,6 +198,30 @@ export function useTxSync(userId: string | null) {
 }
 
 function rowOf(t: Tx) {
+  return {
+    name: t.name,
+    cat: t.cat,
+    icon: t.icon,
+    ibg: t.ibg,
+    ic: t.ic,
+    date: t.date,
+    amt: t.amt,
+    merchant: t.merchant ?? null,
+    note: t.note ?? null,
+    receipt: t.receipt ?? null,
+    items: t.items ?? null,
+    account_id: t.accountId ?? null,
+    to_account_id: t.toAccountId ?? null,
+  };
+}
+
+/** Identity of a CashFlow entry independent of its row id — used to detect
+ *  rows that already exist server-side. */
+export function sigOf(t: Tx) {
+  return `${t.date}|${t.amt}|${t.name}|${t.cat}`;
+}
+
+function _unusedRowOf(t: Tx) {
   return {
     name: t.name,
     cat: t.cat,
