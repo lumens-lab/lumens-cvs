@@ -98,7 +98,7 @@ function WaitlistRoute() {
         )}
 
         <div style={{ marginTop: 26, fontSize: 13, color: "rgba(255,255,255,0.55)" }}>
-          Already have access? <Link to="/app" style={{ color: "#60a5fa", textDecoration: "none", fontWeight: 600 }}>Open the app →</Link>
+          Already have access? <a href="/app" style={{ color: "#60a5fa", textDecoration: "none", fontWeight: 600 }}>Open the app →</a>
         </div>
       </div>
     </main>
