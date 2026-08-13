@@ -792,6 +792,36 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_signups: {
+        Row: {
+          country: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          note: string | null
+          phone: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          note?: string | null
+          phone?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          note?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       profiles_public: {
