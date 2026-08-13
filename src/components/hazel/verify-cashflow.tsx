@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Ic, T, gl, COLORS, Sheet } from './ui';
-import { useHazelStore } from '@/lib/hazel/store';
+import { Ic, T, gl, COLORS, Sheet, showToast } from './ui';
+import { useHazelStore, type Tx } from '@/lib/hazel/store';
 import { sigOf } from '@/lib/hazel/tx-sync';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 
 const { W, S, S2, GN, RD, AM, AC } = COLORS;
+
+type SrvRow = { id: string; name: string; cat: string; date: string; amt: number };
 
 type Report = {
   serverCount: number;
@@ -16,15 +18,38 @@ type Report = {
   duplicates: { sig: string; n: number }[];
   missingLocally: number;
   notSynced: number;
+  rows: SrvRow[];
 };
+
+const PAGE = 1000;
+
+/** Pull every CashFlow row stored on the account (paged, no window). */
+async function fetchAllRows(uid: string, cols: string): Promise<any[]> {
+  const rows: any[] = [];
+  for (let page = 0; ; page++) {
+    const { data, error } = await supabase
+      .from('txs')
+      .select(cols)
+      .eq('user_id', uid)
+      .order('date', { ascending: false })
+      .range(page * PAGE, page * PAGE + PAGE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    rows.push(...data);
+    if (data.length < PAGE) break;
+  }
+  return rows;
+}
 
 /** Five-year CashFlow audit: compares what is stored on the account with what
  *  the device is showing, and flags duplicate or missing entries. */
-export function VerifySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { state } = useHazelStore();
+export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onClose: () => void; openDetail?: (id: number) => void }) {
+  const { state, set } = useHazelStore();
   const { user } = useAuth();
   const [report, setReport] = useState<Report | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pulling, setPulling] = useState(false);
+  const [tab, setTab] = useState<null | 'all' | 'dupes'>(null);
 
   const run = useCallback(async () => {
     if (!user?.id) return;
@@ -33,7 +58,6 @@ export function VerifySheet({ open, onClose }: { open: boolean; onClose: () => v
       const since = new Date();
       since.setFullYear(since.getFullYear() - 5);
       const from = since.toISOString().slice(0, 10);
-      const PAGE = 1000;
       const rows: any[] = [];
       for (let page = 0; ; page++) {
         const { data, error } = await supabase
@@ -78,13 +102,69 @@ export function VerifySheet({ open, onClose }: { open: boolean; onClose: () => v
         duplicates: duplicates.slice(0, 12),
         missingLocally,
         notSynced: state.txs.filter((t) => !t.serverId).length,
+        rows: rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          cat: r.cat,
+          amt: Number(r.amt),
+          date: typeof r.date === 'string' ? r.date : new Date(r.date).toISOString().slice(0, 10),
+        })),
       });
     } finally {
       setBusy(false);
     }
   }, [user?.id, state.txs]);
 
-  useEffect(() => { if (open) run(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [open]);
+  useEffect(() => { if (open) { setTab(null); run(); } /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [open]);
+
+  /** Force a complete download of every record on the account into this
+   *  device, replacing whatever the device currently shows. */
+  const pullAll = useCallback(async () => {
+    if (!user?.id) return;
+    setPulling(true);
+    try {
+      const rows = await fetchAllRows(
+        user.id,
+        'id, name, cat, icon, ibg, ic, date, amt, merchant, note, receipt, items, account_id, to_account_id',
+      );
+      const remote: Tx[] = rows.map((r: any, i: number) => ({
+        id: Date.now() + i,
+        serverId: r.id,
+        name: r.name,
+        cat: r.cat,
+        icon: r.icon,
+        ibg: r.ibg,
+        ic: r.ic,
+        date: typeof r.date === 'string' ? r.date : new Date(r.date).toISOString().slice(0, 10),
+        amt: Number(r.amt),
+        merchant: r.merchant ?? undefined,
+        note: r.note ?? undefined,
+        receipt: r.receipt ?? undefined,
+        items: r.items ?? undefined,
+        accountId: r.account_id ?? undefined,
+        toAccountId: r.to_account_id ?? undefined,
+      }));
+      set((s) => {
+        const unsynced = s.txs.filter((t) => !t.serverId);
+        s.txs = [...unsynced, ...remote];
+      });
+      showToast(`Downloaded ${remote.length} record${remote.length === 1 ? '' : 's'}`);
+      await run();
+    } catch {
+      showToast('Could not download records. Check your connection.');
+    } finally {
+      setPulling(false);
+    }
+  }, [user?.id, set, run]);
+
+  const openTx = (row: SrvRow) => {
+    const local =
+      state.txs.find((t) => t.serverId === row.id) ??
+      state.txs.find((t) => sigOf(t) === `${row.date}|${row.amt}|${row.name}|${row.cat}`);
+    if (!local || !openDetail) { showToast('Tap "Download all records" first, then try again.'); return; }
+    onClose();
+    setTimeout(() => openDetail(local.id!), 80);
+  };
 
   const ok = report && report.missingLocally === 0 && report.duplicates.length === 0 && report.notSynced === 0;
 
@@ -92,6 +172,38 @@ export function VerifySheet({ open, onClose }: { open: boolean; onClose: () => v
     <Sheet open={open} onClose={onClose} title="Verify CashFlow">
       {!report ? (
         <div style={{ color: S, fontSize: 13, padding: '24px 0', textAlign: 'center' }}>Checking your records…</div>
+      ) : tab ? (
+        <div>
+          <T onClick={() => setTab(null)} style={{ color: AC, fontSize: 13, fontWeight: 700, marginBottom: 12, background: 'none', border: 'none', padding: 0 }}>← Back to summary</T>
+          <div style={{ color: W, fontSize: 14, fontWeight: 800, marginBottom: 10 }}>
+            {tab === 'all' ? `All records (${report.rows.length})` : `Duplicated records`}
+          </div>
+          {(tab === 'all'
+            ? report.rows
+            : report.rows.filter((r) => report.duplicates.some((d) => d.sig === `${r.date}|${r.amt}|${r.name}|${r.cat}`))
+          )
+            .slice()
+            .sort((a, b) => (tab === 'all' ? b.date.localeCompare(a.date) : `${a.name}${a.date}`.localeCompare(`${b.name}${b.date}`)))
+            .map((r) => (
+              <T
+                key={r.id}
+                onClick={() => openTx(r)}
+                active="rgba(255,255,255,0.06)"
+                style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'none', border: 'none' }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ color: W, fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
+                  <div style={{ color: S2, fontSize: 11 }}>{r.date}</div>
+                </div>
+                <div style={{ color: r.amt > 0 ? GN : W, fontSize: 13, fontWeight: 700 }}>{r.amt > 0 ? '+' : ''}{r.amt.toFixed(2)}</div>
+                <Ic n="ChevronRight" s={15} c={S2} />
+              </T>
+            ))}
+          {tab === 'dupes' && report.duplicates.length === 0 && (
+            <div style={{ color: S, fontSize: 13, padding: '18px 0', textAlign: 'center' }}>No duplicates found.</div>
+          )}
+          <div style={{ color: S2, fontSize: 10, textAlign: 'center', margin: '14px 0 4px' }}>Tap a record to edit or delete it.</div>
+        </div>
       ) : (
         <div>
           <div style={{ ...gl(ok ? 'rgba(52,211,153,0.1)' : 'rgba(251,191,36,0.1)', 16, { border: `1px solid ${ok ? 'rgba(52,211,153,0.3)' : 'rgba(251,191,36,0.3)'}` }), padding: 14, display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
@@ -104,9 +216,10 @@ export function VerifySheet({ open, onClose }: { open: boolean; onClose: () => v
             </div>
           </div>
 
+          <Row label="All records on account" value={String(report.serverCount)} tone={AC} onClick={() => setTab('all')} />
           <Row label="Date range" value={report.oldest ? `${report.oldest} → ${report.newest}` : '—'} />
           <Row label="Missing on this device" value={String(report.missingLocally)} tone={report.missingLocally ? RD : GN} />
-          <Row label="Duplicate records" value={String(report.duplicates.length)} tone={report.duplicates.length ? AM : GN} />
+          <Row label="Duplicate records" value={String(report.duplicates.length)} tone={report.duplicates.length ? AM : GN} onClick={() => setTab('dupes')} />
           <Row label="Waiting to sync" value={String(report.notSynced)} tone={report.notSynced ? AM : GN} />
 
           <div style={{ color: S, fontSize: 11, fontWeight: 700, margin: '16px 0 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Per year</div>
@@ -135,18 +248,23 @@ export function VerifySheet({ open, onClose }: { open: boolean; onClose: () => v
           <T onClick={run} disabled={busy} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'rgba(37,99,235,0.9)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 800, marginTop: 18 }}>
             {busy ? 'Checking…' : 'Re-run check'}
           </T>
-          <div style={{ color: S2, fontSize: 10, textAlign: 'center', marginTop: 8 }}>Covers the last 5 years of income and expenses.</div>
+          <T onClick={pullAll} disabled={pulling} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', color: W, fontSize: 14, fontWeight: 800, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <Ic n="Download" s={16} c={W} /> {pulling ? 'Downloading…' : 'Download all records now'}
+          </T>
+          <div style={{ color: S2, fontSize: 10, textAlign: 'center', marginTop: 8 }}>Covers the last 5 years of income and expenses. Tap a row above to see the records.</div>
         </div>
       )}
     </Sheet>
   );
 }
 
-function Row({ label, value, tone }: { label: string; value: string; tone?: string }) {
+function Row({ label, value, tone, onClick }: { label: string; value: string; tone?: string; onClick?: () => void }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+    <div onClick={onClick} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', cursor: onClick ? 'pointer' : undefined }}>
       <span style={{ color: S, fontSize: 12 }}>{label}</span>
-      <span style={{ color: tone ?? W, fontSize: 13, fontWeight: 700 }}>{value}</span>
+      <span style={{ color: tone ?? W, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+        {value}{onClick && <Ic n="ChevronRight" s={14} c={S2} />}
+      </span>
     </div>
   );
 }
