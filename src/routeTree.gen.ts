@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as AppRouteImport } from './routes/app'
@@ -19,6 +20,11 @@ import { Route as ApiPublicPushOnMessageRouteImport } from './routes/api/public/
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
+const WaitlistRoute = WaitlistRouteImport.update({
+  id: '/waitlist',
+  path: '/waitlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/waitlist': typeof WaitlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppRoute
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/waitlist': typeof WaitlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/mcp': typeof McpRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/waitlist': typeof WaitlistRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/mcp'
     | '/reset-password'
+    | '/waitlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/mcp'
     | '/reset-password'
+    | '/waitlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/mcp'
     | '/reset-password'
+    | '/waitlist'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.lovable/oauth/consent'
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   McpRoute: typeof McpRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  WaitlistRoute: typeof WaitlistRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -152,6 +165,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/waitlist': {
+      id: '/waitlist'
+      path: '/waitlist'
+      fullPath: '/waitlist'
+      preLoaderRoute: typeof WaitlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRoute,
   McpRoute: McpRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  WaitlistRoute: WaitlistRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
