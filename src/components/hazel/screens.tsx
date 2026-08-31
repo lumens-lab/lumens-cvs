@@ -5,6 +5,7 @@ import { CryptoIcon } from './CryptoIcon';
 import { CRYPTO, CURRENCIES, MONTHS, MS, fmtM } from '@/lib/hazel/data';
 import { useCryptoPrices } from '@/lib/hazel/crypto-prices';
 import { useWatchlist, usePriceAlerts, SUPPORTED_FIAT, resolveVs, notify, ensureNotifyPermission } from '@/lib/hazel/crypto-prefs';
+import { useSyncStatus, formatLastSync } from '@/lib/hazel/sync-status';
 import { useHazelStore } from '@/lib/hazel/store';
 import { sendChatMessage, deleteChatMessage, fetchContactProfile, removeContact } from '@/lib/hazel/chat-sync';
 import { uploadChatMedia } from '@/lib/hazel/chat-media';
@@ -76,6 +77,7 @@ export function HomeScreen({
         <div>
           <div style={{ fontSize: 12, color: S, marginBottom: 2 }}>{greeting}</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: W, letterSpacing: '-0.02em' }}>{pName}</div>
+          <SyncLine />
         </div>
         <T onClick={() => openSub('profile')} aria-label="Open profile" style={{ background: 'none', border: 'none', padding: 0, borderRadius: 33 }}>
           <Av ini={(pName || '').split(' ').map((w) => w[0] || '').join('').slice(0, 2)} src={state.profile?.avatar} sz={66} />
@@ -1744,6 +1746,22 @@ function ContactProfileSheet({ contactId, fallback, onClose, onRemoved }: { cont
           </T>
         </div>
       </div>
+    </div>
+  );
+}
+
+
+/** Small "last synced" indicator shown on the wallet home after sign-in. */
+export function SyncLine() {
+  const sync = useSyncStatus();
+  const dot = sync.status === 'error' ? '#f87171' : sync.status === 'syncing' ? '#fbbf24' : '#34d399';
+  const text = sync.status === 'syncing' ? 'Syncing your records…'
+    : sync.status === 'error' ? 'Sync failed — pull down or open Verify CashFlow'
+    : formatLastSync(sync.lastSync);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+      <span style={{ width: 6, height: 6, borderRadius: 3, background: dot, display: 'inline-block' }} />
+      <span style={{ fontSize: 11, color: S }}>{text}</span>
     </div>
   );
 }
