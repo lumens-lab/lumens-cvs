@@ -4,6 +4,7 @@ import { useHazelStore, type Tx } from '@/lib/hazel/store';
 import { sigOf } from '@/lib/hazel/tx-sync';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { useSyncStatus, formatLastSync, markSyncing, markSynced, markSyncError } from '@/lib/hazel/sync-status';
 
 const { W, S, S2, GN, RD, AM, AC } = COLORS;
 
@@ -50,6 +51,7 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
   const [busy, setBusy] = useState(false);
   const [pulling, setPulling] = useState(false);
   const [tab, setTab] = useState<null | 'all' | 'dupes'>(null);
+  const sync = useSyncStatus();
 
   const run = useCallback(async () => {
     if (!user?.id) return;
@@ -117,12 +119,35 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
 
   useEffect(() => { if (open) { setTab(null); run(); } /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [open]);
 
-  /** Force a complete download of every record on the account into this
-   *  device, replacing whatever the device currently shows. */
+  /** Two-way sync: push anything recorded on this device that the account
+   *  doesn't have yet, then download the full account history back. */
   const pullAll = useCallback(async () => {
     if (!user?.id) return;
     setPulling(true);
+    markSyncing();
     try {
+      const unsyncedLocal = state.txs.filter((t) => !t.serverId);
+      if (unsyncedLocal.length) {
+        const { data: ins } = await supabase
+          .from('txs')
+          .insert(unsyncedLocal.map((t) => ({
+            user_id: user.id,
+            name: t.name, cat: t.cat, icon: t.icon, ibg: t.ibg, ic: t.ic,
+            date: t.date, amt: t.amt,
+            merchant: t.merchant ?? null, note: t.note ?? null,
+            receipt: t.receipt ?? null, items: t.items ?? null,
+            account_id: t.accountId ?? null, to_account_id: t.toAccountId ?? null,
+          })))
+          .select('id');
+        if (ins?.length) {
+          set((s) => {
+            unsyncedLocal.forEach((local, i) => {
+              const idx = s.txs.findIndex((x) => x.id === local.id && !x.serverId);
+              if (idx >= 0 && ins[i]) s.txs[idx] = { ...s.txs[idx], serverId: (ins[i] as any).id };
+            });
+          });
+        }
+      }
       const rows = await fetchAllRows(
         user.id,
         'id, name, cat, icon, ibg, ic, date, amt, merchant, note, receipt, items, account_id, to_account_id',
@@ -148,20 +173,22 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
         const unsynced = s.txs.filter((t) => !t.serverId);
         s.txs = [...unsynced, ...remote];
       });
-      showToast(`Downloaded ${remote.length} record${remote.length === 1 ? '' : 's'}`);
+      markSynced();
+      showToast(`Synced ${remote.length} record${remote.length === 1 ? '' : 's'}`);
       await run();
-    } catch {
-      showToast('Could not download records. Check your connection.');
+    } catch (e: any) {
+      markSyncError(e?.message);
+      showToast('Could not sync records. Check your connection.');
     } finally {
       setPulling(false);
     }
-  }, [user?.id, set, run]);
+  }, [user?.id, set, run, state.txs]);
 
   const openTx = (row: SrvRow) => {
     const local =
       state.txs.find((t) => t.serverId === row.id) ??
       state.txs.find((t) => sigOf(t) === `${row.date}|${row.amt}|${row.name}|${row.cat}`);
-    if (!local || !openDetail) { showToast('Tap "Download all records" first, then try again.'); return; }
+    if (!local || !openDetail) { showToast('Tap "Sync now" first, then try again.'); return; }
     onClose();
     setTimeout(() => openDetail(local.id!), 80);
   };
@@ -213,6 +240,9 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
               <div style={{ color: S, fontSize: 11, marginTop: 2 }}>
                 {report.serverCount} stored on your account · {report.localCount} shown on this device
               </div>
+              <div style={{ color: sync.status === 'error' ? RD : S2, fontSize: 11, marginTop: 3 }}>
+                {sync.status === 'syncing' ? 'Syncing…' : sync.status === 'error' ? 'Sync failed — tap Sync now' : formatLastSync(sync.lastSync)}
+              </div>
             </div>
           </div>
 
@@ -249,7 +279,7 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
             {busy ? 'Checking…' : 'Re-run check'}
           </T>
           <T onClick={pullAll} disabled={pulling} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', color: W, fontSize: 14, fontWeight: 800, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <Ic n="Download" s={16} c={W} /> {pulling ? 'Downloading…' : 'Download all records now'}
+            <Ic n="RefreshCw" s={16} c={W} /> {pulling ? 'Syncing…' : 'Sync now'}
           </T>
           <div style={{ color: S2, fontSize: 10, textAlign: 'center', marginTop: 8 }}>Covers the last 5 years of income and expenses. Tap a row above to see the records.</div>
         </div>
