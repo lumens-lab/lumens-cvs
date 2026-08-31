@@ -161,6 +161,12 @@ export function useTxSync(userId: string | null) {
         // Deletes: in snapshot but no longer present.
         const toDelete: string[] = [];
         lastSnap.current.forEach((_v, id) => { if (!currentServerIds.has(id)) toDelete.push(id); });
+        // Safety net: never mass-delete server history because the local list
+        // came up empty (scope switch, failed hydration, cleared storage).
+        if (current.length === 0 && lastSnap.current.size > 3) {
+          syncing.current = false;
+          return;
+        }
         if (toDelete.length) {
           const { error } = await supabase.from('txs').delete().in('id', toDelete);
           if (error) throw error;
