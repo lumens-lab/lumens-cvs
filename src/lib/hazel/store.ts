@@ -198,6 +198,12 @@ export function useHazelStore() {
 
 export function getStateSnapshot(): HazelState { boot(); return mem; }
 
+/** The user id the local store is currently bound to. Sync hooks MUST wait
+ *  until this matches the signed-in user before seeding or pushing, otherwise
+ *  a scope switch mid-flight wipes freshly pulled data (and can push an empty
+ *  device state back to the account). */
+export function getUserScope(): string | null { return currentUserId; }
+
 /**
  * Bind the store to a specific signed-in user (or `null` for signed-out).
  * Each user gets a separate localStorage namespace so device sharing never

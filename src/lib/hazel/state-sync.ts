@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useHazelStore, getStateSnapshot } from './store';
+import { useHazelStore, getStateSnapshot, getUserScope } from './store';
 
 /**
  * Mirrors per-user app state (categories, budgets, accounts, cards, settings)
@@ -18,11 +18,16 @@ export function useUserStateSync(userId: string | null) {
   const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const pullRemote = async (uid: string, isInitial: boolean) => {
-    const { data } = await supabase
+    // Never seed or bootstrap while the local store is still bound to another
+    // user (or to the signed-out namespace) — doing so pushes this device's
+    // default categories over the account's saved ones.
+    if (getUserScope() !== uid) return false;
+    const { data, error } = await supabase
         .from('user_state' as any)
         .select('income_cats, expense_cats, budgets, accounts, cards, settings')
       .eq('user_id', uid)
         .maybeSingle();
+    if (error) return false; // a failed read must never bootstrap/overwrite
       const hasRemoteCats =
         !!data && (Array.isArray((data as any).income_cats) || Array.isArray((data as any).expense_cats));
       if (data) {
@@ -44,10 +49,11 @@ export function useUserStateSync(userId: string | null) {
           }
         });
       }
+    if (getUserScope() !== uid) return false;
     seededFor.current = uid;
       const live = getStateSnapshot();
       lastSnap.current = snapshot(live);
-    if (isInitial && !hasRemoteCats) {
+    if (isInitial && !data) {
         // Bootstrap the row with current local state so other devices that
         // sign in next can pull a meaningful snapshot immediately.
         await supabase.from('user_state' as any).upsert({
@@ -60,6 +66,7 @@ export function useUserStateSync(userId: string | null) {
           settings: live.settings,
         }, { onConflict: 'user_id' });
       }
+    return hasRemoteCats || !!data;
   };
 
   // Initial pull on sign-in.
@@ -67,7 +74,13 @@ export function useUserStateSync(userId: string | null) {
     if (!userId) { seededFor.current = null; lastSnap.current = ''; return; }
     if (seededFor.current === userId) return;
     let cancelled = false;
-    (async () => { if (!cancelled) await pullRemote(userId, true); })();
+    let tries = 0;
+    const attempt = async () => {
+      if (cancelled) return;
+      const ok = getUserScope() === userId ? await pullRemote(userId, true) : false;
+      if (!ok && getUserScope() !== userId && tries++ < 40) setTimeout(attempt, 150);
+    };
+    attempt();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -97,11 +110,12 @@ export function useUserStateSync(userId: string | null) {
 
   // Debounced push on relevant state changes.
   useEffect(() => {
-    if (!userId || seededFor.current !== userId) return;
+    if (!userId || seededFor.current !== userId || getUserScope() !== userId) return;
     const snap = snapshot(state);
     if (snap === lastSnap.current) return;
     if (pushTimer.current) clearTimeout(pushTimer.current);
     pushTimer.current = setTimeout(async () => {
+      if (getUserScope() !== userId) return;
       lastSnap.current = snap;
       await supabase.from('user_state' as any).upsert({
         user_id: userId,

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useHazelStore, type Tx } from './store';
+import { useHazelStore, getUserScope, type Tx } from './store';
+import { bindSyncUser, markSyncing, markSynced, markSyncError } from './sync-status';
 
 /**
  * Mirrors `state.txs` (CashFlow entries) to the Supabase `txs` table for
@@ -26,6 +27,10 @@ export function useTxSync(userId: string | null) {
   // Merges remote rows with any locally-added rows that haven't been pushed
   // yet (no serverId) so we never lose an in-flight insert.
   const pullRemote = async (uid: string) => {
+    // Wait for the local store to be bound to this user; seeding into another
+    // user's namespace loses the rows and can trigger bogus server deletes.
+    if (getUserScope() !== uid) return false;
+    markSyncing();
     // Pull the user's FULL history — no date window, no row cap. Anything less
     // makes older CashFlow entries silently disappear on a fresh device.
     // PostgREST caps a single response at 1000 rows, so page through.
@@ -39,7 +44,7 @@ export function useTxSync(userId: string | null) {
         .order('date', { ascending: false })
         .order('created_at', { ascending: false })
         .range(page * PAGE, page * PAGE + PAGE - 1);
-      if (error) return; // never seed from a partial/failed read
+      if (error) { markSyncError(error.message); return false; } // never seed from a partial/failed read
       if (!data || data.length === 0) break;
       rows.push(...data);
       // Render what we have as soon as the first page lands so the list shows
@@ -47,7 +52,10 @@ export function useTxSync(userId: string | null) {
       if (page === 0 && data.length === PAGE) applyRows(uid, rows);
       if (data.length < PAGE) break;
     }
+    if (getUserScope() !== uid) return false;
     applyRows(uid, rows);
+    markSynced();
+    return true;
   };
 
   const applyRows = (uid: string, rows: any[]) => {
@@ -99,10 +107,17 @@ export function useTxSync(userId: string | null) {
 
   // Initial load: replace local txs with server txs for this user.
   useEffect(() => {
+    bindSyncUser(userId);
     if (!userId) { seededFor.current = null; lastSnap.current = new Map(); return; }
     if (seededFor.current === userId) return;
     let cancelled = false;
-    (async () => { if (!cancelled) await pullRemote(userId); })();
+    let tries = 0;
+    const attempt = async () => {
+      if (cancelled) return;
+      const ok = await pullRemote(userId);
+      if (!ok && !cancelled && tries++ < 40) setTimeout(attempt, 150);
+    };
+    attempt();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -136,6 +151,7 @@ export function useTxSync(userId: string | null) {
   // Diff-and-push on every store change once seeded.
   useEffect(() => {
     if (!userId || seededFor.current !== userId || syncing.current) return;
+    if (getUserScope() !== userId) return;
     syncing.current = true;
     (async () => {
       try {
@@ -145,6 +161,12 @@ export function useTxSync(userId: string | null) {
         // Deletes: in snapshot but no longer present.
         const toDelete: string[] = [];
         lastSnap.current.forEach((_v, id) => { if (!currentServerIds.has(id)) toDelete.push(id); });
+        // Safety net: never mass-delete server history because the local list
+        // came up empty (scope switch, failed hydration, cleared storage).
+        if (current.length === 0 && lastSnap.current.size > 3) {
+          syncing.current = false;
+          return;
+        }
         if (toDelete.length) {
           const { error } = await supabase.from('txs').delete().in('id', toDelete);
           if (error) throw error;
@@ -180,11 +202,13 @@ export function useTxSync(userId: string | null) {
           if (error) throw error;
           lastSnap.current.set(serverId, JSON.stringify(row));
         }
+        if (toDelete.length || toInsert.length || toUpdate.length) markSynced();
         if (retryTimer.current) {
           clearTimeout(retryTimer.current);
           retryTimer.current = null;
         }
-      } catch {
+      } catch (e: any) {
+        markSyncError(e?.message);
         if (!retryTimer.current) {
           retryTimer.current = setTimeout(() => {
             retryTimer.current = null;
