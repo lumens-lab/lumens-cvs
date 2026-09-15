@@ -55,6 +55,10 @@ export const Route = createFileRoute("/app")({
     meta: [
       { title: "Lumens — Pay, budget, chat" },
       { name: "description", content: "Lumens: send money, budget your month and chat with friends. South African Rand by default." },
+      { property: "og:title", content: "Lumens — Pay, budget, chat" },
+      { property: "og:description", content: "Send money, budget your month and chat with friends in the Lumens app." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   validateSearch: (s: Record<string, unknown>) => ({

@@ -25,6 +25,17 @@ function safeNext(loc: { pathname: string; searchStr: string }) {
 
 export const Route = createFileRoute("/.lovable/oauth/consent")({
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Authorize access — Lumens" },
+      { name: "description", content: "Review and approve an app's request to access your Lumens account." },
+      { property: "og:title", content: "Authorize access — Lumens" },
+      { property: "og:description", content: "Review and approve an app's request to access your Lumens account." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     authorization_id: typeof s.authorization_id === "string" ? s.authorization_id : "",
   }),

@@ -4,7 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/lumens-logo.png";
 
 export const Route = createFileRoute("/reset-password")({
-  head: () => ({ meta: [{ title: "Reset password — Lumens" }] }),
+  head: () => ({
+    meta: [
+      { title: "Reset password — Lumens" },
+      { name: "description", content: "Choose a new password for your Lumens account and get back to sending money, budgeting and chatting." },
+      { property: "og:title", content: "Reset password — Lumens" },
+      { property: "og:description", content: "Choose a new password for your Lumens account." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: ResetPasswordPage,
 });
 
