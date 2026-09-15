@@ -850,9 +850,17 @@
     // Page routing
     function showPage(page) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById('page-' + page).classList.add('active');
+        const target = document.getElementById('page-' + page);
+        if (target) target.classList.add('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    function routeFromHash() {
+        const hash = window.location.hash.replace('#', '');
+        if (hash) showPage(hash);
+    }
+    window.addEventListener('hashchange', routeFromHash);
+    window.addEventListener('DOMContentLoaded', routeFromHash);
 
     function toggleMobileMenu() {
         document.getElementById('mobile-menu').classList.toggle('hidden');
