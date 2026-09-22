@@ -66,7 +66,7 @@ function scanAtWidth(img: HTMLImageElement, targetW: number): string | null {
   const h = Math.max(1, Math.round(img.height * scale));
   const canvas = document.createElement('canvas');
   canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true } as any);
+  const ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D | null;
   if (!ctx) return null;
   ctx.drawImage(img, 0, 0, w, h);
   const id = ctx.getImageData(0, 0, w, h);
