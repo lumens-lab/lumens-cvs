@@ -282,6 +282,10 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
           <T onClick={pullAll} disabled={pulling} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', color: W, fontSize: 14, fontWeight: 800, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Ic n="RefreshCw" s={16} c={W} /> {pulling ? 'Syncing…' : 'Sync now'}
           </T>
+          <T onClick={optimizeReceipts} disabled={!!opt} style={{ width: '100%', padding: 14, borderRadius: 16, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', color: W, fontSize: 14, fontWeight: 800, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <Ic n="Image" s={16} c={W} />
+            {opt ? `Scanning receipts ${opt.done}/${opt.total}…` : 'Optimise receipt photos'}
+          </T>
           <div style={{ color: S2, fontSize: 10, textAlign: 'center', marginTop: 8 }}>Covers the last 5 years of income and expenses. Tap a row above to see the records.</div>
         </div>
       )}
