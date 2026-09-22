@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import html from "@/marketing/index.html?raw";
+import html from "@/marketing/pricing.html?raw";
 
 /**
  * Marketing page served as its own server-rendered document so the copy is
  * crawlable at a real URL (no iframe). Source lives in src/marketing/.
  */
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/pricing")({
   server: {
     handlers: {
       GET: () =>
