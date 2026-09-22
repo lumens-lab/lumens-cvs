@@ -130,7 +130,7 @@ export function AuthScreen() {
             </Field>
             <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: "rgba(160,200,255,0.7)", marginTop: 14, cursor: "pointer" }}>
               <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} style={{ width: 18, height: 18, accentColor: "#0055ff" }} />
-              I agree to the <a href="https://lumens.money/#terms" target="_blank" rel="noopener noreferrer" style={linkA}>Terms</a> and <a href="https://lumens.money/#privacy" target="_blank" rel="noopener noreferrer" style={linkA}>Privacy Policy</a>
+              I agree to the <a href="https://lumens.money/terms" target="_blank" rel="noopener noreferrer" style={linkA}>Terms</a> and <a href="https://lumens.money/privacy" target="_blank" rel="noopener noreferrer" style={linkA}>Privacy Policy</a>
             </label>
             <Cta onClick={completeSignup} busy={busy}>Create account →</Cta>
             {err && <Err>{err}</Err>}
