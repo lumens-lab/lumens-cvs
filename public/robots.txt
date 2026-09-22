@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://lumensmoney.lovable.app/sitemap.xml
+Sitemap: https://lumens.money/sitemap.xml
