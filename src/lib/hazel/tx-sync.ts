@@ -242,7 +242,9 @@ function rowOf(t: Tx) {
     amt: t.amt,
     merchant: t.merchant ?? null,
     note: t.note ?? null,
-    receipt: t.receipt ?? null,
+    // Only write the receipt when this device actually holds the image. Rows
+    // pulled without it must never overwrite the stored photo with null.
+    ...(typeof t.receipt === 'string' && t.receipt ? { receipt: t.receipt } : {}),
     items: t.items ?? null,
     account_id: t.accountId ?? null,
     to_account_id: t.toAccountId ?? null,

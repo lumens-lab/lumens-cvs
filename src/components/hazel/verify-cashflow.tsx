@@ -150,7 +150,7 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
       }
       const rows = await fetchAllRows(
         user.id,
-        'id, name, cat, icon, ibg, ic, date, amt, merchant, note, receipt, items, account_id, to_account_id',
+        'id, name, cat, icon, ibg, ic, date, amt, merchant, note, has_receipt, items, account_id, to_account_id',
       );
       const remote: Tx[] = rows.map((r: any, i: number) => ({
         id: Date.now() + i,
