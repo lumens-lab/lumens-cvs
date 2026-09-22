@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Ic, T, gl, COLORS, Sheet, showToast } from './ui';
 import { useHazelStore, type Tx } from '@/lib/hazel/store';
 import { getCurrencySym } from './screens';
@@ -6,7 +7,7 @@ import { useServerFn } from '@tanstack/react-start';
 import { scanReceipt } from '@/lib/hazel/ocr.functions';
 import { MonthPickerSheet } from './sheets';
 import { MONTHS } from '@/lib/hazel/data';
-import { toBWReceipt } from '@/lib/hazel/img-preprocess';
+import { toBWReceipt, compressReceipt } from '@/lib/hazel/img-preprocess';
 import { VerifySheet } from './verify-cashflow';
 
 const { W, S, S2, AC, GN, RD } = COLORS;
