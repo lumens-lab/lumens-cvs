@@ -703,6 +703,7 @@ export type Database = {
           cat: string
           created_at: string
           date: string
+          has_receipt: boolean | null
           ibg: string | null
           ic: string | null
           icon: string
@@ -722,6 +723,7 @@ export type Database = {
           cat: string
           created_at?: string
           date: string
+          has_receipt?: boolean | null
           ibg?: string | null
           ic?: string | null
           icon?: string
@@ -741,6 +743,7 @@ export type Database = {
           cat?: string
           created_at?: string
           date?: string
+          has_receipt?: boolean | null
           ibg?: string | null
           ic?: string | null
           icon?: string
