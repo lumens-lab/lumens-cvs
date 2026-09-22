@@ -1,144 +1,68 @@
-# Lumens — Feature Roadmap (6 phases)
+# Real screens, a real marketing site, and going live
 
-Tackled in the order you asked: **3 → 4 → 5 → 6 → 1 → 2**. Each phase is a single, reviewable change set. Wait for each to ship and pass review before the next.
+Four pieces of work, in an order where each one builds on the last.
 
----
+## 1. Real app screens on the landing page
 
-## Phase 3 — Disappearing messages
+Sign into the app inside a test browser on your account, then photograph three
+screens at phone size: the wallet home, a chat conversation, and analytics.
+Those three images replace the drawn mockups in the landing page slider, and the
+slider captions are updated to match what each screen actually shows.
 
-**What you'll see**
-- A per-conversation menu: *Off / 24 hours / 7 days / 30 days*.
-- Sent messages auto-delete server-side after the chosen TTL.
-- Small "⏱ 7d" badge next to the conversation title when enabled.
+If a screen needs data to look right (for example an empty chat), I use your own
+account's real content and avoid anything that would expose private details —
+no contact names, phone numbers or email addresses in the captured frames.
 
-**Technical**
-- Migration:
-  - `conversations.disappearing_seconds int` (null = off).
-  - `messages.expires_at timestamptz` (computed at insert from the conversation setting via trigger).
-  - RPC `set_disappearing(conversation_id, seconds)` — only participants.
-- `pg_cron` job every minute: `DELETE FROM messages WHERE expires_at < now()`.
-- UI: dropdown in chat header (`screens.tsx`), badge in conversation list.
+## 2. Turn the marketing site into real pages
 
----
+Today the whole marketing site lives inside a single embedded file, and every
+section (How It Works, Pricing, About, Contact, Careers, Roadmap, Terms, Privacy,
+Legal) is just a hidden panel on one address. Search engines see almost nothing,
+which is the last open search finding.
 
-## Phase 4 — Friend-request rate limiting & abuse protection
+I will give each section its own real address:
 
-**What you'll see**
-- Toast: "You've sent too many requests, try again in X minutes" after 20/hour.
-- Repeated decline from same sender → soft block (24h cooldown to that user).
+`/how-it-works`, `/pricing`, `/about`, `/contact`, `/careers`, `/roadmap`,
+`/terms`, `/privacy`, `/legal`, with the home page staying at `/`.
 
-**Technical**
-- Modify `send_contact_request()` RPC:
-  - Count `contact_requests` from caller in last 1h; raise if ≥ 20.
-  - If recipient declined caller ≥ 3 times in 7d, raise "user not accepting requests".
-- No new tables needed — uses existing `contact_requests` history.
-- Client surfaces the error with a friendly message.
+The existing design, wording, header, footer and styling are kept exactly as they
+are — the content moves out of the embedded frame and into the page itself so it
+is readable by Google and shareable as links. Each page gets its own title and
+description for search and social previews.
 
----
+Then:
+- the sitemap lists every one of those addresses plus `/waitlist` and `/app`
+- the Terms and Privacy links on the sign-in screen point to `/terms` and
+  `/privacy` instead of a fragment link
+- the site's own menus and footer link to the new addresses
 
-## Phase 5 — Media messages + voice/video calls
+## 3. Publish
 
-Split into two sub-phases because of size.
+Publish the project so the new pages, the sitemap and the crawler file are live
+on lumens.money.
 
-### 5a — Media messages (images, voice notes, short video)
-- Storage bucket `chat-media` (private), RLS: sender uploads, conversation participants read.
-- `messages` already has `attachment_url` etc.; add `attachment_kind` ('image'|'audio'|'video') and `attachment_duration_ms`.
-- Client:
-  - Image: `browser-image-compression` → upload → signed URL → send message.
-  - Voice: `MediaRecorder` → opus/webm → 10 MB cap → upload.
-  - Video: file picker, 10 MB cap, no transcode.
-  - Inline render in chat bubble (img / audio player / video tag).
+## 4. Google Search Console
 
-### 5b — Voice & video calls (WebRTC via LiveKit)
-- Use LiveKit Cloud free tier (10k participant-min/mo).
-- New secrets: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `VITE_LIVEKIT_URL`.
-- Server fn `mintCallToken(callId)` — checks call participants, returns JWT.
-- Replace placeholder `CallScreen` with `@livekit/components-react` Room.
-- Existing `calls` table + signalling already in place; we layer LiveKit on top.
+Submit the sitemap. This one needs you: connecting Search Console requires you to
+authorise your Google account, so I will start it and hand you the approval step.
 
-Will pause after 5a for approval before doing 5b.
+## Already checked
 
----
+Your database is awake and healthy, so sign-in and data requests load normally.
+On your account (wuversburg@gmail.com): 513 records stored, the newest from
+21 September, 42 receipt photos, and all 19 of your categories (6 income,
+13 expense) are present and every record still points at a category that exists —
+nothing was lost.
 
-## Phase 6 — PWA offline + push polish
+## Technical notes
 
-**What you'll see**
-- App opens instantly on flaky network, shows last known data.
-- "Install Lumens" prompt on Android/desktop.
-
-**Technical**
-- Add `vite-plugin-pwa` with Workbox.
-  - Precache app shell.
-  - `NetworkFirst` for Supabase REST.
-  - `StaleWhileRevalidate` for avatars/icons.
-- Merge existing `public/sw.js` push handler into Workbox SW (`injectManifest` strategy so we keep the push listener).
-- `manifest.json` already exists; add maskable icon + screenshots field for richer install UI.
-
----
-
-## Phase 1 — Stellar wallet (non-custodial)
-
-Largest phase. Split.
-
-### 1a — Key generation + secure on-device storage
-- `npm i stellar-sdk`.
-- On first wallet open: generate keypair, derive AES-GCM key from PIN via PBKDF2 (250k iters), store encrypted secret in IndexedDB. Public address goes to a new `wallets` table (`user_id, stellar_address, network`).
-- "Reveal secret key" gated by PIN; never sent to server.
-- Show address + QR.
-
-### 1b — Read-only: balances & history via Horizon
-- Use public Horizon endpoint (`horizon.stellar.org`).
-- `useWalletBalances(address)` and `useWalletTxs(address)` via TanStack Query.
-- Filters: sent/received, date range, currency. CSV export.
-
-### 1c — Send XLM / assets
-- `sendPayment(destination, amount, asset, memo)` — sign locally with decrypted secret, submit via Horizon.
-- Confirm sheet with network fee + memo field.
-- QR scan for destination (use `@zxing/browser`).
-
-### 1d — Swap via SDEX
-- `pathPaymentStrictSend` with on-chain best path.
-- Show path + slippage before confirm.
-
-### 1e — On/off ramp (deferred to user)
-- Yellow Card and Stellar Anchor integrations require business agreements/KYC API keys I cannot get. I'll wire the UI screens and stub the provider call so you can drop credentials in later. Will not block the rest of the wallet.
-
----
-
-## Phase 2 — Request-money in chat
-
-**What you'll see**
-- "+" menu in chat → *Request money* sheet → enter amount/asset/note.
-- A bubble appears in the thread with "Accept & Pay" / "Decline" buttons.
-- Accepting opens the wallet send flow pre-filled.
-
-**Technical**
-- New message kind: `payment_request` with payload `{ amount, asset, note, status }`.
-- RPC `respond_payment_request(message_id, action)` — only recipient.
-- Bubble component in `screens.tsx` with status pill (Pending/Paid/Declined/Expired).
-- Expiry: 24h (cron updates status).
-
----
-
-## Order of execution & checkpoints
-
-```
-Phase 3  ──► review ──►
-Phase 4  ──► review ──►
-Phase 5a ──► review ──►
-Phase 5b ──► review ──► (requires LiveKit secrets)
-Phase 6  ──► review ──►
-Phase 1a ──► review ──►
-Phase 1b ──► review ──►
-Phase 1c ──► review ──►
-Phase 1d ──► review ──►
-Phase 2  ──► review ──► done
-```
-
-I'll start with **Phase 3 (disappearing messages)** the moment you approve this plan. Each phase ships as its own migration + code change so you can roll back individually.
-
-## Things I'll need from you along the way
-- **Before Phase 5b**: LiveKit Cloud account + API key/secret/URL.
-- **Before Phase 1e** (optional): Yellow Card or Stellar Anchor credentials.
-
-Everything else uses what's already provisioned.
+- Marketing sections are extracted from `public/marketing.html` into per-route
+  components under `src/routes/`, sharing an extracted stylesheet and
+  header/footer components, so markup is server-rendered rather than iframed.
+  `src/routes/index.tsx` stops rendering the iframe.
+- Screens captured with Playwright against `localhost:8080/app` using a restored
+  Supabase session, saved into `public/screens/`.
+- `public/sitemap.xml` rewritten with the full route list; `public/robots.txt`
+  keeps its sitemap directive.
+- Search Console submission via the Google Search Console tooling, which
+  requires user OAuth.
