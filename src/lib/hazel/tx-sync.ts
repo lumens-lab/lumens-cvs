@@ -39,7 +39,9 @@ export function useTxSync(userId: string | null) {
     for (let page = 0; ; page++) {
       const { data, error } = await supabase
         .from('txs')
-        .select('id, name, cat, icon, ibg, ic, date, amt, merchant, note, receipt, items, account_id, to_account_id')
+        // NOTE: `receipt` is deliberately excluded — receipt photos are large
+        // and are fetched on demand when a record is opened.
+        .select('id, name, cat, icon, ibg, ic, date, amt, merchant, note, has_receipt, items, account_id, to_account_id')
         .eq('user_id', uid)
         .order('date', { ascending: false })
         .order('created_at', { ascending: false })
@@ -71,7 +73,8 @@ export function useTxSync(userId: string | null) {
       amt: Number(r.amt),
       merchant: r.merchant ?? undefined,
       note: r.note ?? undefined,
-      receipt: r.receipt ?? undefined,
+      receipt: undefined,
+      hasReceipt: !!r.has_receipt,
       items: r.items ?? undefined,
       accountId: r.account_id ?? undefined,
       toAccountId: r.to_account_id ?? undefined,
