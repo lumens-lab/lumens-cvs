@@ -37,3 +37,51 @@ export async function toBWReceipt(dataUrl: string, maxDim = 1600): Promise<strin
     img.src = dataUrl;
   });
 }
+
+/**
+ * Shrink a receipt photo before it is stored with the record.
+ *
+ * Raw phone photos are 2–4 MB of base64 each, which bloats the database and
+ * makes every history sync slow. We downscale to `maxDim` and step the JPEG
+ * quality down until the data URL fits under `maxBytes` (~180 KB), which is
+ * still perfectly legible for an attached receipt.
+ */
+export async function compressReceipt(dataUrl: string, maxDim = 1200, maxBytes = 180_000): Promise<string> {
+  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) return dataUrl;
+  if (dataUrl.length <= maxBytes) return dataUrl;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let w = img.width, h = img.height;
+        const scale = Math.min(1, maxDim / Math.max(w, h));
+        w = Math.max(1, Math.round(w * scale));
+        h = Math.max(1, Math.round(h * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(dataUrl);
+        ctx.drawImage(img, 0, 0, w, h);
+        let out = canvas.toDataURL('image/jpeg', 0.7);
+        for (const q of [0.55, 0.42, 0.3]) {
+          if (out.length <= maxBytes) break;
+          out = canvas.toDataURL('image/jpeg', q);
+        }
+        // Still too big? halve the dimensions once and re-encode.
+        if (out.length > maxBytes) {
+          const c2 = document.createElement('canvas');
+          c2.width = Math.max(1, Math.round(w / 2));
+          c2.height = Math.max(1, Math.round(h / 2));
+          const x2 = c2.getContext('2d');
+          if (x2) {
+            x2.drawImage(canvas, 0, 0, c2.width, c2.height);
+            out = c2.toDataURL('image/jpeg', 0.6);
+          }
+        }
+        resolve(out.length < dataUrl.length ? out : dataUrl);
+      } catch { resolve(dataUrl); }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}

@@ -244,7 +244,9 @@ function sanitizeTx(t: any): Tx | null {
     amt: t.amt,
     merchant: t.merchant ? escStr(t.merchant).slice(0, 200) : undefined,
     note: t.note ? escStr(t.note).slice(0, 1000) : undefined,
-    receipt: typeof t.receipt === 'string' && t.receipt.startsWith('data:image/') ? t.receipt.slice(0, 5_000_000) : undefined,
+    // Hard cap: receipts are compressed on capture; anything bigger than this
+    // is a legacy/oversized payload and must not be written back to the cloud.
+    receipt: typeof t.receipt === 'string' && t.receipt.startsWith('data:image/') && t.receipt.length <= 400_000 ? t.receipt : undefined,
     items: Array.isArray(t.items)
       ? t.items
           .filter((i: any) => i && typeof i.name === 'string' && typeof i.amt === 'number')
