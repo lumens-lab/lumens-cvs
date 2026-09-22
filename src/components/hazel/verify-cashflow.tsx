@@ -5,6 +5,7 @@ import { sigOf } from '@/lib/hazel/tx-sync';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { useSyncStatus, formatLastSync, markSyncing, markSynced, markSyncError } from '@/lib/hazel/sync-status';
+import { optimizeStoredReceipts, type OptimizeProgress } from '@/lib/hazel/receipt-optimize';
 
 const { W, S, S2, GN, RD, AM, AC } = COLORS;
 
@@ -51,7 +52,28 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
   const [busy, setBusy] = useState(false);
   const [pulling, setPulling] = useState(false);
   const [tab, setTab] = useState<null | 'all' | 'dupes'>(null);
+  const [opt, setOpt] = useState<OptimizeProgress | null>(null);
   const sync = useSyncStatus();
+
+  /** Re-scan every receipt photo already on the account down to ~5 KB B&W. */
+  const optimizeReceipts = useCallback(async () => {
+    if (!user?.id || opt) return;
+    setOpt({ done: 0, total: 0, savedBytes: 0 });
+    try {
+      const res = await optimizeStoredReceipts(user.id, 5 * 1024, (p) => setOpt(p));
+      const savedMb = res.savedBytes / (1024 * 1024);
+      showToast(
+        res.total === 0
+          ? 'No receipt photos to optimise'
+          : `Scanned ${res.total} receipt${res.total === 1 ? '' : 's'} · freed ${savedMb >= 1 ? `${savedMb.toFixed(1)} MB` : `${Math.round(res.savedBytes / 1024)} KB`}`,
+      );
+    } catch {
+      showToast('Could not optimise receipts. Check your connection.');
+    } finally {
+      setOpt(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const run = useCallback(async () => {
     if (!user?.id) return;
