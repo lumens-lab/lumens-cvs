@@ -17,8 +17,11 @@ export type Tx = {
   merchant?: string;
   /** Free-form note */
   note?: string;
-  /** Base64 image data of a scanned receipt */
+  /** Base64 image data of a scanned receipt. Not loaded with the history list —
+   *  fetched on demand when the record is opened. */
   receipt?: string;
+  /** True when the server holds a receipt image for this row. */
+  hasReceipt?: boolean;
   /** Itemized receipt lines */
   items?: { name: string; amt: number }[];
   /** Account this entry is drawn from (expense) or paid into (income / transfer source). */
