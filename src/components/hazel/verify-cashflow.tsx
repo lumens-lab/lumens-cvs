@@ -135,7 +135,7 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
             name: t.name, cat: t.cat, icon: t.icon, ibg: t.ibg, ic: t.ic,
             date: t.date, amt: t.amt,
             merchant: t.merchant ?? null, note: t.note ?? null,
-            receipt: t.receipt ?? null, items: t.items ?? null,
+            ...(t.receipt ? { receipt: t.receipt } : {}), items: t.items ?? null,
             account_id: t.accountId ?? null, to_account_id: t.toAccountId ?? null,
           })))
           .select('id');
@@ -164,7 +164,8 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
         amt: Number(r.amt),
         merchant: r.merchant ?? undefined,
         note: r.note ?? undefined,
-        receipt: r.receipt ?? undefined,
+        receipt: undefined,
+        hasReceipt: !!r.has_receipt,
         items: r.items ?? undefined,
         accountId: r.account_id ?? undefined,
         toAccountId: r.to_account_id ?? undefined,
