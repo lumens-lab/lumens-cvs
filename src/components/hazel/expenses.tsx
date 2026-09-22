@@ -154,7 +154,7 @@ export function ExpensesScreen({ openAdd, openDetail }: { openAdd: (kind?: 'expe
           <T key={t.id} onClick={() => openDetail(t.id!)} active="rgba(255,255,255,0.06)" style={{ width: '100%', textAlign: 'left', ...gl('rgba(255,255,255,0.05)', 16, { boxShadow: 'none' }), padding: 14, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 42, height: 42, borderRadius: 12, background: t.ibg, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
               <Ic n={t.icon} s={18} c={t.ic} />
-              {t.receipt && <div style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: 8, background: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="Paperclip" s={9} c="#001535" /></div>}
+              {(t.receipt || t.hasReceipt) && <div style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: 8, background: AC, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ic n="Paperclip" s={9} c="#001535" /></div>}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ color: W, fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</div>
@@ -212,6 +212,25 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
   const cat = catList.find((c) => c.id === tx.cat);
   const [editOpen, setEditOpen] = useState(false);
 
+  // Receipt photos are not part of the history sync (they are large). Fetch the
+  // image only now that the user opened this record.
+  const [receiptImg, setReceiptImg] = useState<string | undefined>(tx.receipt);
+  const [receiptLoading, setReceiptLoading] = useState(false);
+  useEffect(() => {
+    setReceiptImg(tx.receipt);
+    if (tx.receipt || !tx.hasReceipt || !tx.serverId) return;
+    let cancelled = false;
+    setReceiptLoading(true);
+    (async () => {
+      const { data } = await supabase.from('txs').select('receipt').eq('id', tx.serverId!).maybeSingle();
+      if (cancelled) return;
+      setReceiptImg((data as any)?.receipt ?? undefined);
+      setReceiptLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [tx.serverId, tx.receipt, tx.hasReceipt]);
+
+
   return (
     <div className="afi" style={{ padding: '14px 20px 140px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -256,10 +275,12 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
         </div>
       )}
 
-      {tx.receipt && (
+      {(receiptImg || receiptLoading) && (
         <div style={{ ...gl('rgba(255,255,255,0.04)', 18), padding: 12, marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 4px' }}>Receipt</div>
-          <img src={tx.receipt} alt="Receipt" style={{ width: '100%', borderRadius: 12, display: 'block' }} />
+          {receiptImg
+            ? <img src={receiptImg} alt="Receipt" style={{ width: '100%', borderRadius: 12, display: 'block' }} />
+            : <div style={{ color: S, fontSize: 12, padding: '18px 4px', textAlign: 'center' }}>Loading receipt…</div>}
         </div>
       )}
 
