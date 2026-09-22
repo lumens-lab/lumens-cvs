@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Ic, T, gl, COLORS, Sheet, showToast } from './ui';
 import { useHazelStore, type Tx } from '@/lib/hazel/store';
 import { getCurrencySym } from './screens';
+import { compressReceipt } from '@/lib/hazel/img-preprocess';
 
 const { W, S, AC, BLUE_BRIGHT, GN } = COLORS;
 
@@ -25,8 +26,9 @@ export function PaySheet({ open, onClose }: { open: boolean; onClose: () => void
     if (!f) return;
     if (f.size > 6 * 1024 * 1024) return showToast('Image too large');
     const r = new FileReader();
-    r.onload = () => {
-      setSnap(r.result as string);
+    r.onload = async () => {
+      const raw = r.result as string;
+      try { setSnap(await compressReceipt(raw)); } catch { setSnap(raw); }
       // Demo prefill — real QR decode would populate payee/address here.
       setPayee('Lumens merchant');
       setStep('confirm');
