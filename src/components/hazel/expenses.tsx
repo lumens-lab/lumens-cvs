@@ -336,7 +336,8 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
       // Preprocess to high-contrast B&W for better OCR accuracy.
       let processed = img;
       try { processed = await toBWReceipt(img); } catch { /* fall back to original */ }
-      setReceipt(processed);
+      // Store a compact copy; the full-size image is only needed for OCR.
+      try { setReceipt(await compressReceipt(processed)); } catch { setReceipt(processed); }
       setScanning(true);
       showToast('Reading receipt…');
       try {
@@ -379,7 +380,10 @@ export function AddExpenseSheet({ open, onClose }: { open: boolean; onClose: () 
   const onPhoto = () => {
     const f = photoRef.current?.files?.[0];
     if (!f) return;
-    readFile(f, (img) => { setReceipt(img); showToast('Receipt photo attached'); });
+    readFile(f, async (img) => {
+      try { setReceipt(await compressReceipt(img)); } catch { setReceipt(img); }
+      showToast('Receipt photo attached');
+    });
     if (photoRef.current) photoRef.current.value = '';
   };
 
