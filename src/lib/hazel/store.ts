@@ -17,8 +17,11 @@ export type Tx = {
   merchant?: string;
   /** Free-form note */
   note?: string;
-  /** Base64 image data of a scanned receipt */
+  /** Base64 image data of a scanned receipt. Not loaded with the history list —
+   *  fetched on demand when the record is opened. */
   receipt?: string;
+  /** True when the server holds a receipt image for this row. */
+  hasReceipt?: boolean;
   /** Itemized receipt lines */
   items?: { name: string; amt: number }[];
   /** Account this entry is drawn from (expense) or paid into (income / transfer source). */
@@ -244,7 +247,9 @@ function sanitizeTx(t: any): Tx | null {
     amt: t.amt,
     merchant: t.merchant ? escStr(t.merchant).slice(0, 200) : undefined,
     note: t.note ? escStr(t.note).slice(0, 1000) : undefined,
-    receipt: typeof t.receipt === 'string' && t.receipt.startsWith('data:image/') ? t.receipt.slice(0, 5_000_000) : undefined,
+    // Hard cap: receipts are compressed on capture; anything bigger than this
+    // is a legacy/oversized payload and must not be written back to the cloud.
+    receipt: typeof t.receipt === 'string' && t.receipt.startsWith('data:image/') && t.receipt.length <= 400_000 ? t.receipt : undefined,
     items: Array.isArray(t.items)
       ? t.items
           .filter((i: any) => i && typeof i.name === 'string' && typeof i.amt === 'number')
