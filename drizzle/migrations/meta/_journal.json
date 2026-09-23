@@ -8,6 +8,13 @@
       "when": 1790107184679,
       "tag": "0000_txs_has_receipt_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790161316731,
+      "tag": "0001_restrict_avatar_downloads_to_signed_in_users",
+      "breakpoints": true
     }
   ]
 }
