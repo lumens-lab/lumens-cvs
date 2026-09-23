@@ -69,8 +69,9 @@
         /* Phone slider */
         .phone-slide { position: absolute; top: 0; left: 0; width: 100%; opacity: 0; transform: translateY(30px) scale(0.96); transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; }
         .phone-slide.active { opacity: 1; transform: translateY(0) scale(1); position: relative; pointer-events: auto; }
-        .phone-shell { width: 280px; border-radius: 42px; background: rgba(8,8,12,0.95); border: 1.5px solid rgba(255,255,255,0.12); box-shadow: 0 32px 80px -16px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset; overflow: hidden; position: relative; margin: 0 auto; }
-        .phone-notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 92px; height: 26px; background: #06060a; border-radius: 0 0 18px 18px; z-index: 20; }
+        .iphone-14 { width: min(280px, calc(100vw - 64px)); aspect-ratio: 390 / 844; border-radius: 42px; background: rgba(8,8,12,0.95); border: 1.5px solid rgba(255,255,255,0.12); box-shadow: 0 32px 80px -16px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) inset; overflow: hidden; position: relative; margin: 0 auto; }
+        .iphone-14 img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+        .phone-notch { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 84px; height: 24px; background: #06060a; border-radius: 15px; z-index: 20; box-shadow: 0 0 0 1px rgba(255,255,255,0.04); }
         .slide-dots { display: flex; gap: 6px; justify-content: center; margin-top: 16px; }
         .slide-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; }
         .slide-dot.active { background: #34d399; width: 18px; border-radius: 3px; }
@@ -274,36 +275,36 @@
                         </div>
 
                         <!-- Center: Phone slider -->
-                        <div style="position:relative;width:280px;flex-shrink:0;">
-                            <div style="position:relative;height:570px;width:280px;">
+                        <div style="position:relative;width:min(280px, calc(100vw - 64px));flex-shrink:0;">
+                            <div style="position:relative;aspect-ratio:390 / 844;width:100%;">
                                 <!-- Slides 0-3: real app screens -->
                                 <div class="phone-slide active" id="slide-0">
-                                    <div class="phone-shell" style="height:560px;">
+                                    <div class="iphone-14">
                                         <div class="phone-notch"></div>
-                                        <img src="/screens/wallet.webp" alt="Lumens wallet screen showing balance, quick actions and recent transactions" width="280" height="560" loading="lazy" decoding="async" style="display:block;width:100%;height:560px;object-fit:cover;object-position:top;">
+                                        <img src="/screens/wallet.webp" alt="Lumens wallet screen showing balance, quick actions and recent transactions" width="560" height="1211" loading="eager" fetchpriority="high" decoding="async">
                                     </div>
                                 </div>
                                 <div class="phone-slide" id="slide-1">
-                                    <div class="phone-shell" style="height:560px;">
+                                    <div class="iphone-14">
                                         <div class="phone-notch"></div>
-                                        <img src="/screens/cashflow.webp" alt="Lumens CashFlow screen listing monthly spending and recent activities" width="280" height="560" loading="lazy" decoding="async" style="display:block;width:100%;height:560px;object-fit:cover;object-position:top;">
+                                        <img src="/screens/cashflow.webp" alt="Lumens CashFlow screen listing monthly spending and recent activities" width="560" height="1211" loading="lazy" decoding="async">
                                     </div>
                                 </div>
                                 <div class="phone-slide" id="slide-2">
-                                    <div class="phone-shell" style="height:560px;">
+                                    <div class="iphone-14">
                                         <div class="phone-notch"></div>
-                                        <img src="/screens/analytics.webp" alt="Lumens analytics screen with monthly budget, weekly expense chart and debit orders" width="280" height="560" loading="lazy" decoding="async" style="display:block;width:100%;height:560px;object-fit:cover;object-position:top;">
+                                        <img src="/screens/analytics.webp" alt="Lumens analytics screen with monthly budget, weekly expense chart and debit orders" width="560" height="1211" loading="lazy" decoding="async">
                                     </div>
                                 </div>
                                 <div class="phone-slide" id="slide-3">
-                                    <div class="phone-shell" style="height:560px;">
+                                    <div class="iphone-14">
                                         <div class="phone-notch"></div>
-                                        <img src="/screens/assets.webp" alt="Lumens assets screen showing net worth and live crypto prices" width="280" height="560" loading="lazy" decoding="async" style="display:block;width:100%;height:560px;object-fit:cover;object-position:top;">
+                                        <img src="/screens/assets.webp" alt="Lumens assets screen showing net worth and live crypto prices" width="560" height="1211" loading="lazy" decoding="async">
                                     </div>
                                 </div>
                                 <!-- Slide 4: Chat -->
                                 <div class="phone-slide" id="slide-4">
-                                    <div class="phone-shell" style="height:560px;">
+                                    <div class="iphone-14">
                                         <div class="phone-notch"></div>
                                         <div style="padding:46px 16px 16px;background:linear-gradient(180deg,#0d1a2e 0%,#081220 100%);height:100%;overflow:hidden;">
                                             <div class="flex items-center gap-2 mb-3" style="padding-top:4px;">
@@ -428,35 +429,11 @@
                         <div class="flex items-start gap-4"><div class="w-9 h-9 rounded-xl glass-subtle flex items-center justify-center flex-shrink-0"><svg class="w-4 h-4 text-neutral-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div><div><h4 class="text-[14px] font-medium mb-1">Virtual card included</h4><p class="text-[13px] text-neutral-400 font-light">Spend from your wallet anywhere, instantly.</p></div></div>
                     </div>
                 </div>
-                <!-- Mobile Dashboard matching screenshot_379 -->
+                <!-- Real Wallet screen in an iPhone 14 frame -->
                 <div class="lg:col-span-7 flex items-center justify-center">
-                    <div style="background:linear-gradient(180deg,#0d1a2e 0%,#0a1628 50%,#081220 100%);border-radius:42px;border:1.5px solid rgba(255,255,255,0.12);box-shadow:0 40px 100px -20px rgba(0,0,0,0.8);overflow:hidden;width:300px;">
-                        <div style="height:30px;background:#0a1422;position:relative;"><div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:14px;background:#06080f;border-radius:0 0 12px 12px;"></div></div>
-                        <div style="padding:12px 16px 0;">
-                            <div class="flex items-center justify-between mb-3">
-                                <div><div style="font-size:11px;color:rgba(255,255,255,0.45)">Good Evening</div><div style="font-size:15px;font-weight:600;color:#fff">Kojo Ayim</div></div>
-                                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#34d399,#0891b2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">KA</div>
-                            </div>
-                            <div class="flex items-center justify-between mb-2"><span style="font-size:13px;font-weight:600;color:#fff">My Cards</span><div class="flex gap-2"><button style="font-size:10px;padding:4px 10px;border-radius:8px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.08)">👁 Show</button><button style="font-size:10px;padding:4px 10px;border-radius:8px;background:rgba(52,211,153,0.1);color:#34d399;border:1px solid rgba(52,211,153,0.2)">+ Add</button></div></div>
-                            <div class="mobile-card mb-3">
-                                <div class="flex items-start justify-between mb-3"><div><div style="font-size:8px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.5)">LUMENS</div><div style="font-size:7px;color:rgba(255,255,255,0.3)">CARD</div></div><div style="width:32px;height:22px;border-radius:6px;background:#f59e0b;"></div></div>
-                                <div style="font-size:14px;font-weight:500;letter-spacing:3px;color:#fff;margin-bottom:12px;">•••• •••• •••• 4829</div>
-                                <div class="flex justify-between"><div><div style="font-size:7px;color:rgba(255,255,255,0.35);letter-spacing:1px;">CARD HOLDER</div><div style="font-size:10px;font-weight:600;color:#fff;">KOJO AYIM</div></div><div class="text-right"><div style="font-size:7px;color:rgba(255,255,255,0.35);letter-spacing:1px;">EXPIRES</div><div style="font-size:10px;font-weight:600;color:#fff;">09/28</div></div></div>
-                            </div>
-                            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
-                                <div class="mobile-action-btn"><div class="mobile-action-icon"><svg class="w-4 h-4" style="color:#34d399" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div><span style="font-size:9px;color:#34d399">Send</span></div>
-                                <div class="mobile-action-btn"><div class="mobile-action-icon"><svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><polyline points="19 12 12 19 5 12"/></svg></div><span style="font-size:9px;color:#4ade80">Receive</span></div>
-                                <div class="mobile-action-btn"><div class="mobile-action-icon"><svg class="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div><span style="font-size:9px;color:#60a5fa">Swap</span></div>
-                                <div class="mobile-action-btn"><div class="mobile-action-icon"><svg class="w-4 h-4 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/></svg></div><span style="font-size:9px;color:#c084fc">Pay</span></div>
-                            </div>
-                            <div class="flex items-center justify-between mb-2"><span style="font-size:12px;font-weight:600;color:#fff">Recent Transactions</span><span style="font-size:9px;color:#34d399">See All →</span></div>
-                            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:7px 12px;font-size:10px;color:rgba(255,255,255,0.25);margin-bottom:8px;">Search transactions...</div>
-                            <div class="tx-item"><div class="tx-icon"><svg class="w-3.5 h-3.5 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg></div><div class="flex-1"><div style="font-size:11px;font-weight:500;color:#fff">Shopping</div><div style="font-size:9px;color:rgba(255,255,255,0.4)">Dec 15, 2024</div></div><div style="font-size:11px;font-weight:500;color:#fff">R344.93</div></div>
-                            <div class="tx-item"><div class="tx-icon"><svg class="w-3.5 h-3.5 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg></div><div class="flex-1"><div style="font-size:11px;font-weight:500;color:#fff">Salary Deposit</div><div style="font-size:9px;color:rgba(255,255,255,0.4)">Dec 14, 2024</div></div><div style="font-size:11px;font-weight:500;color:#34d399">+R8500.00</div></div>
-                            <div class="tx-item"><div class="tx-icon"><svg class="w-3.5 h-3.5 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2v4l-4-4H9a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h8z"/></svg></div><div class="flex-1"><div style="font-size:11px;font-weight:500;color:#fff">Starbucks</div><div style="font-size:9px;color:rgba(255,255,255,0.4)">Dec 14, 2024</div></div><div style="font-size:11px;font-weight:500;color:#fff">R12.50</div></div>
-                            <div class="tx-item"><div class="tx-icon"><svg class="w-3.5 h-3.5 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg></div><div class="flex-1"><div style="font-size:11px;font-weight:500;color:#fff">Netflix</div><div style="font-size:9px;color:rgba(255,255,255,0.4)">Dec 13, 2024</div></div><div style="font-size:11px;font-weight:500;color:#fff">R15.99</div></div>
-                        </div>
-                        <div class="nav-bar"><div class="nav-item"><svg class="w-4 h-4" style="color:#34d399" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="nav-label" style="color:#34d399">CHAT</span></div><div class="nav-item"><svg class="w-4 h-4" style="color:rgba(255,255,255,0.4)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span class="nav-label">Budget</span></div><div class="nav-item"><svg class="w-4 h-4" style="color:rgba(255,255,255,0.4)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span class="nav-label">Expenses</span></div><div class="nav-item"><svg class="w-4 h-4" style="color:rgba(255,255,255,0.4)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg><span class="nav-label">Assets</span></div><div class="nav-item"><svg class="w-4 h-4" style="color:rgba(255,255,255,0.4)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span class="nav-label">Settings</span></div></div>
+                    <div class="iphone-14" style="width:min(300px, calc(100vw - 64px));box-shadow:0 40px 100px -20px rgba(0,0,0,0.8),0 0 0 1px rgba(255,255,255,0.04) inset;">
+                        <div class="phone-notch"></div>
+                        <img src="/screens/wallet.webp" alt="Lumens wallet dashboard showing balance, quick actions and recent transactions" width="560" height="1211" loading="lazy" decoding="async">
                     </div>
                 </div>
             </div>
