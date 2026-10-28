@@ -245,6 +245,7 @@ function rowOf(t: Tx) {
     // Only write the receipt when this device actually holds the image. Rows
     // pulled without it must never overwrite the stored photo with null.
     ...(typeof t.receipt === 'string' && t.receipt ? { receipt: t.receipt } : {}),
+    ...(typeof t.receiptText === 'string' && t.receiptText ? { receipt_text: t.receiptText.slice(0, 8000) } : {}),
     items: t.items ?? null,
     account_id: t.accountId ?? null,
     to_account_id: t.toAccountId ?? null,

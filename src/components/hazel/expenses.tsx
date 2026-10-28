@@ -215,20 +215,23 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
   // Receipt photos are not part of the history sync (they are large). Fetch the
   // image only now that the user opened this record.
   const [receiptImg, setReceiptImg] = useState<string | undefined>(tx.receipt);
+  const [receiptText, setReceiptText] = useState<string | undefined>(tx.receiptText);
   const [receiptLoading, setReceiptLoading] = useState(false);
   useEffect(() => {
     setReceiptImg(tx.receipt);
-    if (tx.receipt || !tx.hasReceipt || !tx.serverId) return;
+    setReceiptText(tx.receiptText);
+    if ((tx.receipt && tx.receiptText) || !tx.hasReceipt || !tx.serverId) return;
     let cancelled = false;
     setReceiptLoading(true);
     (async () => {
-      const { data } = await supabase.from('txs').select('receipt').eq('id', tx.serverId!).maybeSingle();
+      const { data } = await supabase.from('txs').select('receipt, receipt_text').eq('id', tx.serverId!).maybeSingle();
       if (cancelled) return;
-      setReceiptImg((data as any)?.receipt ?? undefined);
+      setReceiptImg((data as any)?.receipt ?? tx.receipt ?? undefined);
+      setReceiptText((data as any)?.receipt_text ?? tx.receiptText ?? undefined);
       setReceiptLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [tx.serverId, tx.receipt, tx.hasReceipt]);
+  }, [tx.serverId, tx.receipt, tx.receiptText, tx.hasReceipt]);
 
 
   return (
@@ -278,9 +281,12 @@ export function ExpenseDetailScreen({ id, onBack }: { id: number; onBack: () => 
       {(receiptImg || receiptLoading) && (
         <div style={{ ...gl('rgba(255,255,255,0.04)', 18), padding: 12, marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: S, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 4px' }}>Receipt</div>
+          {receiptText && (
+            <pre style={{ background: '#ffffff', color: '#000000', fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 11, lineHeight: 1.45, whiteSpace: 'pre-wrap', wordBreak: 'break-word', padding: 14, borderRadius: 12, margin: '0 0 10px' }}>{receiptText}</pre>
+          )}
           {receiptImg
             ? <img src={receiptImg} alt="Receipt" style={{ width: '100%', borderRadius: 12, display: 'block' }} />
-            : <div style={{ color: S, fontSize: 12, padding: '18px 4px', textAlign: 'center' }}>Loading receipt…</div>}
+            : receiptLoading ? <div style={{ color: S, fontSize: 12, padding: '18px 4px', textAlign: 'center' }}>Loading receipt…</div> : null}
         </div>
       )}
 
