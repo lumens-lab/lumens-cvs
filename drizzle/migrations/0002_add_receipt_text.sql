@@ -1,0 +1,1 @@
+ALTER TABLE public.txs ADD COLUMN IF NOT EXISTS receipt_text text;

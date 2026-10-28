@@ -713,6 +713,7 @@ export type Database = {
           name: string
           note: string | null
           receipt: string | null
+          receipt_text: string | null
           to_account_id: string | null
           updated_at: string
           user_id: string
@@ -733,6 +734,7 @@ export type Database = {
           name: string
           note?: string | null
           receipt?: string | null
+          receipt_text?: string | null
           to_account_id?: string | null
           updated_at?: string
           user_id: string
@@ -753,6 +755,7 @@ export type Database = {
           name?: string
           note?: string | null
           receipt?: string | null
+          receipt_text?: string | null
           to_account_id?: string | null
           updated_at?: string
           user_id?: string
