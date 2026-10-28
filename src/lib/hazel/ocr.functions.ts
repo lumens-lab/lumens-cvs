@@ -14,6 +14,7 @@ const ReceiptSchema = z.object({
   total: z.number().nullable().optional(),
   date: z.string().max(40).nullable().optional(),
   currency: z.string().max(10).nullable().optional(),
+  text: z.string().max(8000).nullable().optional(),
   items: z
     .array(z.object({ name: z.string().max(200), amt: z.number() }))
     .max(200)
@@ -33,8 +34,8 @@ export const scanReceipt = createServerFn({ method: "POST" })
 
     const prompt =
       "Extract structured data from this receipt image. Return STRICT JSON only — no markdown, no commentary. " +
-      "Schema: { merchant: string | null, total: number | null, date: string | null (YYYY-MM-DD), currency: string | null (ISO code or symbol), items: [{name: string, amt: number}] | null }. " +
-      "Use null for any field you can't confidently extract. Total is the grand total (after tax). Items are line items only.";
+      "Schema: { merchant: string | null, total: number | null, date: string | null (YYYY-MM-DD), currency: string | null (ISO code or symbol), items: [{name: string, amt: number}] | null, text: string | null }. " +
+      "Use null for any field you can't confidently extract. Total is the grand total (after tax). Items are line items only. text is a faithful plain-text transcription of the whole receipt, line by line, keeping the receipt's layout with newlines.";
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -75,7 +76,7 @@ export const scanReceipt = createServerFn({ method: "POST" })
 
     const safe = ReceiptSchema.safeParse(parsed);
     if (!safe.success) {
-      return { merchant: null, total: null, date: null, currency: null, items: null };
+      return { merchant: null, total: null, date: null, currency: null, items: null, text: null };
     }
     return safe.data;
   });

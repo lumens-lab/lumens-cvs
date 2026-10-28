@@ -22,6 +22,8 @@ export type Tx = {
   receipt?: string;
   /** True when the server holds a receipt image for this row. */
   hasReceipt?: boolean;
+  /** Plain text read from the receipt scan (OCR transcription). */
+  receiptText?: string;
   /** Itemized receipt lines */
   items?: { name: string; amt: number }[];
   /** Account this entry is drawn from (expense) or paid into (income / transfer source). */
