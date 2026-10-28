@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { useSyncStatus, formatLastSync, markSyncing, markSynced, markSyncError } from '@/lib/hazel/sync-status';
 import { optimizeStoredReceipts, type OptimizeProgress } from '@/lib/hazel/receipt-optimize';
+import { useServerFn } from '@tanstack/react-start';
+import { scanReceipt } from '@/lib/hazel/ocr.functions';
 
 const { W, S, S2, GN, RD, AM, AC } = COLORS;
 
@@ -54,13 +56,14 @@ export function VerifySheet({ open, onClose, openDetail }: { open: boolean; onCl
   const [tab, setTab] = useState<null | 'all' | 'dupes'>(null);
   const [opt, setOpt] = useState<OptimizeProgress | null>(null);
   const sync = useSyncStatus();
+  const readReceipt = useServerFn(scanReceipt);
 
   /** Re-scan every receipt photo already on the account down to ~5 KB B&W. */
   const optimizeReceipts = useCallback(async () => {
     if (!user?.id || opt) return;
     setOpt({ done: 0, total: 0, savedBytes: 0 });
     try {
-      const res = await optimizeStoredReceipts(user.id, 5 * 1024, (p) => setOpt(p));
+      const res = await optimizeStoredReceipts(user.id, 5 * 1024, (p) => setOpt(p), async (img) => (await readReceipt({ data: { imageDataUrl: img } })).text);
       const savedMb = res.savedBytes / (1024 * 1024);
       showToast(
         res.total === 0
