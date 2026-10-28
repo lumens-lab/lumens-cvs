@@ -14,6 +14,7 @@ export async function optimizeStoredReceipts(
   userId: string,
   maxBytes = 5 * 1024,
   onProgress?: (p: OptimizeProgress) => void,
+  ocr?: (imageDataUrl: string) => Promise<string | null | undefined>,
 ): Promise<OptimizeProgress> {
   const { data: ids, error } = await supabase
     .from('txs')
@@ -27,9 +28,16 @@ export async function optimizeStoredReceipts(
 
   for (const row of list) {
     try {
-      const { data } = await supabase.from('txs').select('receipt').eq('id', row.id).maybeSingle();
+      const { data } = await supabase.from('txs').select('receipt, receipt_text').eq('id', row.id).maybeSingle();
       const receipt = (data as any)?.receipt as string | null | undefined;
       if (receipt && receipt.startsWith('data:image/')) {
+        // Read the receipt into text from the best-quality copy we have.
+        if (ocr && !(data as any)?.receipt_text) {
+          try {
+            const text = (await ocr(receipt))?.trim();
+            if (text) await supabase.from('txs').update({ receipt_text: text.slice(0, 8000) }).eq('id', row.id);
+          } catch { /* text is optional; still compress */ }
+        }
         const before = dataUrlBytes(receipt);
         if (before > maxBytes) {
           const scanned = await compressReceipt(receipt, 1000, maxBytes);
